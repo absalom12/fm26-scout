@@ -1,0 +1,1689 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scout26</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'%3E%3Cpath d='M13 1 25 5v10c0 7-5 12-12 14C6 27 1 22 1 15V5z' fill='%234aa3ff'/%3E%3Cpath d='M13 1v28C6 27 1 22 1 15h24' fill='%230b0f13' opacity='.85'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* Scout26 — "Floodlit Touchline": night-match slate, Rovers-blue accent, condensed sports type. */
+:root {
+  --bg: #0b0f13; --bg2: #0e1318; --panel: #121920; --raise: #18212a; --hover: #1d2832; --line: #222d38; --line2: #2c3946;
+  --text: #e8eef3; --text2: #b6c3ce; --muted: #8796a5; --faint: #56636f;
+  --accent: #4aa3ff; --accent-ink: #03111f; --accent-soft: rgba(74,163,255,.13);
+  --good: #3fd98a; --ok: #c3d651; --warn: #f2b84b; --bad: #ff6f6f; --gold: #f5c542;
+  --good-soft: rgba(63,217,138,.13); --warn-soft: rgba(242,184,75,.13); --bad-soft: rgba(255,111,111,.13);
+  --pitch: #0f2619; --pitch2: #11301f;
+  --r-sm: 6px; --r: 10px; --r-lg: 14px; --r-pill: 999px;
+  --shadow: 0 18px 50px rgba(0,0,0,.5);
+  --ease: cubic-bezier(.2,.8,.2,1); --t-fast: 120ms; --t: 200ms; --t-slow: 360ms;
+  --f-body: 'Barlow', system-ui, sans-serif; --f-display: 'Barlow Condensed', 'Barlow', sans-serif; --f-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --top: 52px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { font: 14px/1.4 var(--f-body); background: var(--bg); color: var(--text); display: flex; flex-direction: column; overflow: hidden; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+kbd { font: 600 10px var(--f-mono); color: var(--muted); border: 1px solid var(--line2); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; line-height: 15px; }
+::-webkit-scrollbar { width: 8px; height: 8px; } ::-webkit-scrollbar-thumb { background: #26323d; border-radius: 4px; } ::-webkit-scrollbar-track { background: transparent; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ---------- Header ---------- */
+.top { height: var(--top); flex-shrink: 0; display: flex; align-items: center; gap: 14px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--line); position: relative; }
+.brand { display: flex; align-items: center; gap: 8px; font: 700 20px/1 var(--f-display); letter-spacing: .02em; text-transform: uppercase; white-space: nowrap; }
+.brand b { color: var(--accent); }
+.brand svg { width: 26px; height: 30px; }
+.nav { display: flex; gap: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); padding: 3px; }
+.nav button { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 7px; font: 600 15px var(--f-display); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); transition: color var(--t-fast), background var(--t-fast); }
+.nav button:hover { color: var(--text); }
+.nav button[aria-current="page"] { background: var(--raise); color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+.search { position: relative; flex: 1; max-width: 380px; min-width: 160px; }
+.search input { width: 100%; height: 36px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); padding: 0 34px 0 34px; outline: none; transition: border-color var(--t-fast); }
+.search input:focus { border-color: var(--accent); }
+.search svg { position: absolute; left: 11px; top: 10px; width: 16px; height: 16px; color: var(--muted); }
+.search kbd { position: absolute; right: 10px; top: 10px; }
+.spacer { flex: 1; }
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: var(--r); border: 1px solid var(--line); background: var(--bg); font-weight: 600; white-space: nowrap; transition: border-color var(--t-fast), background var(--t-fast), transform var(--t-fast); }
+.btn:hover { border-color: var(--line2); background: var(--raise); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { background: #6db5ff; }
+.btn[disabled] { opacity: .85; cursor: progress; }
+.btn svg { width: 16px; height: 16px; }
+.seg { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); padding: 3px; gap: 2px; }
+.seg button { height: 28px; padding: 0 10px; border-radius: 7px; font-weight: 600; font-size: 13px; color: var(--muted); white-space: nowrap; transition: background var(--t-fast), color var(--t-fast); }
+.seg button:hover { color: var(--text); }
+.seg button[aria-pressed="true"] { background: var(--raise); color: var(--text); box-shadow: inset 0 0 0 1px var(--line2); }
+.progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; overflow: hidden; display: none; }
+.progress.on { display: block; }
+.progress::after { content: ""; position: absolute; inset: 0; width: 30%; background: linear-gradient(90deg, transparent, var(--accent), transparent); animation: slide 1.2s linear infinite; }
+@keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(400%); } }
+.spin { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: rot .8s linear infinite; }
+@keyframes rot { to { transform: rotate(360deg); } }
+
+/* ---------- Data modes ---------- */
+body { --mode: var(--accent); }
+body.mode-fair { --mode: var(--good); } body.mode-moneyball { --mode: var(--gold); }
+.top { box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--mode) 55%, transparent); }
+.modes button[aria-pressed="true"] { background: color-mix(in srgb, var(--mode) 18%, transparent); color: var(--mode); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mode) 55%, transparent); }
+.mode-chip { font: 700 11px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--mode); border: 1px solid color-mix(in srgb, var(--mode) 50%, transparent); border-radius: 4px; padding: 1px 6px; margin-right: 6px; }
+.tip { position: relative; }
+.tip::after { content: attr(data-tip); position: absolute; top: calc(100% + 10px); right: 0; width: 260px; padding: 10px 12px; border-radius: var(--r); background: var(--raise); border: 1px solid var(--line2); box-shadow: var(--shadow); color: var(--text2); font: 400 13px/1.45 var(--f-body); text-align: left; white-space: normal; opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity var(--t-fast), transform var(--t-fast); z-index: 60; }
+.tip:hover::after, .tip:focus-visible::after { opacity: 1; transform: none; transition-delay: .25s; }
+.count { font: 700 11px var(--f-mono); background: var(--accent); color: var(--accent-ink); border-radius: var(--r-pill); padding: 0 6px; }
+.count:empty { display: none; }
+.crit { min-height: 40px; padding: 6px 16px; gap: 6px; flex-wrap: wrap; background: var(--bg); }
+.crit-chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 4px 0 10px; border-radius: var(--r-pill); background: var(--accent-soft); color: var(--text); font-size: 12px; font-weight: 600; }
+.crit-chip button { width: 22px; height: 22px; border-radius: 50%; color: var(--muted); }
+.crit-chip button:hover { background: var(--raise); color: var(--text); }
+/* Nationality */
+.nat { display: inline-flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.flag { font-size: 15px; line-height: 1; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+/* Key attribute / stat chips */
+.kchips { display: inline-flex; gap: 4px; overflow: hidden; vertical-align: middle; align-items: center; }
+.ac { display: inline-flex; gap: 4px; align-items: baseline; font: 600 11px var(--f-display); letter-spacing: .04em; color: var(--muted); background: #151e27; border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
+.ac b { font: 700 12px var(--f-mono); }
+.ac.st b { color: var(--text); }
+.wage-hi { color: var(--warn); font-weight: 700; }
+.wage-hi { color: var(--warn); font-weight: 700; }
+/* ---------- Page visibility ---------- */
+body[data-page="club"] .only-grid, body[data-page="offers"] .only-grid, body:not([data-page="scout"]) .only-scout, body:not([data-page="deals"]) .only-deals, body:not([data-page="club"]) .only-club, body:not([data-page="offers"]) .only-offers { display: none !important; }
+.crit[hidden] { display: none !important; }
+body.no-deals[data-page="deals"] #grid { display: none; }
+body:not(.no-deals) #dealsMissing { display: none; }
+
+/* ---------- Filter bar ---------- */
+.bar { flex-shrink: 0; display: flex; align-items: center; gap: 14px; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--bg2); min-height: 52px; }
+.bar.sub { background: var(--bg); min-height: 50px; gap: 8px; }
+.chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.chip { height: 30px; min-width: 38px; padding: 0 10px; border-radius: var(--r-pill); border: 1px solid var(--line2); font: 600 13px var(--f-display); letter-spacing: .05em; color: var(--text2); transition: all var(--t-fast); }
+.chip:hover { border-color: var(--muted); color: var(--text); }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.fld { display: inline-flex; align-items: center; gap: 6px; font: 600 12px var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.fld input, .fld select, .in { height: 30px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 8px; outline: none; font: 500 13px var(--f-mono); color: var(--text); text-transform: none; letter-spacing: 0; transition: border-color var(--t-fast); }
+.fld input { width: 54px; }
+.fld input:focus, .fld select:focus, .in:focus { border-color: var(--accent); }
+.fld input.has, .fld select.has { border-color: rgba(74,163,255,.55); background: var(--accent-soft); }
+.in[aria-invalid="true"] { border-color: var(--bad); }
+.check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); cursor: pointer; white-space: nowrap; }
+.check input { width: 16px; height: 16px; accent-color: var(--accent); }
+.link { color: var(--muted); font-weight: 600; font-size: 13px; padding: 6px 4px; }
+.link:hover { color: var(--accent); }
+.link b { color: var(--accent); }
+.summary { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 13px; }
+.summary b { color: var(--text); font-family: var(--f-mono); }
+.list-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: var(--r-pill); border: 1px solid var(--line); font-weight: 600; font-size: 13px; color: var(--text2); white-space: nowrap; transition: all var(--t-fast); }
+.list-chip:hover { border-color: var(--line2); color: var(--text); background: var(--raise); }
+.list-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+.list-chip .x { color: var(--muted); margin-left: 2px; }
+.list-chip .n { font: 600 11px var(--f-mono); color: var(--gold); }
+.views { margin-left: auto; }
+
+/* Deal lens switch */
+.lenses { display: flex; gap: 6px; }
+.lens { text-align: left; padding: 6px 14px; border-radius: var(--r); border: 1px solid var(--line); min-width: 150px; transition: all var(--t-fast); }
+.lens b { display: block; font: 700 16px/1.1 var(--f-display); letter-spacing: .04em; text-transform: uppercase; }
+.lens span { font-size: 12px; color: var(--muted); }
+.lens:hover { border-color: var(--line2); background: var(--raise); }
+.lens[aria-pressed="true"] { border-color: var(--good); background: var(--good-soft); }
+.lens[aria-pressed="true"] b { color: var(--good); }
+.legend { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+
+/* ---------- Grid ---------- */
+.main { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; }
+#grid { flex: 1; min-height: 0; }
+body .ag-theme-quartz-dark {
+  --ag-background-color: var(--bg); --ag-header-background-color: var(--bg2); --ag-odd-row-background-color: var(--bg);
+  --ag-row-hover-color: #141d26; --ag-border-color: var(--line); --ag-row-border-color: #172029; --ag-header-foreground-color: var(--muted);
+  --ag-foreground-color: var(--text); --ag-font-family: var(--f-body); --ag-font-size: 14px; --ag-cell-horizontal-padding: 12px;
+  --ag-selected-row-background-color: #132536; --ag-active-color: var(--accent); --ag-input-focus-border-color: var(--accent);
+  --ag-wrapper-border-radius: 0; --ag-input-border-color: var(--line); --ag-header-column-resize-handle-color: var(--line2);
+}
+.ag-theme-quartz-dark .ag-root-wrapper { border: 0; }
+.ag-header-cell-text { font: 600 13px var(--f-display); text-transform: uppercase; letter-spacing: .07em; }
+.ag-floating-filter-input input { font-family: var(--f-mono) !important; font-size: 12px !important; }
+.ag-row { cursor: pointer; }
+.ag-cell { display: flex; align-items: center; }
+.ag-overlay-no-rows-wrapper * { pointer-events: auto; }
+.cell-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.ours { display: inline-block; font: 700 10px var(--f-display); letter-spacing: .08em; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 0 4px; margin-left: 6px; vertical-align: 1px; }
+.pos { display: inline-block; font: 600 11px/18px var(--f-display); letter-spacing: .06em; padding: 0 5px; border-radius: 4px; background: #1a2530; color: #a7bccb; margin-right: 3px; }
+.abar { display: flex; align-items: center; gap: 8px; width: 100%; }
+.abar .mono { width: 26px; text-align: right; font-weight: 700; }
+.abar .tr { flex: 1; height: 4px; border-radius: 2px; background: #1c2731; position: relative; overflow: hidden; }
+.abar .tr i { position: absolute; inset: 0 auto 0 0; border-radius: 2px; }
+.abar .gap { font: 500 11px var(--f-mono); color: var(--muted); width: 28px; }
+.role { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.role b { font-family: var(--f-mono); }
+.role span { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a1 { color: var(--bad); } .a2 { color: var(--warn); } .a3 { color: var(--ok); } .a4 { color: var(--good); font-weight: 700; }
+.sk { display: block; height: 10px; width: 70%; border-radius: 4px; background: linear-gradient(90deg, #17202a 0%, #212c37 50%, #17202a 100%); background-size: 200% 100%; animation: shimmer 1.3s linear infinite; }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.star-btn { width: 32px; height: 32px; display: grid; place-items: center; font-size: 17px; color: #34444f; border-radius: 6px; transition: color var(--t-fast); }
+.star-btn:hover { color: var(--text2); }
+.star-btn[aria-pressed="true"] { color: var(--gold); }
+.star-btn.pop { animation: pop .35s var(--ease); }
+@keyframes pop { 40% { transform: scale(1.45) rotate(-12deg); } }
+
+/* Deal visuals */
+.deal { display: inline-flex; align-items: center; gap: 6px; font: 700 12px var(--f-mono); padding: 2px 8px; border-radius: var(--r-pill); color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); white-space: nowrap; }
+.deal em { font: 700 10px var(--f-display); letter-spacing: .08em; text-transform: uppercase; font-style: normal; opacity: .9; }
+.vf { display: flex; align-items: center; gap: 8px; width: 100%; }
+.vf .tr { flex: 1; height: 6px; border-radius: 3px; background: #1c2731; position: relative; overflow: hidden; }
+.vf .tr i { position: absolute; inset: 0 auto 0 0; background: var(--muted); border-radius: 3px; }
+.vf .tr.over i { background: var(--bad); }
+.vf .mono { font-size: 12px; min-width: 52px; text-align: right; }
+.mini { font: 600 12px var(--f-mono); }
+
+/* Empty states */
+.empty { display: grid; place-items: center; text-align: center; gap: 6px; padding: 32px; color: var(--muted); }
+.empty svg { width: 120px; height: auto; opacity: .9; }
+.empty h3 { margin: 6px 0 0; font: 700 20px var(--f-display); letter-spacing: .03em; text-transform: uppercase; color: var(--text); }
+.empty p { margin: 0; max-width: 360px; }
+.panel-msg { position: absolute; inset: 0; display: grid; place-items: center; }
+
+/* ---------- Drawer ---------- */
+.drawer { position: fixed; top: var(--top); right: 0; bottom: 0; width: 460px; max-width: 100%; background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; z-index: 20; box-shadow: var(--shadow); transform: translateX(105%); transition: transform var(--t-slow) var(--ease); overscroll-behavior: contain; }
+.drawer.open { transform: none; }
+.dr-head { position: sticky; top: 0; z-index: 2; background: var(--panel); padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+.dr-row { display: flex; align-items: flex-start; gap: 6px; }
+.dr-id { flex: 1; min-width: 0; }
+.dr-id h2 { margin: 0; font: 700 26px/1.05 var(--f-display); letter-spacing: .01em; }
+.dr-id p { margin: 3px 0 6px; color: var(--muted); font-size: 13px; }
+.icon-btn { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; color: var(--muted); font-size: 20px; }
+.icon-btn:hover { background: var(--raise); color: var(--text); }
+.icon-btn.star[aria-pressed="true"] { color: var(--gold); }
+.ability { margin-top: 12px; }
+.ability .nums { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--f-display); text-transform: uppercase; letter-spacing: .05em; font-size: 12px; color: var(--muted); }
+.ability .nums b { font: 700 24px var(--f-mono); margin-left: 4px; }
+.ability .track { position: relative; height: 8px; border-radius: 4px; background: #1a242d; margin-top: 6px; overflow: hidden; }
+.ability .track i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; transform-origin: left; animation: grow .7s var(--ease) both; }
+.ability .track i.pa { opacity: .28; }
+@keyframes grow { from { transform: scaleX(0); } }
+.dr-body { padding: 4px 18px 28px; }
+.sec { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.sec:last-child { border-bottom: 0; }
+.sec h3 { margin: 0 0 10px; font: 700 13px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: baseline; gap: 8px; }
+.sec h3 small { font: 400 12px var(--f-body); letter-spacing: 0; text-transform: none; color: var(--faint); margin-left: auto; }
+.tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: var(--r-pill); background: var(--raise); color: var(--text2); white-space: nowrap; }
+.tag b { font-family: var(--f-mono); margin-left: 4px; }
+.tag.good { background: var(--good-soft); color: var(--good); }
+.tag.bad { background: var(--bad-soft); color: var(--bad); }
+.tag.warn { background: var(--warn-soft); color: var(--warn); }
+.price { display: grid; grid-template-columns: 1fr 1fr auto; gap: 4px 12px; align-items: end; }
+.kv { font-size: 11px; font-family: var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kv b { display: block; font: 700 18px var(--f-mono); color: var(--text); letter-spacing: 0; text-transform: none; }
+.price .vf { grid-column: 1 / -1; margin-top: 6px; }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 13px; margin-top: 12px; }
+.facts dt { color: var(--muted); } .facts dd { margin: 0; text-align: right; }
+.lens-mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+.lens-mini div { background: var(--bg); border-radius: var(--r-sm); padding: 6px 8px; font-size: 11px; color: var(--muted); }
+.lens-mini b { display: block; font: 700 14px var(--f-mono); }
+.radar-wrap { display: grid; grid-template-columns: 220px 1fr; gap: 10px; align-items: center; }
+.radar { width: 220px; height: 220px; overflow: visible; }
+.radar .shape { transform-origin: 110px 110px; animation: radar .6s var(--ease) both; }
+@keyframes radar { from { transform: scale(.2); opacity: 0; } }
+.radar text { font: 600 10px var(--f-display); letter-spacing: .06em; text-transform: uppercase; fill: var(--muted); }
+.axes-list { font-size: 13px; display: grid; gap: 3px; }
+.axes-list div { display: flex; justify-content: space-between; }
+.axes-list b { font-family: var(--f-mono); }
+.statline { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.stat { background: var(--bg); border-radius: var(--r-sm); padding: 5px 10px; font-size: 11px; color: var(--muted); font-family: var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
+.stat b { display: block; font: 700 16px var(--f-mono); color: var(--text); letter-spacing: 0; }
+.pct { display: grid; grid-template-columns: 128px 1fr 44px 30px; align-items: center; gap: 8px; font-size: 13px; padding: 3px 0; }
+.pct .lbl { color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pct .tr { height: 8px; border-radius: 4px; background: #1a242d; position: relative; }
+.pct .tr::before { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--line2); }
+.pct .tr i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; transform-origin: left; animation: grow .6s var(--ease) both; }
+.pct .v { font: 500 12px var(--f-mono); text-align: right; color: var(--muted); }
+.pct .p { font: 700 12px var(--f-mono); text-align: right; }
+.note { font-size: 12px; color: var(--faint); margin-top: 8px; }
+.rolebar { display: grid; grid-template-columns: 150px 1fr 34px; align-items: center; gap: 8px; font-size: 13px; padding: 2px 0; }
+.rolebar .tr { height: 5px; border-radius: 3px; background: #1a242d; overflow: hidden; }
+.rolebar .tr i { display: block; height: 100%; border-radius: 3px; }
+details summary { cursor: pointer; font: 700 13px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); list-style: none; display: flex; align-items: center; gap: 8px; min-height: 32px; }
+details summary::before { content: "+"; font: 700 15px var(--f-mono); color: var(--accent); width: 14px; }
+details[open] summary::before { content: "−"; }
+.attrs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; margin-top: 10px; }
+.attrs h4 { margin: 0 0 4px; font: 700 12px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.attrs .row { display: flex; justify-content: space-between; font-size: 13px; padding: 1px 0; }
+.attrs .row span:first-child { color: var(--text2); }
+
+/* ---------- Palette ---------- */
+dialog.pal { width: min(620px, calc(100vw - 32px)); max-height: min(560px, calc(100vh - 120px)); margin: 12vh auto auto; padding: 0; border: 1px solid var(--line2); border-radius: var(--r-lg); background: var(--panel); color: var(--text); box-shadow: var(--shadow); display: none; flex-direction: column; }
+dialog.pal[open] { display: flex; animation: palIn var(--t) var(--ease); }
+@keyframes palIn { from { transform: translateY(-8px) scale(.98); opacity: 0; } }
+dialog::backdrop { background: rgba(3,6,9,.6); backdrop-filter: blur(2px); }
+.pal-in { display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid var(--line); }
+.pal-in input { flex: 1; height: 52px; background: none; border: 0; outline: none; font-size: 16px; }
+.pal-list { overflow-y: auto; padding: 6px; }
+.pal-g { font: 700 11px var(--f-display); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); padding: 10px 10px 4px; }
+.pal-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; min-height: 40px; }
+.pal-item .l { font-weight: 600; white-space: nowrap; }
+.pal-item .d { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.pal-item.on { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+.pal-item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.pal-foot { display: flex; gap: 14px; padding: 8px 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+
+/* ---------- Overlay & toast ---------- */
+.overlay { position: fixed; inset: 0; z-index: 40; background: rgba(3,6,9,.78); display: grid; place-items: center; }
+.overlay[hidden] { display: none; }
+.drop-zone { border: 2px dashed var(--accent); border-radius: 22px; padding: 48px 72px; text-align: center; }
+.drop-zone h2 { margin: 12px 0 4px; font: 700 28px var(--f-display); text-transform: uppercase; letter-spacing: .03em; }
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 20px); opacity: 0; z-index: 50; background: var(--raise); border: 1px solid var(--line2); border-left: 3px solid var(--accent); padding: 10px 16px; border-radius: var(--r); box-shadow: var(--shadow); font-size: 14px; pointer-events: none; transition: all var(--t) var(--ease); max-width: 90vw; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+.toast.bad { border-left-color: var(--bad); } .toast.good { border-left-color: var(--good); }
+
+/* ---------- My Club ---------- */
+.club { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.club-head { display: flex; align-items: center; gap: 18px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--bg2); flex-wrap: wrap; }
+.club-head h1 { margin: 0; font: 700 28px/1 var(--f-display); text-transform: uppercase; letter-spacing: .02em; }
+.club-head .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.club-head .ctrls { margin-left: auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.club-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(330px, 380px) minmax(280px, 330px) 1fr; }
+.club-grid > section { min-height: 0; overflow-y: auto; padding: 14px 16px; border-right: 1px solid var(--line); }
+.club-grid > section:last-child { border-right: 0; }
+.col-title { margin: 0 0 10px; font: 700 13px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.pitch { position: relative; aspect-ratio: 68 / 92; width: 100%; border-radius: var(--r-lg); overflow: hidden;
+  background: repeating-linear-gradient(180deg, var(--pitch) 0 9.09%, var(--pitch2) 9.09% 18.18%); box-shadow: inset 0 0 0 1px #1d3d2a, inset 0 0 60px rgba(0,0,0,.45); }
+.pitch > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.slot { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; width: 84px; padding: 2px; border-radius: 10px; transition: transform var(--t) var(--ease); animation: slotIn .45s var(--ease) both; }
+@keyframes slotIn { from { opacity: 0; transform: translate(-50%, -30%); } }
+.slot:hover { transform: translate(-50%, -50%) scale(1.06); }
+.slot .disc { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font: 700 13px var(--f-mono); color: #04110a; background: var(--g, var(--muted)); box-shadow: 0 0 0 3px rgba(0,0,0,.35), 0 0 18px color-mix(in srgb, var(--g, #000) 45%, transparent); }
+.slot .lbl { font: 700 10px var(--f-display); letter-spacing: .1em; color: rgba(255,255,255,.7); }
+.slot .nm { font: 600 12px/1.1 var(--f-body); color: #fff; max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 3px #000; }
+.slot .bk { font-size: 10px; color: rgba(255,255,255,.55); max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot[aria-pressed="true"] .disc { box-shadow: 0 0 0 3px var(--accent), 0 0 22px var(--accent); }
+.slot.weak .disc { animation: pulse 2.2s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 3px rgba(0,0,0,.35), 0 0 26px var(--bad); } }
+.g-weak { --g: var(--bad); } .g-ok { --g: var(--warn); } .g-strong { --g: var(--good); } .g-none { --g: #6b7884; }
+.slot-card { margin-top: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; }
+.slot-card .chips .chip { height: 28px; min-width: 44px; padding: 0 6px; font-size: 12px; }
+.person { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 6px 8px; border-radius: 8px; min-height: 44px; }
+.person:hover { background: var(--raise); }
+.person .who { flex: 1; min-width: 0; }
+.person .who b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person .who span { font-size: 12px; color: var(--muted); }
+.fitbar { width: 70px; height: 5px; border-radius: 3px; background: #1a242d; overflow: hidden; }
+.fitbar i { display: block; height: 100%; border-radius: 3px; }
+.rank { display: grid; grid-template-columns: 22px 44px 1fr auto; gap: 8px; align-items: center; width: 100%; text-align: left; padding: 8px; border-radius: 8px; border-left: 3px solid var(--g); margin-bottom: 4px; background: var(--bg2); min-height: 48px; transition: background var(--t-fast); }
+.rank:hover { background: var(--raise); }
+.rank[aria-pressed="true"] { background: var(--accent-soft); }
+.rank .i { font: 700 12px var(--f-mono); color: var(--faint); }
+.rank .p { font: 700 14px var(--f-display); letter-spacing: .05em; text-align: center; padding: 2px 0; border-radius: 5px; background: color-mix(in srgb, var(--g) 18%, transparent); color: var(--g); }
+.rank .w b { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank .w span { font-size: 11px; color: var(--muted); }
+.rank .f { font: 700 13px var(--f-mono); text-align: right; }
+.rank .f small { display: block; font: 500 10px var(--f-body); color: var(--muted); }
+.reco { display: grid; grid-template-columns: 26px minmax(160px, 1.3fr) minmax(150px, 1fr) minmax(170px, 1fr) 36px; gap: 12px; align-items: center; padding: 10px 8px; border-bottom: 1px solid var(--line); animation: slotIn .4s var(--ease) both; }
+.reco:hover { background: var(--bg2); }
+.reco .i { font: 700 13px var(--f-mono); color: var(--faint); text-align: right; }
+.reco .nm { text-align: left; font-weight: 700; font-size: 15px; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reco .nm:hover { color: var(--accent); }
+.reco .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.reco .rep { font-size: 13px; }
+.reco .rep .up { color: var(--good); font: 700 12px var(--f-mono); }
+.reco .why { font-size: 12px; color: var(--muted); margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.reco .money { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+.sk-card { height: 58px; margin-bottom: 6px; border-radius: 8px; }
+
+@media (max-width: 1180px) {
+  .club-grid { grid-template-columns: minmax(300px, 360px) 1fr; overflow-y: auto; }
+  .club-grid > section:last-child { grid-column: 1 / -1; border-top: 1px solid var(--line); }
+  .nav kbd, .search kbd, #palBtn kbd { display: none; }
+  .lens { min-width: 0; }
+}
+@media (max-width: 760px) {
+  body { overflow: auto; }
+  .top { flex-wrap: wrap; height: auto; padding: 8px 16px; }
+  .club-grid { display: block; }
+  .reco { grid-template-columns: 22px 1fr 36px; } .reco > :nth-child(3), .reco > :nth-child(4) { grid-column: 2; }
+  .drawer { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+}
+
+/* ---------- Edit search ---------- */
+dialog.es { width: min(1120px, calc(100vw - 32px)); height: min(820px, calc(100vh - 48px)); padding: 0; border: 1px solid var(--line2); border-radius: var(--r-lg); background: var(--panel); color: var(--text); box-shadow: var(--shadow); }
+dialog.es[open] { animation: palIn var(--t) var(--ease); }
+.es-in { display: flex; flex-direction: column; height: 100%; margin: 0; }
+.es-head { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); }
+.es-head h2 { margin: 0; font: 700 22px var(--f-display); text-transform: uppercase; letter-spacing: .03em; }
+.es-head .icon-btn { margin-left: auto; }
+.es-body { flex: 1; overflow-y: auto; padding: 16px 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-content: start; }
+.es-sec { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; min-width: 0; }
+.es-sec.wide { grid-column: 1 / -1; }
+.es-sec h3 { margin: 0 0 10px; font: 700 13px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; gap: 8px; align-items: baseline; }
+.es-sec h3 small { font: 400 12px var(--f-body); letter-spacing: 0; text-transform: none; color: var(--faint); }
+.es-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 22px; }
+.es-grid h4 { margin: 4px 0; font: 700 11px var(--f-display); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
+.rg { display: grid; grid-template-columns: 1fr 96px 22px; align-items: center; gap: 8px; font-size: 13px; min-height: 26px; }
+.rg span:first-child { color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rg input[type=range] { width: 100%; accent-color: var(--mode); }
+.rg output { font: 700 12px var(--f-mono); text-align: right; color: var(--faint); }
+.rg output.on { color: var(--mode); }
+.es-row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 10px; }
+.es-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+.es-fields .fld input, .es-fields .fld select { width: 100%; }
+.es-fields .fld { display: grid; gap: 4px; }
+.nat-list { max-height: 180px; overflow-y: auto; margin-top: 6px; border: 1px solid var(--line); border-radius: var(--r-sm); }
+.nat-list label { display: flex; align-items: center; gap: 8px; padding: 4px 8px; font-size: 13px; cursor: pointer; min-height: 30px; }
+.nat-list label:hover { background: var(--raise); }
+.nat-list .n { margin-left: auto; font: 500 11px var(--f-mono); color: var(--faint); }
+.es-foot { display: flex; align-items: center; gap: 10px; padding: 10px 18px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.es-save { display: inline-flex; gap: 6px; }
+.es-save .in { width: 170px; }
+
+/* ---------- Offers ---------- */
+.offers { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(340px, 400px) 1fr; }
+.offers > section { min-height: 0; overflow-y: auto; padding: 18px; }
+.offers > section:first-child { border-right: 1px solid var(--line); background: var(--bg2); }
+.ac-wrap { position: relative; }
+.ac-wrap input { width: 100%; height: 40px; font-family: var(--f-body); font-size: 15px; }
+.ac-list { position: absolute; left: 0; right: 0; top: calc(100% + 4px); background: var(--raise); border: 1px solid var(--line2); border-radius: var(--r); box-shadow: var(--shadow); z-index: 10; padding: 4px; }
+.ac-list:empty { display: none; }
+.ac-item { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; width: 100%; text-align: left; padding: 7px 10px; border-radius: 7px; }
+.ac-item.on, .ac-item:hover { background: var(--accent-soft); }
+.ac-item span { font-size: 12px; color: var(--muted); }
+.of-card { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; }
+.of-card h3 { margin: 0; font: 700 24px/1.1 var(--f-display); }
+.of-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.of-inputs .fld { display: grid; gap: 4px; }
+.of-inputs .in { width: 100%; height: 40px; font-size: 16px; }
+.verdict { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.vbadge { font: 700 30px/1 var(--f-display); text-transform: uppercase; letter-spacing: .04em; padding: 8px 16px; border-radius: var(--r); color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); animation: pop .4s var(--ease); }
+.accept { font-weight: 700; color: var(--c); }
+.gauge { position: relative; height: 96px; margin: 26px 24px 18px; }
+.gauge .track { position: absolute; left: 0; right: 0; top: 40px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, var(--good-soft), #1a242d 50%, var(--bad-soft)); }
+.gauge .band { position: absolute; top: 36px; height: 18px; border-radius: 6px; background: color-mix(in srgb, var(--good) 22%, transparent); border: 1px solid color-mix(in srgb, var(--good) 55%, transparent); }
+.mk { position: absolute; top: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; font-size: 11px; white-space: nowrap; transition: left var(--t-slow) var(--ease); }
+.mk i { width: 2px; height: 26px; background: var(--c); margin-top: 3px; }
+.mk b { font: 700 12px var(--f-mono); color: var(--c); }
+.mk span { color: var(--muted); font-family: var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
+.mk.below { top: 50px; flex-direction: column-reverse; } .mk.below i { margin: 0 0 3px; }
+.mk.you i { width: 4px; border-radius: 2px; height: 30px; }
+.tag.nfs { background: var(--bad-soft); color: var(--bad); font-family: var(--f-body); }
+.vf .tr.na { background: repeating-linear-gradient(45deg, #1c2731 0 4px, #141c24 4px 8px); }
+.cmp { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 10px 12px; align-items: end; }
+.cmp .vf { align-self: center; }
+.pkg { margin-top: 10px; font-size: 13px; color: var(--text2); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.r2 { font: 600 11px var(--f-mono); color: var(--faint); border: 1px dashed var(--line2); border-radius: 4px; padding: 0 5px; cursor: help; }
+.nfs-banner { display: flex; gap: 10px; align-items: center; padding: 10px 12px; margin-bottom: 14px; border-radius: var(--r); background: var(--bad-soft); color: var(--text2); font-size: 13px; }
+.lens-mini span { font: 600 11px var(--f-mono); margin-left: 6px; }
+.legend-row { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 6px; font-size: 12px; color: var(--muted); }
+.legend-row i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.legend-row .band-dot { background: color-mix(in srgb, var(--good) 30%, transparent); border: 1px solid var(--good); }
+.legend-row b { color: var(--text); }
+.of-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+.of-quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.lens-tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+.lens-tbl th { text-align: left; font: 700 11px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); padding: 4px 0; }
+.lens-tbl td { padding: 6px 0; border-top: 1px solid var(--line); } .lens-tbl td.mono, .lens-tbl th.r { text-align: right; }
+.notes { margin: 6px 0 0; padding-left: 18px; color: var(--text2); font-size: 14px; } .notes li { margin: 4px 0; }
+.show-chip { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 6px 0 12px; border-radius: var(--r-pill); background: var(--accent-soft); border: 1px solid rgba(74,163,255,.45); font-weight: 600; font-size: 13px; }
+@media (max-width: 1600px) { .nav kbd { display: none; } }
+@media (max-width: 1180px) { .es-body { grid-template-columns: 1fr 1fr; } .es-grid { grid-template-columns: 1fr 1fr; } .offers { grid-template-columns: 1fr; } }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js"></script>
+</head>
+<body data-page="scout">
+<header class="top">
+  <div class="brand" aria-label="Scout26">
+    <!-- Quartered shield: a nod to the Gas's blue-and-white quarters -->
+    <svg viewBox="0 0 26 30" aria-hidden="true"><path d="M13 1 25 5v10c0 7-5 12-12 14C6 27 1 22 1 15V5z" fill="#4aa3ff"/><path d="M13 1v28C6 27 1 22 1 15h24" fill="#0b0f13" opacity=".85"/><path d="M13 1 25 5v10c0 7-5 12-12 14C6 27 1 22 1 15V5z" fill="none" stroke="#e8eef3" stroke-opacity=".5"/></svg>
+    <span>Scout<b>26</b></span>
+  </div>
+  <nav class="nav" aria-label="Pages">
+    <button data-page="scout" aria-current="page">Scout <kbd>1</kbd></button>
+    <button data-page="deals">Deal Finder <kbd>2</kbd></button>
+    <button data-page="club">My Club <kbd>3</kbd></button>
+    <button data-page="offers">Offers <kbd>4</kbd></button>
+  </nav>
+  <div class="search">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="search" type="search" placeholder="Search player or club" aria-label="Search player or club" autocomplete="off">
+    <kbd>/</kbd>
+  </div>
+  <button id="palBtn" class="btn" aria-haspopup="dialog" title="Lists &amp; commands">Lists <kbd>⌘K</kbd></button>
+  <div class="spacer"></div>
+  <div id="modes" class="seg modes" role="group" aria-label="Data mode">
+    <button data-mode="full" aria-pressed="true" class="tip" data-tip="Full: everything in the save, including CA/PA, hidden attributes and personality.">Full</button>
+    <button data-mode="fair" aria-pressed="false" class="tip" data-tip="Fair play: what a scout sees in-game. Visible attributes and stats only, with no CA/PA, hidden attributes or personality.">Fair play</button>
+    <button data-mode="moneyball" aria-pressed="false" class="tip" data-tip="Moneyball: numbers only. In-game statistics and money, no attributes at all (visible or hidden).">Moneyball</button>
+  </div>
+  <div id="gender" class="seg" role="group" aria-label="Gender">
+    <button data-g="" aria-pressed="true">All</button><button data-g="Men" aria-pressed="false">Men</button><button data-g="Women" aria-pressed="false">Women</button>
+  </div>
+  <button id="loadBtn" class="btn primary"><span>Load save</span></button>
+  <input id="file" type="file" accept=".fm" hidden>
+  <div id="progress" class="progress" aria-hidden="true"></div>
+</header>
+
+<!-- Quick filters (Scout + Deal Finder): essentials only, the rest lives in Edit search -->
+<div class="bar only-grid" role="toolbar" aria-label="Quick filters">
+  <div id="positions" class="chips" role="group" aria-label="Positions"></div>
+  <span class="fld">Age <input data-q="age_min" class="qf" type="number" min="14" max="45" placeholder="min" aria-label="Age min"> – <input data-q="age_max" class="qf" type="number" min="14" max="45" placeholder="max" aria-label="Age max"></span>
+  <label class="fld">Value ≤ <select data-q="value_max" class="qf">
+    <option value="">Any</option><option value="0">Free</option><option value="250000">£250k</option><option value="1000000">£1M</option>
+    <option value="5000000">£5M</option><option value="20000000">£20M</option><option value="50000000">£50M</option></select></label>
+  <label class="fld">Wage ≤ <select data-q="wage_max" class="qf" aria-label="Max weekly wage">
+    <option value="">Any</option><option value="1000">£1k/w</option><option value="2500">£2.5k/w</option><option value="5000">£5k/w</option>
+    <option value="10000">£10k/w</option><option value="25000">£25k/w</option><option value="50000">£50k/w</option><option value="100000">£100k/w</option></select></label>
+  <button id="esBtn" class="btn" aria-haspopup="dialog" title="All search criteria (e)">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Edit search <span id="esCount" class="count"></span></button>
+  <button id="reset" class="link">Reset</button>
+  <div id="summary" class="summary" aria-live="polite"></div>
+  <button id="exportBtn" class="btn" title="Export the current list as CSV">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg>Export</button>
+</div>
+<div id="crit" class="bar crit only-grid" hidden aria-label="Active criteria"></div>
+
+<!-- Scout: lists + column views -->
+<div class="bar sub only-scout">
+  <div id="lists" class="chips" role="group" aria-label="Lists"></div>
+  <button class="link" data-open-pal>All lists <kbd>⌘K</kbd></button>
+  <div id="views" class="seg views" role="group" aria-label="Columns"></div>
+</div>
+
+<!-- Deal Finder: lens switch -->
+<div class="bar sub only-deals">
+  <div id="lenses" class="lenses" role="group" aria-label="Deal lens"></div>
+  <div class="legend"><span id="lensNote"></span> · Deal = % below fair package
+    <span class="deal" style="--c:var(--good)">60%+ <em>Steal</em></span>
+    <span class="deal" style="--c:var(--ok)">30%+ <em>Bargain</em></span>
+    <span class="deal" style="--c:var(--bad)">−% <em>Over</em></span></div>
+</div>
+
+<main class="main">
+  <div id="grid" class="ag-theme-quartz-dark only-grid"></div>
+  <div id="dealsMissing" class="panel-msg only-deals"></div>
+  <div id="club" class="club only-club"></div>
+  <div id="offers" class="offers only-offers"></div>
+</main>
+
+<aside id="drawer" class="drawer" role="dialog" aria-label="Player detail" aria-hidden="true" tabindex="-1"></aside>
+
+<dialog id="pal" class="pal" aria-label="Lists and commands">
+  <div class="pal-in">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true" style="color:var(--muted)"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="palQ" placeholder="Jump to a list, lens or action…" aria-label="Filter commands" autocomplete="off" role="combobox" aria-controls="palList" aria-expanded="true">
+    <kbd>esc</kbd>
+  </div>
+  <div id="palList" class="pal-list" role="listbox"></div>
+  <div class="pal-foot"><span><kbd>↑</kbd> <kbd>↓</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>/</kbd> search</span><span><kbd>1</kbd>–<kbd>4</kbd> pages</span><span><kbd>e</kbd> edit search</span><span><kbd>s</kbd> star open player</span></div>
+</dialog>
+
+<dialog id="es" class="es" aria-labelledby="esTitle">
+  <form method="dialog" class="es-in" id="esForm">
+    <header class="es-head"><h2 id="esTitle">Edit search</h2><span class="muted" id="esMode"></span><button type="button" class="icon-btn" data-es-close aria-label="Close">×</button></header>
+    <div class="es-body" id="esBody"></div>
+    <footer class="es-foot">
+      <div id="esSaved" class="chips"></div>
+      <span class="es-save"><input id="esName" class="in" placeholder="Name this search" aria-label="Search name"><button type="button" class="btn" id="esSave">Save</button></span>
+      <span class="spacer"></span>
+      <span id="esLive" class="muted mono" aria-live="polite"></span>
+      <button type="button" class="link" id="esClear">Clear all</button>
+      <button type="button" class="btn" data-es-close>Cancel</button>
+      <button type="button" class="btn primary" id="esApply">Apply</button>
+    </footer>
+  </form>
+</dialog>
+
+<div id="overlay" class="overlay" hidden>
+  <div class="drop-zone">
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#4aa3ff" stroke-width="2.5" aria-hidden="true"><path d="M10 50V18h44v32"/><path d="M10 18 18 26h28l8-8M18 26v24M46 26v24" stroke-opacity=".5"/><circle cx="32" cy="42" r="7" fill="#e8eef3" stroke="none"/></svg>
+    <h2>Drop your .fm save</h2><p class="muted">Players are re-extracted read-only. Takes about a minute.</p></div>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clone = o => JSON.parse(JSON.stringify(o));
+
+// fetch with retry: the backend may restart briefly.
+async function api(path, body, tries = 4) {
+  const opt = body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  for (let i = 1; ; i++) {
+    try {
+      const r = await fetch(path, opt);
+      if (r.status < 502 || i >= tries) return r;
+    } catch (e) { if (i >= tries) throw e; }
+    await sleep(700 * i);
+  }
+}
+
+// ---------- Domain constants ----------
+const ATTR = {
+  technical: ['corners','crossing','dribbling','finishing','first_touch','free_kick_taking','heading','long_shots','long_throws','marking','passing','penalty_taking','tackling','technique'],
+  mental: ['aggression','anticipation','bravery','composure','concentration','decisions','determination','flair','leadership','off_the_ball','positioning','teamwork','vision','work_rate'],
+  physical: ['acceleration','agility','balance','jumping_reach','natural_fitness','pace','stamina','strength'],
+  goalkeeping: ['aerial_reach','command_of_area','communication','eccentricity','handling','kicking','one_on_ones','punching','reflexes','rushing_out','throwing'],
+  hidden: ['consistency','important_matches','injury_proneness','dirtiness','versatility'],
+};
+// FM's own attribute abbreviations.
+const ABBR = { acceleration: 'Acc', aggression: 'Agg', agility: 'Agi', anticipation: 'Ant', balance: 'Bal', bravery: 'Bra', composure: 'Cmp', concentration: 'Cnt',
+  corners: 'Cor', crossing: 'Cro', decisions: 'Dec', determination: 'Det', dribbling: 'Dri', finishing: 'Fin', first_touch: 'Fir', flair: 'Fla', free_kick_taking: 'Fre',
+  heading: 'Hea', jumping_reach: 'Jum', leadership: 'Ldr', long_shots: 'Lon', long_throws: 'L Th', marking: 'Mar', natural_fitness: 'Nat', off_the_ball: 'OtB',
+  pace: 'Pac', passing: 'Pas', penalty_taking: 'Pen', positioning: 'Pos', stamina: 'Sta', strength: 'Str', tackling: 'Tck', teamwork: 'Tea', technique: 'Tec',
+  vision: 'Vis', work_rate: 'Wor', aerial_reach: 'Aer', command_of_area: 'Cmd', communication: 'Com', eccentricity: 'Ecc', handling: 'Han', kicking: 'Kic',
+  one_on_ones: '1v1', punching: 'Pun', reflexes: 'Ref', rushing_out: 'TRO', throwing: 'Thr', consistency: 'Con', important_matches: 'Imp', injury_proneness: 'Inj',
+  dirtiness: 'Dirt', versatility: 'Vers' };
+const SEASON = [['s_apps','Apps'],['s_minutes','Mins'],['s_avg_rating','Rating'],['s_goals','Gls'],['s_assists','Ast'],
+  ['s_expected_goals','xG'],['s_expected_assists','xA'],['s_goals_p90','Gls/90'],['s_xg_p90','xG/90'],['s_assists_p90','Ast/90'],['s_shots','Shots'],
+  ['s_shots_on_target','On tgt'],['s_passes_attempted','Pas att'],['s_passes_completed','Pas cmp'],['s_pass_pct','Pas %'],
+  ['s_key_passes','Key pas'],['s_key_passes_p90','KP/90'],['s_progressive_passes','Prog pas'],['s_clear_cut_chances_created','CCC'],
+  ['s_crosses_attempted','Crs att'],['s_crosses_completed','Crs cmp'],['s_dribbles','Drb'],['s_tackles_attempted','Tck att'],
+  ['s_tackles_completed','Tck cmp'],['s_tackle_pct','Tck %'],['s_interceptions','Int'],['s_def_actions_p90','Def/90'],
+  ['s_possession_won','Poss won'],['s_pressures_completed','Press'],['s_headers_won','Hdr won'],['s_header_pct','Hdr %'],
+  ['s_clearances','Clr'],['s_blocks','Blk'],['s_distance_km','Dist km'],['s_player_of_the_match','PoM'],
+  ['s_yellow_cards','Yel'],['s_red_cards','Red'],['s_clean_sheets','CS'],['s_goals_allowed','Conc'],['s_expected_goals_prevented','xGP']];
+const PERS = ['adaptability','ambition','loyalty','pressure','professionalism','sportsmanship','temperament','controversy'];
+const BAD = new Set(['attributes_injury_proneness','attributes_dirtiness','personality_controversy']);
+const FIXED = ['star','name','nationality','age','natural_positions','ability_current','ability_potential'];
+const VIRTUAL = ['key_attrs', 'key_stats'];
+const LENSES = [
+  { id: 'ability', preset: 'deals_ability', label: 'Ability', hint: 'CA / PA vs package', deal: 'deal_ability', fair: 'fair_package_ability', ffee: 'fair_fee_ability', fwage: 'fair_wage_ability', ctx: ['pa_gap'] },
+  { id: 'attributes', preset: 'deals_attributes', label: 'Attributes', hint: 'Role & key attributes vs package', deal: 'deal_attributes', fair: 'fair_package_attributes', ffee: 'fair_fee_attributes', fwage: 'fair_wage_attributes', ctx: ['best_role_score', 'key_attrs'] },
+  { id: 'form', preset: 'deals_form', label: 'Form', hint: 'Season output vs package', deal: 'deal_form', fair: 'fair_package_form', ffee: 'fair_fee_form', fwage: 'fair_wage_form', ctx: ['s_avg_rating', 's_minutes', 'key_stats'] },
+  { id: 'stats', preset: 'deals_stats', label: 'Performance', hint: 'Per-90 index vs package', deal: 'deal_stats', fair: 'fair_package_stats', ffee: 'fair_fee_stats', fwage: 'fair_wage_stats', ctx: ['stat_score', 's_minutes', 'key_stats'] },
+  { id: 'blend', preset: 'deals_blend', label: 'Blend', hint: 'Every lens of this mode', deal: 'deal_score', fair: 'fair_package', ffee: 'fair_fee', fwage: 'fair_wage', ctx: ['best_role_score', 'stat_score', 's_avg_rating'] },
+];
+const MODES = { full: 'Full', fair: 'Fair play', moneyball: 'Moneyball' };
+const FEATURED = { full: ['wonderkids', 'hidden_gems', 'bosman', 'free_agents', 'top_rated'],
+  fair: ['young_talent', 'top_performers', 'bosman_open', 'free_agents_open', 'speed'],
+  moneyball: ['top_performers', 'young_performers', 'bosman_open', 'scorers', 'creators'] };
+const OVERVIEW = {
+  full: ['club_name', 'best_role_score', 'stat_score', 'transfer_value', 'contract_wage', 'months_left'],
+  fair: ['club_name', 'best_role_score', 'key_attrs', 'stat_score', 's_avg_rating', 'transfer_value', 'contract_wage', 'months_left'],
+  moneyball: ['club_name', 'stat_score', 'key_stats', 's_minutes', 's_avg_rating', 'transfer_value', 'contract_wage', 'months_left'],
+};
+const POSITIONS = ['GK','DL','DC','DR','WBL','WBR','DM','ML','MC','MR','AML','AMC','AMR','ST'];
+// Pitch coordinates (% of width, % of height), attacking upwards.
+const PITCH = { GK: [50, 92], DL: [13, 73], DC: [50, 76], DR: [87, 73], WBL: [10, 57], WBR: [90, 57], DM: [50, 58.5],
+  ML: [12, 40], MC: [50, 42], MR: [88, 41], AML: [15, 23], AMC: [50, 25], AMR: [85, 23], ST: [50, 8] };
+const SQUAD = ['star_player','important_player','regular_starter','squad_player','fringe_player','impact_sub','backup','breakthrough_prospect','future_prospect','youngster','surplus_to_requirements','first_choice_goalkeeper','cup_goalkeeper'];
+
+// ---------- Mode ----------
+let MODE = (() => { try { const m = localStorage.getItem('fm26_mode'); if (m in MODES) return m; if (localStorage.getItem('fm26_fairplay') === '1') return 'fair'; } catch {} return 'full'; })();
+let HIDDEN = new Set();
+const hid = c => HIDDEN.has(c) || (c === 'key_attrs' && MODE === 'moneyball');
+const presetOk = p => !p.modes || p.modes.includes(MODE);
+const lensOk = l => l.id === 'blend' || (META.modes?.[MODE]?.lenses || []).includes(l.id);
+const mq = (sep = '?') => sep + 'mode=' + MODE;
+
+// ---------- Formatting ----------
+const LABELS = { ability_current: 'CA', ability_potential: 'PA', pa_gap: 'Gap', natural_positions: 'Pos', transfer_value: 'Value',
+  months_left: 'Months left', best_role: 'Best role', best_role_score: 'Best role', height_cm: 'Height', nationality: 'Nation',
+  club_name: 'Club', contract_squad_status: 'Squad status', contract_end: 'Contract end', deal_ability: 'Ability deal',
+  deal_attributes: 'Attr. deal', deal_form: 'Form deal', deal_stats: 'Perf. deal', deal_score: 'Blend deal', fair_package: 'Package vs fair',
+  fair_package_ability: 'Package vs fair', fair_package_attributes: 'Package vs fair', fair_package_form: 'Package vs fair', fair_package_stats: 'Package vs fair',
+  package_cost: 'Package (3y)', contract_wage: 'Wage/w', transfer_value: 'Fee', fair_fee: 'Fair fee', fair_wage: 'Fair wage',
+  fair_fee_ability: 'Fair fee', fair_fee_attributes: 'Fair fee', fair_fee_form: 'Fair fee', fair_fee_stats: 'Fair fee',
+  fair_wage_ability: 'Fair wage', fair_wage_attributes: 'Fair wage', fair_wage_form: 'Fair wage', fair_wage_stats: 'Fair wage', stat_score: 'Performance', key_attrs: 'Key attributes', key_stats: 'Key stats (per 90)', ...Object.fromEntries(SEASON) };
+const label = c => LABELS[c] || c.replace(/^(attributes|personality|role|positions)_/, '').replaceAll('_', ' ').replace(/\b\w/g, m => m.toUpperCase());
+const short = c => c.startsWith('attributes_') ? ABBR[c.slice(11)] || label(c) : label(c);
+const money = v => v == null ? '–' : v >= 1e6 ? `£${(v / 1e6).toFixed(v >= 1e7 ? 0 : 1)}M` : v >= 1e3 ? `£${Math.round(v / 1e3)}k` : `£${Math.round(v)}`;
+const wage = v => v == null ? '–' : (v >= 1e5 ? `£${Math.round(v / 1e3)}k` : v >= 1e3 ? `£${+(v / 1e3).toFixed(1)}k` : `£${Math.round(v)}`) + '/w';
+const tier = (v, bad) => { if (v == null) return ''; const t = v <= 5 ? 1 : v <= 10 ? 2 : v <= 15 ? 3 : 4; return 'a' + (bad ? 5 - t : t); };
+const C = { good: '#3fd98a', ok: '#c3d651', warn: '#f2b84b', orange: '#f08a4b', bad: '#ff6f6f', muted: '#8796a5', accent: '#4aa3ff', gold: '#f5c542' };
+const abilityColor = v => v >= 160 ? C.good : v >= 130 ? C.ok : v >= 100 ? C.warn : v >= 70 ? C.orange : C.bad;
+const scoreColor = v => v >= 75 ? C.good : v >= 65 ? C.ok : v >= 55 ? C.warn : C.muted;
+const pctColor = v => v >= 80 ? C.good : v >= 60 ? C.ok : v >= 40 ? C.warn : v >= 20 ? C.orange : C.bad;
+const ratingColor = v => v >= 7.3 ? C.good : v >= 6.9 ? C.ok : v >= 6.5 ? C.warn : C.bad;
+const dealColor = v => v >= 60 ? C.good : v >= 30 ? C.ok : v >= 0 ? C.muted : C.bad;
+const dealTag = v => v >= 60 ? 'Steal' : v >= 30 ? 'Bargain' : v >= 0 ? 'Fair' : 'Over';
+// ponytail: deal % can be extreme (e.g. -19960% on form); capped for display.
+const pctTxt = v => v < -999 ? '−999%+' : `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(Math.round(v))}%`;
+const dealBadge = v => v == null ? '' : `<span class="deal" style="--c:${dealColor(v)}">${Math.min(999, Math.abs(Math.round(v)))}${v < -999 ? '+' : ''}% ${v >= 0 ? 'under' : 'over'} <em>${dealTag(v)}</em></span>`;
+const valueVsFair = (val, fair, fmt = money) => {
+  if (fair == null) return '';
+  if (val == null) return `<div class="vf" title="Fair ${fmt(fair)}"><div class="tr na"></div><span class="mono">${fmt(fair)}</span></div>`;
+  const over = val > fair, w = !fair ? 0 : over ? 100 : Math.max(2, val / fair * 100);
+  return `<div class="vf" title="Actual ${fmt(val)} vs fair ${fmt(fair)}"><div class="tr${over ? ' over' : ''}"><i style="width:${w}%"></i></div><span class="mono">${fmt(fair)}</span></div>`;
+};
+// No transfer value = the club won't sell. Free agents genuinely cost no fee.
+const NFS = '<span class="tag nfs" title="The game puts no price on him: his club will not sell">Not for sale</span>';
+const FREE = '<span class="tag good">Free agent</span>';
+const feeHTML = p => !p ? '' : p.free_agent ? FREE : p.transfer_value == null ? NFS : money(p.transfer_value);
+const r2 = (lensId) => { const v = META?.model_fit_r2?.[`${gender() || 'Men'}/${lensId && lensId !== 'blend' ? lensId : MODE}`]; return v != null ? v.toFixed(2) : null; };
+const r2Note = lensId => { const v = r2(lensId); return v ? `<span class="r2" title="Share of real fee variance the fair-price model explains for ${esc(gender() || 'Men')} in ${MODES[MODE]} mode">model R² ${v}</span>` : ''; };
+const wageVerdict = (w, fair) => { if (w == null || !fair) return null; const r = w / fair;
+  return r <= .8 ? ['Below fair wage', C.good] : r <= 1.15 ? ['Fair wage', C.accent] : r <= 1.5 ? ['Above fair wage', C.warn] : ['Well above fair wage', C.bad]; };
+const posChips = v => (v || '').split(';').filter(Boolean).map(p => `<span class="pos">${esc(p)}</span>`).join('');
+const abilityBar = (v, gap) => v == null ? '' : `<div class="abar"><span class="mono" style="color:${abilityColor(v)}">${v}</span><div class="tr"><i style="width:${v / 2}%;background:${abilityColor(v)}"></i></div>${gap != null ? `<span class="gap">+${gap}</span>` : ''}</div>`;
+const perfBar = v => v == null ? '<span class="muted" style="font-size:12px" title="Not enough minutes">–</span>' : `<div class="abar"><span class="mono" style="color:${pctColor(v)}">${Math.round(v)}</span><div class="tr"><i style="width:${v}%;background:${pctColor(v)}"></i></div></div>`;
+const fitBar = v => `<div class="fitbar"><i style="width:${v ?? 0}%;background:${v == null ? 'transparent' : scoreColor(v)}"></i></div>`;
+const lastName = n => { const s = String(n || '').trim().split(/\s+/); return s.length > 1 ? s.slice(1).join(' ') : s[0] || '—'; };
+const flag = code => {
+  if (!code) return '';
+  if (code.startsWith('GB-')) { const t = { 'GB-ENG': 'gbeng', 'GB-SCT': 'gbsct', 'GB-WLS': 'gbwls' }[code];
+    return t ? '\u{1F3F4}' + [...t].map(c => String.fromCodePoint(0xE0000 + c.charCodeAt(0))).join('') + '\u{E007F}' : '\u{1F1EC}\u{1F1E7}'; }
+  return /^[A-Z]{2}$/i.test(code) ? [...code.toUpperCase()].map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('') : '';
+};
+const natCode = name => META.nations?.find(n => n.name === name)?.code || '';
+const natHTML = (p, withName = true) => !p || !p.nationality ? '' : `<span class="nat" title="${esc(p.nationality)}${p.second_nationalities ? ' · also ' + esc(p.second_nationalities) : ''}"><span class="flag" aria-hidden="true">${flag(p.nationality_code)}</span>${withName ? esc(p.nationality) : `<span class="sr">${esc(p.nationality)}</span>`}</span>`;
+
+// ---------- Stats ----------
+const per90 = k => p => p.s_minutes ? (p[k] ?? 0) * 90 / p.s_minutes : null;
+// [label, fn, decimals, unit, lowerIsBetter, short]
+const M = {
+  rating: ['Avg rating', p => p.s_avg_rating, 2, '', false, 'Rtg'], goals: ['Goals', per90('s_goals'), 2, '', false, 'Gls'], xg: ['xG', per90('s_expected_goals'), 2, '', false, 'xG'],
+  shots: ['Shots', per90('s_shots'), 2, '', false, 'Sh'], assists: ['Assists', per90('s_assists'), 2, '', false, 'Ast'], xa: ['xA', per90('s_expected_assists'), 2, '', false, 'xA'],
+  kp: ['Key passes', per90('s_key_passes'), 2, '', false, 'KP'], ccc: ['Clear-cut chances', per90('s_clear_cut_chances_created'), 2, '', false, 'CCC'],
+  drb: ['Dribbles', per90('s_dribbles'), 2, '', false, 'Drb'], prog: ['Progressive passes', per90('s_progressive_passes'), 2, '', false, 'Prog'],
+  passpct: ['Pass completion', p => p.s_pass_pct, 0, '%', false, 'Pas'], tck: ['Tackles won', per90('s_tackles_completed'), 2, '', false, 'Tck'],
+  tckpct: ['Tackle success', p => p.s_tackle_pct, 0, '%', false, 'Tck'], int: ['Interceptions', per90('s_interceptions'), 2, '', false, 'Int'],
+  won: ['Possession won', per90('s_possession_won'), 2, '', false, 'Won'], press: ['Pressures', per90('s_pressures_completed'), 2, '', false, 'Prs'],
+  hdr: ['Headers won', per90('s_headers_won'), 2, '', false, 'Hdr'], hdrpct: ['Aerial success', p => p.s_header_pct, 0, '%', false, 'Aer'],
+  clr: ['Clearances', per90('s_clearances'), 2, '', false, 'Clr'], blk: ['Blocks', per90('s_blocks'), 2, '', false, 'Blk'],
+  crs: ['Crosses completed', per90('s_crosses_completed'), 2, '', false, 'Crs'], xgp: ['xG prevented', per90('s_expected_goals_prevented'), 2, '', false, 'xGP'],
+  conc: ['Goals conceded', per90('s_goals_allowed'), 2, '', true, 'Conc'],
+  saves: ['Saves', p => p.s_minutes ? ((p.s_saves_held || 0) + (p.s_saves_parried || 0) + (p.s_saves_tipped || 0)) * 90 / p.s_minutes : null, 2, '', false, 'Sav'],
+  cs: ['Clean sheet rate', p => p.s_apps ? (p.s_clean_sheets || 0) / p.s_apps * 100 : null, 0, '%', false, 'CS'],
+};
+const METRICS = { GK: ['rating','xgp','saves','conc','cs','passpct'], CB: ['rating','tck','int','hdr','hdrpct','tckpct','clr','blk','prog','passpct'],
+  FB: ['rating','tck','int','crs','kp','won','prog','drb','passpct'], DM: ['rating','tck','int','prog','won','press','passpct','kp'],
+  CM: ['rating','prog','kp','tck','xa','passpct','won','press','drb'], W: ['rating','goals','assists','drb','kp','xg','xa','crs','shots'],
+  AM: ['rating','goals','kp','xa','xg','ccc','drb','prog','passpct'], ST: ['rating','goals','xg','shots','assists','kp','hdr','drb','press'] };
+const KEY = {
+  GK: ['reflexes','handling','one_on_ones','aerial_reach','command_of_area','communication','kicking','positioning','concentration'],
+  CB: ['tackling','marking','heading','positioning','jumping_reach','strength','anticipation','concentration','pace'],
+  FB: ['tackling','marking','crossing','pace','stamina','work_rate','positioning','acceleration','dribbling'],
+  DM: ['tackling','positioning','anticipation','passing','decisions','teamwork','work_rate','concentration','strength'],
+  CM: ['passing','first_touch','decisions','vision','stamina','work_rate','teamwork','technique','tackling'],
+  W: ['dribbling','crossing','pace','acceleration','technique','flair','first_touch','agility','off_the_ball'],
+  AM: ['passing','vision','technique','first_touch','decisions','flair','off_the_ball','dribbling','composure'],
+  ST: ['finishing','off_the_ball','composure','first_touch','pace','acceleration','heading','anticipation','dribbling'],
+};
+const groupOf = p => p.stat_group || (META.roles && META.roles[p.best_role]) || ((p.positions_gk || 0) >= 15 ? 'GK' : 'CM');
+const fmtM = (k, v) => { const [, , dec = 2, unit = ''] = M[k]; return v == null ? '–' : v.toFixed(dec) + unit; };
+function keyAttrs(d, n = 5) {
+  if (!d || MODE === 'moneyball') return '';
+  const list = (META.role_attributes && META.role_attributes[d.best_role]) || KEY[groupOf(d)] || [];
+  return `<div class="kchips">${list.slice(0, n).map(a => { const v = d['attributes_' + a];
+    return `<span class="ac" title="${label('attributes_' + a)}${d.best_role ? ' · key for ' + esc(label('role_' + d.best_role)) : ''}">${ABBR[a] || a.slice(0, 3)}<b class="${tier(v)}">${v ?? '–'}</b></span>`; }).join('')}</div>`;
+}
+function keyStats(d, n = 4) {
+  if (!d) return '';
+  if (!d.s_minutes) return '<span class="muted" style="font-size:12px">No minutes this season</span>';
+  const keys = (METRICS[groupOf(d)] || METRICS.CM).filter(k => k !== 'rating').slice(0, n);
+  return `<div class="kchips">${keys.map(k => `<span class="ac st" title="${M[k][0]}${M[k][3] ? '' : ' per 90'}">${M[k][5]}<b>${fmtM(k, M[k][1](d))}</b></span>`).join('')}</div>`;
+}
+
+// ---------- State ----------
+let META, grid, CLUB = null, formation = null, slotSel = null, posEdit = false, recoTab = 'needs';
+const st = { page: 'scout', preset: null, view: 'overview', lens: 'blend' };
+let VIEWS = {};
+let firstPageDone; const firstPage = new Promise(r => firstPageDone = r);
+let shortlist = new Set();
+try { shortlist = new Set(JSON.parse(localStorage.getItem('fm26_shortlist') || '[]')); } catch {}
+const saveSL = () => { try { localStorage.setItem('fm26_shortlist', JSON.stringify([...shortlist])); } catch {} renderLists(); };
+// All search criteria live in F; the quick bar and the Edit search dialog both edit it.
+const F0 = () => ({ positions: [], age_min: null, age_max: null, value_max: null, wage_max: null, ca_min: null, pa_min: null, risks: false,
+  nations: [], months_max: null, squad: '', free_agent: false, on_loan: false, min: {}, max: {} });
+let F = F0();
+let saved = []; try { saved = JSON.parse(localStorage.getItem('fm26_searches') || '[]'); } catch {}
+const saveSearches = () => { try { localStorage.setItem('fm26_searches', JSON.stringify(saved)); } catch {} };
+
+function toggleStar(uid, name, clubUid) {
+  const on = !shortlist.has(uid);
+  on ? shortlist.add(uid) : shortlist.delete(uid);
+  saveSL();
+  if (on && CLUB && clubUid === CLUB.club_uid) toast(`${name} is already one of ours. Up the Gas!`, 'good');
+  else toast(on ? `★ ${name} added to shortlist` : `${name} removed from shortlist`);
+  grid?.refreshCells({ columns: ['star'], force: true });
+  $$(`[data-star="${uid}"]`).forEach(b => { b.setAttribute('aria-pressed', on); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
+  return on;
+}
+let toastT;
+function toast(msg, kind = '', ms = 2600) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'toast on ' + kind;
+  clearTimeout(toastT); if (ms) toastT = setTimeout(() => t.classList.remove('on'), ms);
+}
+const gender = () => $('#gender [aria-pressed="true"]').dataset.g || null;
+const dealsAvailable = () => META.presets.some(p => p.group === 'Deals');
+const lens = () => LENSES.find(l => l.id === st.lens);
+
+// ---------- Grid ----------
+const NUM = { filter: 'agNumberColumnFilter', filterParams: { defaultOption: 'lessThan', maxNumConditions: 1 } };
+const num = (type, filter) => ({ filterType: 'number', type, filter });
+function colDef(c) {
+  const d = { field: c, headerName: label(c), hide: true, width: 76, ...NUM, filterParams: { ...NUM.filterParams } };
+  if (c === 'star') return { colId: 'star', headerName: '', width: 48, pinned: 'left', sortable: false, filter: false, floatingFilter: false, resizable: false,
+    cellRenderer: p => p.data ? `<button class="star-btn" data-star="${p.data.uid}" aria-pressed="${shortlist.has(p.data.uid)}" aria-label="Shortlist ${esc(p.data.name)}">★</button>` : '',
+    onCellClicked: p => p.data && toggleStar(p.data.uid, p.data.name, p.data.club_uid) };
+  if (c === 'key_attrs' || c === 'key_stats') return { colId: c, headerName: label(c), hide: true, width: c === 'key_attrs' ? 290 : 260, sortable: false, filter: false, floatingFilter: false,
+    cellRenderer: p => c === 'key_attrs' ? keyAttrs(p.data, st.page === 'deals' ? 5 : 4) : keyStats(p.data) };
+  if (['name', 'club_name', 'natural_positions', 'best_role', 'contract_squad_status', 'nationality'].includes(c))
+    Object.assign(d, { filter: 'agTextColumnFilter', filterParams: { maxNumConditions: 1 }, width: c === 'name' ? 200 : c === 'club_name' ? 170 : c === 'nationality' ? 140 : 120 });
+  if (c === 'name') Object.assign(d, { pinned: 'left', cellRenderer: p => !p.data ? '<span class="sk"></span>'
+    : `<span class="cell-name">${esc(p.value)}</span>${CLUB && p.data.club_uid === CLUB.club_uid ? '<span class="ours">OURS</span>' : ''}` });
+  if (c === 'nationality') d.cellRenderer = p => natHTML(p.data);
+  if (c === 'natural_positions') d.cellRenderer = p => posChips(p.value);
+  if (c === 'best_role') d.valueFormatter = p => p.value ? label('role_' + p.value) : '—';
+  if (c === 'contract_squad_status') d.valueFormatter = p => (p.value || '').replaceAll('_', ' ');
+  if (c === 'ability_current') Object.assign(d, { width: 104, cellRenderer: p => abilityBar(p.value) });
+  if (c === 'ability_potential') Object.assign(d, { width: 132, cellRenderer: p => p.data ? abilityBar(p.value, hid('pa_gap') ? null : p.data.pa_gap) : '' });
+  if (c === 'stat_score') Object.assign(d, { width: 124, headerTooltip: 'Performance index 0–100: per-90 percentiles vs same position group (600+ min), plus club level', cellRenderer: p => p.data ? perfBar(p.value) : '' });
+  if (c === 'pa_gap') Object.assign(d, { width: 70, cellRenderer: p => p.value == null ? '' : `<span class="mono" style="color:${p.value >= 40 ? C.good : p.value >= 20 ? C.ok : C.muted}">+${p.value}</span>` });
+  if (c === 'best_role_score') Object.assign(d, { width: 170, cellRenderer: p => p.value == null || !p.data ? ''
+    : `<span class="role"><b style="color:${scoreColor(p.value)}">${p.value.toFixed(0)}</b><span>${esc(label('role_' + p.data.best_role))}</span></span>` });
+  if (c === 'transfer_value') Object.assign(d, { width: 110, cellClass: 'mono', cellRenderer: p => feeHTML(p.data) });
+  if (c === 'package_cost') Object.assign(d, { width: 124, valueFormatter: p => p.value == null ? '' : money(p.value), cellClass: 'mono' });
+  if (c.startsWith('fair_fee')) Object.assign(d, { width: 150, headerTooltip: 'Fair transfer fee from the price model. Bar = actual fee as a share of it', cellRenderer: p => p.data ? valueVsFair(p.data.free_agent ? 0 : p.data.transfer_value, p.value) : '' });
+  if (c.startsWith('fair_wage')) Object.assign(d, { width: 150, headerTooltip: 'Fair weekly wage from the price model. Bar = actual wage as a share of it', cellRenderer: p => p.data ? valueVsFair(p.data.contract_wage, p.value, wage) : '' });
+  if (c === 'contract_wage') Object.assign(d, { width: 100, valueFormatter: p => p.value == null ? '' : wage(p.value), cellClass: 'mono' });
+  if (c === 'contract_end') Object.assign(d, { width: 124, filter: 'agDateColumnFilter', filterParams: { defaultOption: 'lessThan', maxNumConditions: 1 }, cellClass: 'mono' });
+  if (c === 'months_left') Object.assign(d, { width: 112, cellRenderer: p => p.value == null ? '' : `<span class="mono" style="${p.value <= 6 ? 'color:var(--gold);font-weight:700' : ''}">${p.value}</span>` });
+  if (c === 'age' || c === 'height_cm') Object.assign(d, { width: 84, cellClass: 'mono' });
+  if (c.startsWith('attributes_') || c.startsWith('personality_')) Object.assign(d, { cellClass: p => 'mono ' + tier(p.value, BAD.has(c)) });
+  if (c.startsWith('role_')) Object.assign(d, { width: 112, cellRenderer: p => p.value == null ? '' : `<span class="mono" style="color:${scoreColor(p.value)};font-weight:700">${p.value.toFixed(0)}</span>` });
+  if (c.startsWith('s_')) Object.assign(d, { width: 80, cellClass: 'mono' });
+  if (c === 's_avg_rating') d.cellRenderer = p => p.value == null ? '' : `<span class="mono" style="font-weight:700;color:${ratingColor(p.value)}">${p.value.toFixed(2)}</span>`;
+  if (c.startsWith('fair_package')) Object.assign(d, { width: 170, cellRenderer: p => p.data ? valueVsFair(p.data.package_cost, p.value) : '' });
+  if (c.startsWith('deal_')) Object.assign(d, { width: 142, cellRenderer: p => p.value == null ? '' : st.page === 'deals' && lens().deal === c ? dealBadge(p.value)
+    : `<span class="mini" style="color:${dealColor(p.value)}">${pctTxt(p.value)}</span>` });
+  if (['free_agent', 'on_loan'].includes(c)) Object.assign(d, { filter: false, floatingFilter: false, valueFormatter: p => p.value ? 'Yes' : '' });
+  return d;
+}
+
+function query(extra = {}, f = F) {
+  const deals = st.page === 'deals';
+  const filters = {};
+  if (f.months_max != null) filters.months_left = num('lessThanOrEqual', f.months_max);
+  if (f.squad) filters.contract_squad_status = { filterType: 'text', type: 'equals', filter: f.squad };
+  if (f.free_agent) filters.free_agent = num('equals', 1);
+  if (f.on_loan) filters.on_loan = num('equals', 1);
+  Object.entries(f.min).forEach(([c, v]) => { if (!hid(c)) filters[c] = num('greaterThanOrEqual', v); });
+  Object.entries(f.max).forEach(([c, v]) => { if (!hid(c)) filters[c] = num('lessThanOrEqual', v); });
+  return { search: $('#search').value.trim(),
+    preset: deals ? lens().preset : st.preset && st.preset !== '__shortlist' ? st.preset : null,
+    shortlist: !deals && st.preset === '__shortlist' ? [...shortlist] : null,
+    positions: f.positions, age: [f.age_min, f.age_max], value_max: f.value_max, wage_max: f.wage_max,
+    ca_min: hid('ability_current') ? null : f.ca_min, pa_min: hid('ability_potential') ? null : f.pa_min,
+    hide_hidden_risks: MODE === 'full' && f.risks, gender: gender(), nations: f.nations, mode: MODE,
+    ...extra, filters: { ...filters, ...(extra.filters || {}) } };
+}
+const refresh = () => grid && grid.purgeInfiniteCache();
+function currentCols() {
+  if (st.page !== 'deals') return st.view === 'overview' ? OVERVIEW[MODE] : VIEWS[st.view];
+  const L = lens(), others = LENSES.filter(x => x !== L).map(x => x.deal);
+  return ['club_name', 'transfer_value', L.ffee, 'contract_wage', L.fwage, L.deal, ...L.ctx, 'package_cost', L.fair, ...others];
+}
+function applyColumns() {
+  const order = [...new Set([...FIXED, ...currentCols()])].filter(c => grid.getColumn(c) && !hid(c));
+  const show = new Set(order);
+  grid.applyColumnState({ state: grid.getColumns().map(c => ({ colId: c.getColId(), hide: !show.has(c.getColId()) })) });
+  grid.moveColumns(order, 0);
+  grid.refreshCells({ force: true });
+}
+const clearSort = () => grid.applyColumnState({ defaultState: { sort: null } });
+
+// ---------- Pages ----------
+function setPage(p) {
+  if (st.page === p && p !== 'deals') { if (p === 'club') loadClub(); return; }
+  st.page = p; document.body.dataset.page = p;
+  $$('.nav button').forEach(b => b.dataset.page === p ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
+  if (p === 'club') { loadClub(); return; }
+  if (p === 'offers') { renderOffers(); return; }
+  if (p === 'deals') { renderLenses(); if (!dealsAvailable()) return; }
+  applyColumns(); clearSort(); renderSummary(); refresh();
+}
+function pickList(id) {
+  st.preset = st.preset === id ? null : id;
+  const pr = META.presets.find(x => x.id === st.preset);
+  if (pr && VIEWS[pr.view] && VIEWS[pr.view].some(c => !hid(c))) st.view = pr.view;
+  if (st.page !== 'scout') { st.page = '-'; setPage('scout'); }
+  else { applyColumns(); clearSort(); refresh(); }
+  renderLists(); renderViews(); renderSummary();
+}
+function pickLens(id) { st.lens = id; if (st.page !== 'deals') setPage('deals'); else { renderLenses(); applyColumns(); clearSort(); refresh(); } renderSummary(); }
+
+function renderLists() {
+  if (!META) return;
+  const ids = FEATURED[MODE].filter(id => META.presets.some(p => p.id === id && presetOk(p)));
+  if (st.preset && st.preset !== '__shortlist' && !ids.includes(st.preset)) ids.push(st.preset);
+  const chip = (id, txt, extra = '') => `<button class="list-chip" data-list="${id}" aria-pressed="${st.preset === id}">${txt}${extra}${st.preset === id ? '<span class="x" aria-hidden="true">×</span>' : ''}</button>`;
+  $('#lists').innerHTML = chip('__shortlist', '★ Shortlist', shortlist.size ? ` <span class="n">${shortlist.size}</span>` : '')
+    + ids.map(id => chip(id, esc(META.presets.find(p => p.id === id).label))).join('');
+}
+function renderViews() {
+  const names = { overview: 'Overview', technical: 'Tech', mental: 'Mental', physical: 'Physical', goalkeeping: 'GK', hidden: 'Hidden', season: 'Season', roles: 'Roles', contract: 'Contract' };
+  $('#views').innerHTML = Object.keys(VIEWS).filter(v => v === 'overview' || VIEWS[v].some(c => !hid(c))).map(v => `<button data-view="${v}" aria-pressed="${st.view === v}">${names[v] || v}</button>`).join('');
+}
+function renderLenses() {
+  $('#lenses').innerHTML = LENSES.filter(lensOk).map(l => `<button class="lens" data-lens="${l.id}" aria-pressed="${st.lens === l.id}" ${META.presets.some(p => p.id === l.preset) ? '' : 'disabled'}><b>${l.label}</b><span>${l.hint}</span></button>`).join('');
+  document.body.classList.toggle('no-deals', !dealsAvailable());
+  $('#lensNote').innerHTML = r2Note(st.lens) + ' ' + { ability: 'Fair price from CA/PA', attributes: 'Fair price from role score & attributes', form: 'Fair price from this season', stats: 'Fair price from the performance index', blend: 'Fair price from every lens' }[st.lens] + ' · fee and wage vs fair';
+  $('#dealsMissing').innerHTML = dealsAvailable() ? '' : emptyState('Deal Finder is warming up', 'The backend has not published the deal presets yet.', '<button class="btn" onclick="location.reload()">Reload</button>');
+}
+let total = null;
+function renderSummary() {
+  if (!META) return;
+  const n = total == null ? '…' : total.toLocaleString();
+  let ctx = '';
+  if (st.page === 'deals') ctx = `${lens().label} lens`;
+  else if (st.preset === '__shortlist') ctx = 'Your shortlist';
+  else if (st.preset) { const p = META.presets.find(x => x.id === st.preset); ctx = p ? `${esc(p.label)}: ${esc(p.desc)}` : ''; }
+  $('#summary').innerHTML = `<span class="mode-chip">${MODES[MODE]}</span><b>${n}</b> players${ctx ? ' · ' + ctx : ''} · <span title="In-game date of the loaded save">${esc(META.game_date || '')}</span>`;
+  $$('.qf').forEach(el => { const k = el.dataset.q; if (document.activeElement !== el) el.value = F[k] ?? ''; el.classList.toggle('has', F[k] != null); });
+  $$('#positions [data-pos]').forEach(b => b.setAttribute('aria-pressed', F.positions.includes(b.dataset.pos)));
+  const crit = critList();
+  $('#esCount').textContent = crit.length || '';
+  $('#crit').hidden = !crit.length;
+  $('#crit').innerHTML = crit.length ? `<span class="muted" style="font-size:12px;font-weight:600">Criteria</span>` + crit.map(([t], i) => `<span class="crit-chip">${t}<button data-crit="${i}" aria-label="Remove ${esc(t.replace(/<[^>]+>/g, ''))}">×</button></span>`).join('') + '<button class="link" data-es-open>Edit</button>' : '';
+  const active = ['age_min', 'age_max', 'value_max', 'wage_max'].filter(k => F[k] != null).length + F.positions.length + crit.length;
+  $('#reset').innerHTML = active ? `Reset <b>${active}</b>` : 'Reset';
+}
+// Criteria from Edit search shown as removable chips (criteria hidden in this mode are kept but not shown or sent).
+function critList(f = F) {
+  const L = [];
+  if (f.ca_min != null && !hid('ability_current')) L.push([`CA ≥ ${f.ca_min}`, () => f.ca_min = null]);
+  if (f.pa_min != null && !hid('ability_potential')) L.push([`PA ≥ ${f.pa_min}`, () => f.pa_min = null]);
+  if (f.risks && MODE === 'full') L.push(['No hidden-stat risks', () => f.risks = false]);
+  f.nations.forEach(n => L.push([`<span class="flag">${flag(natCode(n))}</span> ${esc(n)}`, () => f.nations = f.nations.filter(x => x !== n)]));
+  if (f.months_max != null) L.push([`≤ ${f.months_max} months left`, () => f.months_max = null]);
+  if (f.squad) L.push([esc(label(f.squad)), () => f.squad = '']);
+  if (f.free_agent) L.push(['Free agents', () => f.free_agent = false]);
+  if (f.on_loan) L.push(['On loan', () => f.on_loan = false]);
+  Object.entries(f.min).forEach(([c, v]) => !hid(c) && L.push([`${esc(short(c))} ≥ ${v}`, () => delete f.min[c]]));
+  Object.entries(f.max).forEach(([c, v]) => !hid(c) && L.push([`${esc(short(c))} ≤ ${v}`, () => delete f.max[c]]));
+  return L;
+}
+function emptyState(title, text, extra = '') {
+  return `<div class="empty"><svg viewBox="0 0 120 80" fill="none" aria-hidden="true">
+    <path d="M14 70V18h92v52" stroke="#4aa3ff" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M14 18l10 10h72l10-10M24 28v42M96 28v42M24 40h72M24 52h72M40 28v42M56 28v42M72 28v42M88 28v42" stroke="#2c3946" stroke-width="1.5"/>
+    <path d="M4 70h112" stroke="#3a4a58" stroke-width="2"/><circle cx="60" cy="64" r="5" fill="#e8eef3" opacity=".25"/></svg>
+    <h3>${title}</h3><p>${text}</p>${extra}</div>`;
+}
+
+// ---------- Drawer ----------
+let drawerUid = null, lastFocus = null, drawerPlayer = null;
+const AXES_OUT = [['Pace', ['pace','acceleration']], ['Physical', ['strength','stamina','natural_fitness','balance']], ['Aerial', ['heading','jumping_reach']],
+  ['Defending', ['tackling','marking','positioning']], ['Passing', ['passing','vision','first_touch']], ['Dribbling', ['dribbling','technique','flair','agility']],
+  ['Finishing', ['finishing','composure','off_the_ball','long_shots']], ['Mentality', ['work_rate','determination','teamwork','decisions','concentration']]];
+const AXES_GK = [['Shot stopping', ['reflexes','one_on_ones','handling']], ['Aerial', ['aerial_reach','command_of_area','punching']], ['Distribution', ['kicking','throwing','passing']],
+  ['Sweeping', ['rushing_out','acceleration','anticipation']], ['Organising', ['communication','command_of_area','leadership']], ['Mentality', ['composure','concentration','decisions','positioning']]];
+
+// ponytail: percentiles from a 300-player peer sample per position group (~2.5 MB, cached); a server-side percentile endpoint would be exact and lighter.
+const peerCache = new Map();
+function peers(grp, g) {
+  const k = grp + '|' + (g || '') + '|' + MODE;
+  if (!peerCache.has(k)) peerCache.set(k, api('/api/players', { start: 0, end: 300, positions: [grp], gender: g || null, mode: MODE, sort: [{ colId: 'uid', sort: 'asc' }],
+    filters: { s_minutes: num('greaterThan', 900) } })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => d.rows).catch(e => { peerCache.delete(k); throw e; }));
+  return peerCache.get(k);
+}
+function radar(axes, max = 20, ring = 15) {
+  const n = axes.length, R = 78, cx = 110, cy = 110;
+  const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / n; return [cx + Math.cos(a) * R * v / max, cy + Math.sin(a) * R * v / max]; };
+  const poly = v => axes.map((_, i) => pt(i, v).join(',')).join(' ');
+  const shape = axes.map((a, i) => pt(i, a[1]).join(',')).join(' ');
+  return `<svg class="radar" viewBox="0 0 220 220" role="img" aria-label="${axes.map(a => a[0] + ' ' + a[1].toFixed(0)).join(', ')}">
+    ${[.25, .5, .75, 1].map(f => `<polygon points="${poly(f * max)}" fill="none" stroke="#1f2a35"/>`).join('')}
+    <polygon points="${poly(ring)}" fill="none" stroke="#2f4152" stroke-dasharray="3 3"/>
+    ${axes.map((_, i) => `<line x1="${cx}" y1="${cy}" x2="${pt(i, max)[0]}" y2="${pt(i, max)[1]}" stroke="#1f2a35"/>`).join('')}
+    <polygon class="shape" points="${shape}" fill="color-mix(in srgb, var(--mode) 22%, transparent)" stroke="var(--mode)" stroke-width="2" stroke-linejoin="round"/>
+    ${axes.map((a, i) => { const [x, y] = pt(i, max * 1.27); return `<text x="${x}" y="${y + 3}" text-anchor="${Math.abs(x - cx) < 8 ? 'middle' : x > cx ? 'start' : 'end'}">${a[0]}</text>`; }).join('')}
+  </svg>`;
+}
+function verdict(p, grp) {
+  const strong = [], weak = [];
+  if (MODE !== 'moneyball') {
+    const pool = grp === 'GK' ? [...ATTR.goalkeeping, ...ATTR.mental, ...ATTR.physical] : [...ATTR.technical, ...ATTR.mental, ...ATTR.physical].filter(k => !['long_throws', 'penalty_taking'].includes(k));
+    strong.push(...pool.map(k => [k, p['attributes_' + k]]).filter(x => x[1] != null && x[1] >= 15).sort((a, b) => b[1] - a[1]).slice(0, 5));
+    weak.push(...KEY[grp].map(k => [k, p['attributes_' + k]]).filter(x => x[1] != null && x[1] <= 10).sort((a, b) => a[1] - b[1]).slice(0, 3));
+  }
+  const H = MODE === 'full', a = k => p['attributes_' + k], q = k => p['personality_' + k];
+  const flags = [
+    H && a('injury_proneness') >= 14 && ['bad', 'Injury-prone'], H && a('consistency') <= 8 && ['bad', 'Inconsistent'], H && a('important_matches') <= 8 && ['bad', 'Shrinks in big games'],
+    H && q('professionalism') <= 8 && ['bad', 'Unprofessional'], H && q('controversy') >= 15 && ['warn', 'Controversial'],
+    H && q('professionalism') >= 17 && ['good', 'Model pro'], H && a('consistency') >= 16 && ['good', 'Consistent'], H && a('injury_proneness') != null && a('injury_proneness') <= 4 && ['good', 'Rarely injured'],
+    H && a('important_matches') >= 16 && ['good', 'Big-game player'], p.months_left != null && p.months_left <= 6 && ['warn', `Contract ends in ${p.months_left}m`],
+    p.free_agent && ['good', 'Free agent'], p.on_loan && ['', `On loan from ${p.loan_parent_club_name || '?'}`],
+  ].filter(Boolean);
+  return { strong, weak, flags };
+}
+function closeDrawer() {
+  if (!$('#drawer').classList.contains('open')) return;
+  $('#drawer').classList.remove('open'); $('#drawer').setAttribute('aria-hidden', 'true'); drawerUid = null; drawerPlayer = null;
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+}
+async function openPlayer(uid) {
+  if (!$('#drawer').classList.contains('open')) lastFocus = document.activeElement;
+  drawerUid = uid;
+  const dr = $('#drawer');
+  dr.innerHTML = `<div class="dr-head"><span class="sk" style="height:24px;width:60%"></span><span class="sk" style="margin-top:10px;width:40%"></span><span class="sk" style="margin-top:18px;height:8px;width:100%"></span></div>
+    <div class="dr-body">${'<div class="sec"><span class="sk" style="width:30%"></span><span class="sk" style="margin-top:12px;height:60px;width:100%"></span></div>'.repeat(3)}</div>`;
+  dr.classList.add('open'); dr.setAttribute('aria-hidden', 'false');
+  let p;
+  try { const r = await api('/api/player/' + uid + mq()); if (!r.ok) throw r.status; p = await r.json(); }
+  catch { if (drawerUid === uid) dr.innerHTML = `<div class="dr-head dr-row"><div class="dr-id"></div><button class="icon-btn" data-close aria-label="Close">×</button></div>${emptyState('Player not found', 'The server could not load this player. It may be restarting, so try again in a moment.')}`; return; }
+  if (drawerUid !== uid) return;
+  drawerPlayer = p;
+  const grp = groupOf(p), isGK = grp === 'GK', v = verdict(p, grp), noAttr = MODE === 'moneyball';
+  const avg = keys => { const xs = keys.map(k => p['attributes_' + k]).filter(x => x != null); return xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0; };
+  const axes = (isGK ? AXES_GK : AXES_OUT).map(([n, ks]) => [n, avg(ks)]);
+  const roles = noAttr ? [] : Object.keys(META.roles).map(r => [r, p['role_' + r]]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const hasDeal = p.fair_fee != null || p.fair_package != null;
+  const pkg = p.package_cost ?? (p.free_agent ? (META.wage_weeks || 156) * (p.contract_wage || 0) : null);
+  const block = (title, keys, pre = 'attributes_') => `<div><h4>${title}</h4>${keys.map(k => `<div class="row"><span>${label(k)}</span><span class="mono ${tier(p[pre + k], BAD.has(pre + k))}">${p[pre + k] ?? '–'}</span></div>`).join('')}</div>`;
+  const foot = p.left_foot != null && p.right_foot != null ? (p.left_foot > p.right_foot ? 'Left' : p.right_foot > p.left_foot ? 'Right' : 'Either') + ' foot' : '';
+  const showAbility = !hid('ability_current') && p.ability_current != null;
+  dr.innerHTML = `
+    <div class="dr-head">
+      <div class="dr-row">
+        <div class="dr-id"><h2 id="drName">${esc(p.name)}</h2>
+          <p>${natHTML(p) || 'Unknown nation'}${p.second_nationalities ? ` <span class="muted">(+${esc(p.second_nationalities)})</span>` : ''} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${p.height_cm} cm` : ''}${foot ? ' · ' + foot : ''}</p>
+          <div>${posChips(p.natural_positions)}</div></div>
+        <button class="icon-btn star star-btn" data-star="${p.uid}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist" title="Shortlist (s)">★</button>
+        <button class="icon-btn" data-close aria-label="Close player detail" title="Close (Esc)">×</button>
+      </div>
+      ${showAbility ? `<div class="ability">
+        <div class="nums"><span>Current<b style="color:${abilityColor(p.ability_current)}">${p.ability_current}</b></span>
+          <span>${p.pa_gap > 0 ? `+${p.pa_gap} to grow` : 'At ceiling'}</span>
+          <span>Potential<b style="color:${abilityColor(p.ability_potential)}">${p.ability_potential ?? '–'}</b></span></div>
+        <div class="track" role="img" aria-label="CA ${p.ability_current} of potential ${p.ability_potential}, scale 200"><i class="pa" style="width:${(p.ability_potential || 0) / 2}%;background:${abilityColor(p.ability_potential)}"></i><i style="width:${(p.ability_current || 0) / 2}%;background:${abilityColor(p.ability_current)}"></i></div>
+      </div>` : `<div class="ability">
+        <div class="nums"><span>Performance index<b style="color:${p.stat_score != null ? pctColor(p.stat_score) : C.muted}">${p.stat_score != null ? Math.round(p.stat_score) : '–'}</b></span>
+          <span>${p.stat_score == null ? 'Not enough minutes to rate' : `vs ${esc(p.stat_group || grp)}s, 600+ min`}</span>
+          ${p.best_role_score != null ? `<span>${esc(label('role_' + p.best_role))}<b style="color:${scoreColor(p.best_role_score)}">${p.best_role_score.toFixed(0)}</b></span>` : `<span>Rating<b style="color:${p.s_avg_rating ? ratingColor(p.s_avg_rating) : C.muted}">${p.s_avg_rating?.toFixed(2) ?? '–'}</b></span>`}</div>
+        <div class="track" role="img" aria-label="Performance index ${p.stat_score ?? 'unknown'} of 100"><i style="width:${p.stat_score || 0}%;background:${pctColor(p.stat_score || 0)}"></i></div>
+      </div>`}
+    </div>
+    <div class="dr-body">
+      <section class="sec"><h3>Scouting verdict</h3>
+        ${noAttr ? '<p class="note" style="margin:0 0 6px">Moneyball mode: judged on numbers only. See the percentiles below.</p>'
+          : v.strong.length ? `<div class="tags">${v.strong.map(([k, x]) => `<span class="tag good">${label(k)}<b>${x}</b></span>`).join('')}</div>` : '<p class="note" style="margin:0">No standout attributes (15+).</p>'}
+        ${v.weak.length ? `<div class="tags" style="margin-top:6px">${v.weak.map(([k, x]) => `<span class="tag bad">${label(k)}<b>${x}</b></span>`).join('')}</div>` : ''}
+        ${v.flags.length ? `<div class="tags" style="margin-top:6px">${v.flags.map(([c, t]) => `<span class="tag ${c}">${esc(t)}</span>`).join('')}</div>` : ''}
+      </section>
+      <section class="sec"><h3>Price <small>package = fee + ${META.wage_weeks || 156} weeks of wages</small></h3>
+        <div class="cmp">
+          <div class="kv">Fee<b>${feeHTML(p)}</b></div><div class="kv">Fair fee<b>${money(p.fair_fee)}</b></div>
+          ${p.fair_fee != null ? valueVsFair(p.free_agent ? 0 : p.transfer_value, p.fair_fee) : '<span></span>'}
+          <div class="kv">Wage<b>${wage(p.contract_wage)}</b></div><div class="kv">Fair wage<b>${p.fair_wage != null ? wage(p.fair_wage) : '–'}</b></div>
+          ${p.fair_wage != null ? valueVsFair(p.contract_wage, p.fair_wage, wage) : '<span></span>'}
+        </div>
+        <div class="pkg">${p.transfer_value == null && !p.free_agent ? `<span class="muted">Not for sale, so it cannot be a deal. Fair package would be ${money(p.fair_package)}.</span>`
+          : `Package (3y) <b class="mono">${money(pkg)}</b> vs fair <b class="mono">${money(p.fair_package)}</b> ${dealBadge(p.deal_score)}`} ${r2Note()}</div>
+        ${hasDeal ? `<div class="lens-mini">${LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] != null).map(l => `<div>${l.label}<b class="mono">${money(p[l.ffee])}</b>${p[l.deal] != null ? `<span style="color:${dealColor(p[l.deal])}">${pctTxt(p[l.deal])}</span>` : ''}</div>`).join('')}</div>` : ''}
+        <dl class="facts">
+          <dt>Contract</dt><dd class="mono" style="${p.months_left != null && p.months_left <= 6 ? 'color:var(--gold)' : ''}">${esc(p.contract_end || '–')}${p.months_left != null ? ` · ${p.months_left}m` : ''}</dd>
+          <dt>Squad status</dt><dd>${esc((p.contract_squad_status || '–').replaceAll('_', ' '))}</dd>
+        </dl>
+        <button class="btn primary" style="margin-top:12px;width:100%;justify-content:center" data-offer="${p.uid}">Make an offer →</button>
+      </section>
+      <section class="sec" id="profileSec">${noAttr ? '<h3>Performance profile</h3><span class="sk" style="height:200px;width:100%"></span>'
+        : `<h3>Profile <small>avg of attribute groups, scale 20 · dashed ring = 15</small></h3>
+        <div class="radar-wrap">${radar(axes)}<div class="axes-list">${axes.map(([n, x]) => `<div><span class="muted">${n}</span><b class="${tier(Math.round(x))}">${x.toFixed(1)}</b></div>`).join('')}</div></div>`}
+      </section>
+      <section class="sec" id="seasonSec"></section>
+      ${roles.length ? `<section class="sec"><h3>Best roles</h3>
+        ${roles.map(([r, x]) => `<div class="rolebar"><span>${label('role_' + r)} <span class="muted" style="font-size:11px">${META.roles[r]}</span></span><div class="tr"><i style="width:${x}%;background:${scoreColor(x)}"></i></div><b class="mono" style="color:${scoreColor(x)};text-align:right">${x.toFixed(0)}</b></div>`).join('')}
+      </section>` : ''}
+      ${noAttr ? '' : `<section class="sec"><details><summary>All attributes</summary>
+        <div class="attrs">
+          ${isGK ? block('Goalkeeping', ATTR.goalkeeping) : block('Technical', ATTR.technical)}
+          ${block('Mental', ATTR.mental)}${block('Physical', ATTR.physical)}
+          ${MODE === 'full' ? `<div style="display:grid;gap:14px">${block('Hidden', ATTR.hidden)}${block('Personality', PERS, 'personality_')}</div>` : ''}
+        </div></details></section>`}
+    </div>`;
+  renderSeason(p, grp);
+  $('[data-close]', dr).focus({ preventScroll: true });
+}
+async function renderSeason(p, grp) {
+  const sec = $('#seasonSec'); if (!sec) return;
+  const prof = MODE === 'moneyball' && $('#profileSec');
+  const head = `<h3>This season <small>per 90 · percentile vs ${grp}s with 900+ min</small></h3>`;
+  if (!p.s_minutes) {
+    sec.innerHTML = `<h3>This season</h3><p class="note" style="margin:0">No league minutes logged this season, so there is nothing to benchmark yet.</p>`;
+    if (prof) prof.innerHTML = '<h3>Performance profile</h3><p class="note" style="margin:0">Needs league minutes.</p>';
+    return;
+  }
+  const line = [['Apps', p.s_apps], ['Minutes', p.s_minutes?.toLocaleString()], ['Rating', p.s_avg_rating?.toFixed(2), ratingColor(p.s_avg_rating)],
+    ...(grp === 'GK' ? [['Clean sheets', p.s_clean_sheets], ['Conceded', p.s_goals_allowed]] : [['Goals', p.s_goals], ['Assists', p.s_assists]]), ['PoM', p.s_player_of_the_match]]
+    .map(([l, x, c]) => `<div class="stat">${l}<b style="${c ? 'color:' + c : ''}">${x ?? '–'}</b></div>`).join('');
+  const keys = METRICS[grp] || METRICS.CM;
+  sec.innerHTML = head + `<div class="statline">${line}</div>` + keys.map(() => `<div class="pct"><span class="sk" style="width:80%"></span><span class="sk" style="width:100%"></span><span></span><span></span></div>`).join('');
+  let pool;
+  try { pool = await peers(grp, p.gender); } catch { pool = null; }
+  if (drawerUid !== p.uid) return;
+  const pcs = {};
+  const rows = keys.map(k => {
+    const [name, fn, dec = 2, unit = '', lower] = M[k], val = fn(p);
+    if (val == null) return '';
+    let pc = null;
+    if (pool && pool.length) {
+      const xs = pool.map(fn).filter(x => x != null);
+      const below = xs.filter(x => x < val).length, eq = xs.filter(x => x === val).length;
+      pc = Math.round((below + eq / 2) / xs.length * 100); if (lower) pc = 100 - pc;
+      pcs[k] = pc;
+    }
+    return `<div class="pct" title="${name}: ${val.toFixed(dec)}${unit}${pc != null ? ` · better than ${pc}% of peers` : ''}"><span class="lbl">${name}</span>
+      <div class="tr">${pc != null ? `<i style="width:${Math.max(pc, 2)}%;background:${pctColor(pc)}"></i>` : ''}</div>
+      <span class="v">${val.toFixed(dec)}${unit}</span><span class="p" style="color:${pc != null ? pctColor(pc) : C.muted}">${pc ?? '–'}</span></div>`;
+  }).join('');
+  sec.innerHTML = head + `<div class="statline">${line}</div>${rows}
+    <p class="note">${pool ? `Benchmarked against ${pool.length} ${grp}s. ` : 'Peer benchmark unavailable right now. '}${p.s_minutes < 900 ? `Small sample (${p.s_minutes} min): read with care.` : ''}</p>`;
+  if (prof) {
+    const ax = keys.filter(k => k !== 'rating' && pcs[k] != null).map(k => [M[k][5], pcs[k]]);
+    const best = Object.entries(pcs).filter(([k]) => k !== 'rating').sort((a, b) => b[1] - a[1]);
+    prof.innerHTML = ax.length >= 3 ? `<h3>Performance profile <small>percentiles · dashed ring = 75th</small></h3>
+      <div class="radar-wrap">${radar(ax, 100, 75)}<div class="axes-list">${best.slice(0, 3).map(([k, x]) => `<div><span class="muted">${M[k][0]}</span><b style="color:${pctColor(x)}">${x}</b></div>`).join('')}
+      ${best.length > 3 ? `<div style="margin-top:6px"><span class="muted">Weakest: ${M[best.at(-1)[0]][0]}</span><b style="color:${pctColor(best.at(-1)[1])}">${best.at(-1)[1]}</b></div>` : ''}</div></div>`
+      : '<h3>Performance profile</h3><p class="note" style="margin:0">Not enough peer data to draw a profile.</p>';
+  }
+}
+
+// ---------- Palette ----------
+let palItems = [], palIdx = 0;
+function paletteItems() {
+  const it = [
+    { g: 'Go to', l: 'Scout', d: 'Browse and filter every player', k: '1', run: () => setPage('scout') },
+    { g: 'Go to', l: 'Deal Finder', d: 'Best value for money in your world', k: '2', run: () => setPage('deals') },
+    { g: 'Go to', l: 'My Club', d: 'Formation, weak spots and targets', k: '3', run: () => setPage('club') },
+    { g: 'Go to', l: 'Offers', d: 'Check whether a fee is fair', k: '4', run: () => setPage('offers') },
+  ];
+  Object.entries(MODES).forEach(([m, l]) => it.push({ g: 'Data mode', l: `${l} mode`, d: $(`[data-mode="${m}"]`).dataset.tip, on: MODE === m, run: () => setMode(m) }));
+  if (dealsAvailable()) LENSES.filter(lensOk).forEach(l => it.push({ g: 'Deal Finder', l: `${l.label} lens`, d: l.hint, on: st.page === 'deals' && st.lens === l.id, run: () => pickLens(l.id) }));
+  it.push({ g: 'Lists', l: '★ My shortlist', d: `${shortlist.size} players you starred`, on: st.preset === '__shortlist', run: () => pickList('__shortlist') });
+  META.presets.filter(p => p.group !== 'Deals' && presetOk(p)).forEach(p => it.push({ g: p.group, l: p.label, d: p.desc, on: st.preset === p.id, run: () => pickList(p.id) }));
+  saved.forEach(s => it.push({ g: 'Saved searches', l: s.name, d: critList(s.f).map(c => c[0].replace(/<[^>]+>/g, '')).join(' · ') || 'No extra criteria', run: () => loadSearch(s) }));
+  it.push({ g: 'Actions', l: 'Edit search', d: 'All criteria: nationality, attributes, stats, contract…', k: 'e', run: openES },
+    { g: 'Actions', l: 'Export CSV', d: 'Current list with all columns', run: exportCSV },
+    { g: 'Actions', l: 'Load .fm save', d: 'Re-extract players from a save file', run: () => $('#file').click() },
+    { g: 'Actions', l: 'Reset filters', d: 'Clear quick filters, criteria, search and column filters', run: resetAll });
+  if (st.preset) it.push({ g: 'Actions', l: 'Clear list', d: 'Back to all players', run: () => pickList(st.preset) });
+  return it;
+}
+function renderPalette() {
+  const q = $('#palQ').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  palItems = paletteItems().filter(i => q.every(t => (i.l + ' ' + i.d + ' ' + i.g).toLowerCase().includes(t)));
+  palIdx = Math.min(palIdx, Math.max(0, palItems.length - 1));
+  let g = null;
+  $('#palList').innerHTML = palItems.length ? palItems.map((i, n) => {
+    const h = i.g !== g ? `<div class="pal-g">${esc(i.g)}</div>` : ''; g = i.g;
+    return h + `<button class="pal-item${n === palIdx ? ' on' : ''}" role="option" aria-selected="${n === palIdx}" data-i="${n}"><span class="l">${esc(i.l)}</span><span class="d">${esc(i.d)}</span>${i.on ? '<span class="dot" title="Active"></span>' : ''}${i.k ? `<kbd>${i.k}</kbd>` : ''}</button>`;
+  }).join('') : `<div class="empty" style="padding:24px"><p>Nothing matches “${esc($('#palQ').value)}”.</p></div>`;
+  $('#palList .on')?.scrollIntoView({ block: 'nearest' });
+}
+function openPalette(q = '') { const d = $('#pal'); if (d.open) return; $('#palQ').value = q; palIdx = 0; renderPalette(); d.showModal(); $('#palQ').focus(); }
+function runPal(n) { const i = palItems[n]; if (!i) return; $('#pal').close(); i.run(); }
+
+// ---------- Edit search (FM-style) ----------
+let D = null; // draft criteria while the dialog is open
+const STATS_F = [['s_minutes', 'Minutes'], ['s_apps', 'Appearances'], ['s_avg_rating', 'Avg rating'], ['stat_score', 'Performance index'],
+  ['s_goals_p90', 'Goals / 90'], ['s_xg_p90', 'xG / 90'], ['s_assists_p90', 'Assists / 90'], ['s_key_passes_p90', 'Key passes / 90'],
+  ['s_def_actions_p90', 'Def. actions / 90'], ['s_pass_pct', 'Pass %'], ['s_tackle_pct', 'Tackle %'], ['s_header_pct', 'Header %']];
+const rangeRow = (col, name, max = 20, isMax = false) => { const v = (isMax ? D.max : D.min)[col];
+  return `<label class="rg"><span title="${esc(name)}">${esc(name)}</span><input type="range" min="0" max="${max}" step="1" value="${v ?? (isMax ? max : 0)}" ${isMax ? 'data-rmax' : 'data-rmin'}="${col}" aria-label="${esc(name)} ${isMax ? 'maximum' : 'minimum'}"><output class="${v != null ? 'on' : ''}">${v ?? '–'}</output></label>`; };
+function renderES() {
+  const cols = new Set(META.columns), noAttr = MODE === 'moneyball', full = MODE === 'full';
+  const g = $('#gender [aria-pressed="true"]').dataset.g;
+  const natQ = ($('#esNatQ')?.value || '').toLowerCase();
+  const nats = (META.nations || []).filter(n => !natQ || n.name.toLowerCase().includes(natQ)).slice(0, natQ ? 60 : 30);
+  const nf = (k, ph) => `<input class="in" data-esf="${k}" type="text" inputmode="decimal" value="${D[k] ?? ''}" placeholder="${ph}">`;
+  $('#esMode').innerHTML = `<span class="mode-chip">${MODES[MODE]}</span>${noAttr ? 'Attributes are off in Moneyball' : full ? '' : 'Hidden info is off in Fair play'}`;
+  $('#esBody').innerHTML = `
+    <section class="es-sec"><h3>General</h3>
+      <div class="es-fields">
+        <label class="fld">Age min ${nf('age_min', 'any')}</label><label class="fld">Age max ${nf('age_max', 'any')}</label>
+      </div>
+      <div class="fld" style="margin-top:10px">Positions</div>
+      <div class="chips" style="margin-top:4px">${META.positions.map(p => `<button type="button" class="chip" data-espos="${p}" aria-pressed="${D.positions.includes(p)}">${p}</button>`).join('')}</div>
+      <div class="fld" style="margin-top:10px">Gender</div>
+      <div class="seg" style="margin-top:4px">${[['', 'All'], ['Men', 'Men'], ['Women', 'Women']].map(([v, l]) => `<button type="button" data-esg="${v}" aria-pressed="${(D.gender ?? g) === v}">${l}</button>`).join('')}</div>
+    </section>
+    <section class="es-sec"><h3>Nationality <small>first or second nationality</small></h3>
+      <div class="chips">${D.nations.map(n => `<span class="crit-chip"><span class="flag">${flag(natCode(n))}</span>${esc(n)}<button type="button" data-esnat-rm="${esc(n)}" aria-label="Remove ${esc(n)}">×</button></span>`).join('') || '<span class="muted" style="font-size:13px">Any nation</span>'}</div>
+      <input id="esNatQ" class="in" placeholder="Find a nation…" style="width:100%;margin-top:8px" value="${esc($('#esNatQ')?.value || '')}" aria-label="Find a nation">
+      <div class="nat-list">${nats.map(n => `<label><input type="checkbox" data-esnat="${esc(n.name)}" ${D.nations.includes(n.name) ? 'checked' : ''}><span class="flag">${flag(n.code)}</span>${esc(n.name)}<span class="n">${n.players.toLocaleString()}</span></label>`).join('')}</div>
+    </section>
+    <section class="es-sec"><h3>Contract &amp; finance</h3>
+      <div class="es-fields">
+        <label class="fld">Value ≤ ${nf('value_max', 'e.g. 2.5M')}</label><label class="fld">Wage ≤ /w ${nf('wage_max', 'e.g. 15k')}</label>
+        <label class="fld">Months left ≤ ${nf('months_max', 'any')}</label>
+        <label class="fld">Squad status <select class="in" data-esf="squad"><option value="">Any</option>${SQUAD.map(s => `<option value="${s}" ${D.squad === s ? 'selected' : ''}>${label(s)}</option>`).join('')}</select></label>
+      </div>
+      <div class="es-row" style="margin-top:10px"><label class="check"><input type="checkbox" data-esb="free_agent" ${D.free_agent ? 'checked' : ''}> Free agents only</label>
+        <label class="check"><input type="checkbox" data-esb="on_loan" ${D.on_loan ? 'checked' : ''}> On loan only</label></div>
+    </section>
+    ${noAttr ? '' : `<section class="es-sec wide"><h3>Attributes <small>minimum values · drag to 0 to clear</small></h3>
+      <div class="es-grid">${[['Technical', ATTR.technical], ['Mental', ATTR.mental], ['Physical', ATTR.physical], ['Goalkeeping', ATTR.goalkeeping]].map(([t, list]) =>
+        `<div><h4>${t}</h4>${list.filter(a => cols.has('attributes_' + a) && !hid('attributes_' + a)).map(a => rangeRow('attributes_' + a, label('attributes_' + a))).join('')}</div>`).join('')}</div>
+    </section>`}
+    <section class="es-sec ${noAttr ? 'wide' : ''}"><h3>Statistics <small>this season, minimums</small></h3>
+      <div class="es-fields">${STATS_F.filter(([c]) => cols.has(c) && !hid(c)).map(([c, n]) => `<label class="fld">${n} <input class="in" data-esmin="${c}" type="number" step="any" min="0" value="${D.min[c] ?? ''}" placeholder="any"></label>`).join('')}</div>
+    </section>
+    ${noAttr ? '' : `<section class="es-sec"><h3>Roles <small>minimum role score 0–100</small></h3>
+      <div class="es-fields">${Object.entries(META.roles).filter(([r]) => cols.has('role_' + r)).map(([r, grp]) => `<label class="fld">${label('role_' + r)} <span class="muted">${grp}</span><input class="in" data-esmin="role_${r}" type="number" min="0" max="100" value="${D.min['role_' + r] ?? ''}" placeholder="any"></label>`).join('')}</div>
+    </section>`}
+    ${full ? `<section class="es-sec"><h3>Hidden &amp; ability <small>Full mode only</small></h3>
+      <div class="es-fields"><label class="fld">CA ≥ ${nf('ca_min', 'any')}</label><label class="fld">PA ≥ ${nf('pa_min', 'any')}</label></div>
+      <label class="check" style="margin:10px 0"><input type="checkbox" data-esb="risks" ${D.risks ? 'checked' : ''}> Hide hidden-stat risks</label>
+      ${rangeRow('attributes_consistency', 'Consistency ≥')}${rangeRow('attributes_important_matches', 'Important matches ≥')}${rangeRow('attributes_versatility', 'Versatility ≥')}
+      ${rangeRow('attributes_injury_proneness', 'Injury proneness ≤', 20, true)}${rangeRow('attributes_dirtiness', 'Dirtiness ≤', 20, true)}
+      ${rangeRow('personality_professionalism', 'Professionalism ≥')}${rangeRow('personality_ambition', 'Ambition ≥')}${rangeRow('personality_pressure', 'Pressure ≥')}
+      ${rangeRow('personality_controversy', 'Controversy ≤', 20, true)}
+    </section>` : ''}`;
+  $('#esSaved').innerHTML = saved.length ? '<span class="muted" style="font-size:12px;font-weight:600">Saved</span>' + saved.map((s, i) => `<span class="crit-chip"><button type="button" class="link" style="padding:0" data-esload="${i}">${esc(s.name)}</button><button type="button" data-esdel="${i}" aria-label="Delete saved search ${esc(s.name)}">×</button></span>`).join('') : '';
+  esLive();
+}
+let esT;
+function esLive() {
+  clearTimeout(esT);
+  $('#esLive').textContent = 'Counting…';
+  esT = setTimeout(async () => {
+    if (!D) return;
+    const r = await api('/api/players', query({ start: 0, end: 1, filters: grid.getFilterModel() }, D)).catch(() => null);
+    if (!$('#es').open) return;
+    $('#esLive').textContent = r && r.ok ? `${(await r.json()).total.toLocaleString()} players match` : 'Could not count';
+  }, 350);
+}
+function openES() { D = clone(F); $('#esName').value = ''; $('#esNatQ') && ($('#esNatQ').value = ''); if (st.page !== 'scout' && st.page !== 'deals') { st.page = '-'; setPage('scout'); } renderES(); $('#es').showModal(); }
+function applyES() {
+  if (D.gender != null) setGender(D.gender);
+  delete D.gender;
+  F = D; D = null; $('#es').close(); renderSummary(); refresh();
+}
+function loadSearch(s) { F = { ...F0(), ...clone(s.f) }; renderSummary(); refresh(); toast(`Search “${s.name}” loaded`); }
+const esNum = v => { if (v === '' || v == null) return null; const m = parseMoney(v); return Number.isNaN(m) ? null : m; };
+
+// ---------- My Club ----------
+let recoT, recoSeq = 0;
+const parseMoney = s => { const m = String(s).trim().replace(/[£,\s]/g, '').match(/^(\d+(?:\.\d+)?)([kKmM]?)$/); if (!m) return String(s).trim() === '' ? null : NaN; return Math.round(+m[1] * ({ k: 1e3, m: 1e6 }[m[2].toLowerCase()] || 1)); };
+function clubBody() {
+  const b = parseMoney($('#cBudget')?.value ?? ''), w = parseMoney($('#cWage')?.value ?? ''), a = $('#cAge')?.value;
+  return { budget: Number.isNaN(b) ? null : b, wage_max: Number.isNaN(w) ? null : w, age_max: a ? Number(a) : null, gender: gender(), formation, mode: MODE, slot_index: slotSel };
+}
+async function loadClub(force) {
+  const box = $('#club');
+  if (CLUB && !force) { if (!$('.club-head', box)) { renderClub(); loadRecos(); } return; }
+  box.innerHTML = `<div class="panel-msg">${emptyState('Reading the teamsheet…', 'Rating every slot of your formation.')}</div>`;
+  let sv = null; try { sv = JSON.parse(localStorage.getItem('fm26_formation') || 'null'); } catch {}
+  const qs = [Array.isArray(sv) && sv.length === 11 ? 'formation=' + sv.join(',') : '', 'mode=' + MODE].filter(Boolean).join('&');
+  const r = await api('/api/club?' + qs).catch(() => null);
+  if (!r || !r.ok) { box.innerHTML = `<div class="panel-msg">${emptyState('My Club is not available', r && r.status === 404 ? 'The server does not expose /api/club yet.' : 'The server did not answer. It may be restarting.', '<button class="btn" id="clubRetry">Try again</button>')}</div>`; return; }
+  CLUB = await r.json(); formation = [...CLUB.formation];
+  renderClub(); loadRecos();
+  grid?.refreshCells({ columns: ['name'], force: true });
+}
+async function refetchClub() {
+  try { localStorage.setItem('fm26_formation', JSON.stringify(formation)); } catch {}
+  const r = await api('/api/club?formation=' + formation.join(',') + mq('&')).catch(() => null);
+  if (r && r.ok) { const d = await r.json(); if (d.formation.join() === formation.join()) CLUB = d; }
+  renderClub(); loadRecos();
+}
+const shapes = () => CLUB.shapes || {};
+const shapeName = () => Object.keys(shapes()).find(k => shapes()[k].join() === formation.join()) || null;
+const slotOf = i => (CLUB.slots || []).find(s => s.slot_index === i) || { slot_index: i, pos: formation[i], grade: null };
+function slotXY() {
+  const seen = {}, count = {}; formation.forEach(p => count[p] = (count[p] || 0) + 1);
+  return formation.map(p => { const [x, y] = PITCH[p] || [50, 50], n = count[p], k = seen[p] = (seen[p] || 0) + 1;
+    const spread = n === 1 ? 0 : n === 2 ? 28 : 24;
+    return [Math.min(90, Math.max(10, x + (k - (n + 1) / 2) * spread)), y]; });
+}
+const fitWord = () => MODE === 'moneyball' ? 'performance' : 'fit';
+function renderClub() {
+  const box = $('#club'), name = shapeName() || 'Custom shape';
+  const xy = slotXY();
+  const prev = { b: $('#cBudget')?.value, w: $('#cWage')?.value, a: $('#cAge')?.value };
+  box.innerHTML = `
+    <div class="club-head">
+      <div><h1>${esc(CLUB.club_name)}</h1><div class="sub">${esc(CLUB.formation_name || name)} · Team ${fitWord()} <b class="mono" style="color:${scoreColor(CLUB.team_fit)}">${CLUB.team_fit?.toFixed(1) ?? '–'}</b> · ${(CLUB.slots || []).filter(s => s.grade === 'weak').length} weak spots · <span class="mode-chip">${MODES[MODE]}</span></div></div>
+      <div class="ctrls">
+        <label class="fld">Shape <select id="cShape" class="in">${Object.keys(shapes()).map(k => `<option ${k === shapeName() ? 'selected' : ''}>${k}</option>`).join('')}${shapeName() ? '' : '<option selected disabled>Custom</option>'}</select></label>
+        <label class="fld">Budget <input id="cBudget" class="in" style="width:96px" placeholder="${money(CLUB.default_budget)}" value="${esc(prev.b ?? '')}" title="e.g. 2.5M or 400k"></label>
+        <label class="fld">Max wage <input id="cWage" class="in" style="width:84px" placeholder="${wage(CLUB.default_wage_max)}" value="${esc(prev.w ?? '')}" title="Weekly, e.g. 15k. Default: 1.25× your top earner (${wage(CLUB.top_wage)})"></label>
+        <label class="fld">Max age <input id="cAge" class="in" type="number" min="15" max="45" style="width:64px" placeholder="31" value="${esc(prev.a ?? '')}"></label>
+      </div>
+    </div>
+    <div class="club-grid">
+      <section aria-label="Formation">
+        <h2 class="col-title">Formation <span class="muted" style="font-weight:500;letter-spacing:0;text-transform:none">click a slot to see targets for it</span></h2>
+        <div class="pitch" id="pitch">
+          <svg viewBox="0 0 68 92" preserveAspectRatio="none" fill="none" stroke="rgba(255,255,255,.16)" stroke-width=".35" aria-hidden="true">
+            <rect x="2" y="2" width="64" height="88" rx="1"/><path d="M2 46h64"/><circle cx="34" cy="46" r="7.5"/><circle cx="34" cy="46" r=".6" fill="rgba(255,255,255,.3)"/>
+            <rect x="15" y="2" width="38" height="14"/><rect x="25" y="2" width="18" height="5"/><path d="M28 16a7 5 0 0 0 12 0"/>
+            <rect x="15" y="76" width="38" height="14"/><rect x="25" y="85" width="18" height="5"/><path d="M28 76a7 5 0 0 1 12 0"/>
+          </svg>
+          ${formation.map((pos, i) => { const s = slotOf(i), g = s.pos === pos ? s.grade : null, fit = s.starter?.fit;
+            return `<button class="slot g-${g || 'none'} ${g === 'weak' ? 'weak' : ''}" style="left:${xy[i][0]}%;top:${xy[i][1]}%;animation-delay:${i * 35}ms" data-slot="${i}" aria-pressed="${slotSel === i}"
+              aria-label="${pos}: ${esc(s.starter?.name || 'nobody')}, ${fitWord()} ${fit != null ? fit.toFixed(0) : 'none'}, ${g || 'unrated'}. Show targets for this slot">
+              <span class="lbl">${pos}</span><span class="disc">${fit != null ? fit.toFixed(0) : '–'}</span>
+              <span class="nm">${esc(s.starter ? lastName(s.starter.name) : 'Nobody')}</span>${s.backup ? `<span class="bk">${esc(lastName(s.backup.name))}</span>` : ''}</button>`; }).join('')}
+        </div>
+        <div class="slot-card" id="slotCard"></div>
+      </section>
+      <section aria-label="Position power ranking">
+        <h2 class="col-title">Power ranking <span class="muted" style="font-weight:500;letter-spacing:0;text-transform:none">weakest first</span></h2>
+        ${[...(CLUB.slots || [])].sort((a, b) => b.need - a.need).map((s, n) => `
+          <button class="rank g-${s.grade || 'none'}" data-slot="${s.slot_index}" aria-pressed="${slotSel === s.slot_index}">
+            <span class="i">${n + 1}</span><span class="p">${s.pos}</span>
+            <span class="w"><b>${esc(s.starter?.name || 'No one fits')}</b><span>${s.backup ? 'Backup ' + esc(lastName(s.backup.name)) : 'No backup'} · depth ${s.depth ?? 0}</span></span>
+            <span class="f" style="color:${s.starter?.fit != null ? scoreColor(s.starter.fit) : C.muted}">${s.starter?.fit != null ? s.starter.fit.toFixed(0) : '–'}<small>need ${s.need?.toFixed(1) ?? '–'}</small></span>
+          </button>`).join('')}
+      </section>
+      <section aria-label="Recommended targets">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap">
+          <div class="seg" role="group" aria-label="Recommendation type">
+            <button data-reco="needs" aria-pressed="${recoTab === 'needs'}">Fix weak spots</button>
+            <button data-reco="tactic" aria-pressed="${recoTab === 'tactic'}">Fit the tactic</button></div>
+          <span id="recoScope"></span>
+        </div>
+        <div id="recos"></div>
+      </section>
+    </div>`;
+  renderSlotCard(); renderScope();
+}
+function renderScope() {
+  const el = $('#recoScope'); if (!el) return;
+  el.innerHTML = slotSel != null ? `<span class="show-chip">Showing: ${formation[slotSel]} (slot ${slotSel + 1})<button class="icon-btn" style="width:24px;height:24px;font-size:16px" data-clear-slot aria-label="Show all positions">×</button></span>`
+    : `<span class="muted" style="font-size:12px">${recoTab === 'needs' ? 'Top 20 deals for your weakest positions' : 'Top 20 players who slot straight into this shape'} · click a slot to focus</span>`;
+}
+function renderSlotCard() {
+  const card = $('#slotCard'); if (!card) return;
+  if (slotSel == null) { card.innerHTML = '<p class="muted" style="margin:0;font-size:13px">Click a slot on the pitch (or a row in the ranking) to see targets for that position only.</p>'; return; }
+  const s = slotOf(slotSel), pos = formation[slotSel], same = s.pos === pos;
+  const person = (who, role) => who ? `<button class="person" data-player="${who.uid}"><div class="who"><b>${esc(who.name)}</b><span>${role} · ${who.age} yrs${hid('ability_current') || who.ca == null ? '' : ` · CA ${who.ca} / PA ${who.pa}`}${who.wage != null ? ' · ' + wage(who.wage) : ''}</span></div>${fitBar(who.fit)}<b class="mono" style="color:${who.fit != null ? scoreColor(who.fit) : C.muted};width:26px;text-align:right">${who.fit != null ? who.fit.toFixed(0) : '–'}</b></button>`
+    : `<p class="muted" style="font-size:13px;margin:6px 8px">No ${role.toLowerCase()} for this position.</p>`;
+  card.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px"><b style="font:700 15px var(--f-display);letter-spacing:.06em;text-transform:uppercase">Slot ${slotSel + 1} · ${pos}</b>
+      <span><button class="link" data-pos-edit aria-expanded="${posEdit}">${posEdit ? 'Done' : 'Change position'}</button><button class="link" data-clear-slot>Close</button></span></div>
+    ${posEdit ? `<div class="chips" role="group" aria-label="Position for slot ${slotSel + 1}" style="margin-bottom:8px">${POSITIONS.map(p => `<button class="chip" data-setpos="${p}" aria-pressed="${p === pos}">${p}</button>`).join('')}</div>` : ''}
+    <div>${same ? person(s.starter, 'Starter') + person(s.backup, 'Backup') : '<p class="muted" style="font-size:13px">Updating…</p>'}</div>`;
+}
+function selectSlot(i) {
+  slotSel = i == null || slotSel === i ? null : i; posEdit = false;
+  $$('[data-slot]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.slot === slotSel));
+  renderSlotCard(); renderScope(); loadRecos();
+}
+function loadRecos() {
+  clearTimeout(recoT);
+  recoT = setTimeout(async () => {
+    const box = $('#recos'); if (!box) return;
+    const body = clubBody();
+    ['#cBudget', '#cWage'].forEach(id => $(id)?.setAttribute('aria-invalid', Number.isNaN(parseMoney($(id).value))));
+    box.innerHTML = '<span class="sk sk-card"></span>'.repeat(7);
+    const seq = ++recoSeq;
+    const r = await api('/api/club/' + recoTab, body).catch(() => null);
+    if (seq !== recoSeq) return;
+    if (!r || !r.ok) { box.innerHTML = emptyState('No recommendations', r && r.status === 404 ? 'This endpoint is not live on the server yet.' : 'The server did not answer. Try again in a moment.'); return; }
+    const rows = (await r.json()).rows || [];
+    if (!rows.length) { box.innerHTML = emptyState('Nobody fits the brief', `No targets${slotSel != null ? ' for ' + formation[slotSel] : ''} under this budget, wage and age cap. Loosen one of them.`); return; }
+    const med = CLUB.xi_median_wage;
+    box.innerHTML = rows.map((p, i) => `
+      <div class="reco" style="animation-delay:${Math.min(i, 12) * 25}ms">
+        <span class="i">${i + 1}</span>
+        <div style="min-width:0"><button class="nm" data-player="${p.uid}"><span class="flag" title="${esc(p.nationality || '')}">${flag(p.nationality_code)}</span> ${esc(p.name)}</button>
+          <div class="meta">${p.age} yrs · <span class="pos">${esc(p.target_pos || '')}</span> ${esc(p.club_name || 'Free agent')} · ${esc(p.nationality || '')}${hid('ability_current') || p.ability_current == null ? (p.stat_score != null ? ` · Perf <b style="color:${pctColor(p.stat_score)}">${Math.round(p.stat_score)}</b>` : '') : ` · CA <b style="color:${abilityColor(p.ability_current)}">${p.ability_current}</b> / PA ${p.ability_potential}`}</div></div>
+        <div style="min-width:0"><div class="rep">${p.replaces ? `replaces ${esc(lastName(p.replaces.name))} <span class="up">${p.upgrade != null ? (p.upgrade >= 0 ? '+' : '') + p.upgrade.toFixed(0) : ''} ${fitWord()}</span>` : '<span class="up">fills an empty slot</span>'}</div>
+          <div class="why" title="${esc(p.reason || '')}">${esc(p.reason || '')}</div></div>
+        <div><div class="money">Fee <b class="mono">${feeHTML(p)}</b> · <b class="mono ${med && p.contract_wage > 1.5 * med ? 'wage-hi' : ''}" title="${med ? `${(p.contract_wage / med).toFixed(1)}× your XI median wage (${wage(med)})` : ''}">${wage(p.contract_wage)}</b></div>
+          <div class="money">Package <b class="mono">${money(p.package_cost)}</b>${p.fair_package != null ? ` · Fair <b class="mono">${money(p.fair_package)}</b>` : ''}</div>${dealBadge(p.deal_score)}</div>
+        <button class="star-btn" data-star="${p.uid}" data-name="${esc(p.name)}" data-club="${p.club_uid ?? ''}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist ${esc(p.name)}">★</button>
+      </div>`).join('');
+  }, 250);
+}
+
+// ---------- Offers ----------
+const of = { p: null, res: null, list: [], idx: 0 };
+const VERDICT = { steal: ['Steal', C.good], good: ['Good deal', C.ok], fair: ['Fair price', C.accent], overpay: ['Overpay', C.warn], 'rip-off': ['Rip-off', C.bad], unknown: ['Unknown', C.muted] };
+const ACCEPT = { likely: ['Likely to be accepted', C.good], possible: ['Might be accepted', C.warn], unlikely: ['Unlikely to be accepted', C.bad], 'not for sale': ['Not for sale: the club will not negotiate', C.bad], unknown: ['Acceptance unknown', C.muted] };
+function renderOffers() {
+  const box = $('#offers');
+  if (!$('#ofSearch', box)) box.innerHTML = `
+    <section aria-label="Offer details">
+      <h2 class="col-title">Make an offer <span class="mode-chip" id="ofMode"></span></h2>
+      <div class="ac-wrap"><input id="ofSearch" class="in" placeholder="Find a player…" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ofList" aria-autocomplete="list" aria-label="Find a player">
+        <div id="ofList" class="ac-list" role="listbox"></div></div>
+      <div id="ofPlayer"></div>
+      <div class="of-inputs">
+        <label class="fld">Your fee <input id="ofFee" class="in" placeholder="e.g. 2.5M" inputmode="decimal"></label>
+        <label class="fld">Wage /w <input id="ofWage" class="in" placeholder="current" inputmode="decimal"></label>
+      </div>
+      <p class="note" id="ofNote"></p>
+    </section>
+    <section id="ofResult" aria-live="polite"></section>`;
+  $('#ofMode').textContent = MODES[MODE];
+  $('#ofNote').innerHTML = `Fair price = what players with a similar ${MODE === 'full' ? '' : 'visible '}profile, age, level and contract cost in this save. ${r2Note()}`;
+  renderOfPlayer();
+  if (of.p) evalOffer(); else $('#ofResult').innerHTML = emptyState('Who are you bidding for?', 'Search a player on the left, or press “Make an offer” in any player card. Enter a fee and get an instant verdict.');
+}
+function renderOfPlayer() {
+  const p = of.p, el = $('#ofPlayer'); if (!el) return;
+  el.innerHTML = p ? `<div class="of-card"><div style="display:flex;justify-content:space-between;gap:8px"><div><h3>${esc(p.name)}</h3>
+      <div class="muted" style="font-size:13px;margin-top:4px">${natHTML(p)} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs</div><div style="margin-top:6px">${posChips(p.natural_positions)}</div></div>
+      <button class="link" data-player="${p.uid}">Profile</button></div>
+      <div class="of-grid" style="grid-template-columns:repeat(3,1fr)"><div class="kv">Game value<b>${feeHTML(p)}</b></div><div class="kv">Wage<b>${wage(p.contract_wage)}</b></div><div class="kv">Contract<b>${p.months_left != null ? p.months_left + 'm' : '–'}</b></div></div></div>` : '';
+}
+function pickOfferPlayer(p) {
+  if (!p) return;
+  of.p = p; of.list = [];
+  if (!$('#ofSearch')) renderOffers();
+  $('#ofList').innerHTML = ''; $('#ofSearch').value = ''; $('#ofSearch').setAttribute('aria-expanded', 'false');
+  const pre = p.free_agent ? 0 : p.transfer_value ?? p.fair_fee;
+  $('#ofFee').value = pre != null ? (pre === 0 ? '0' : money(pre).replace('£', '')) : '';
+  $('#ofWage').value = ''; $('#ofWage').placeholder = p.contract_wage != null ? wage(p.contract_wage).replace(/^£|\/w$/g, '') + ' (current)' : 'current';
+  renderOfPlayer(); evalOffer();
+}
+let ofT, ofSeq = 0;
+function evalOffer() {
+  clearTimeout(ofT);
+  ofT = setTimeout(async () => {
+    const box = $('#ofResult'); if (!box || !of.p) return;
+    const fee = parseMoney($('#ofFee').value), w = parseMoney($('#ofWage').value);
+    $('#ofFee').setAttribute('aria-invalid', fee == null || Number.isNaN(fee)); $('#ofWage').setAttribute('aria-invalid', Number.isNaN(w));
+    if (fee == null || Number.isNaN(fee) || Number.isNaN(w)) { box.innerHTML = emptyState('Enter a fee', 'Type an amount like 2.5M or 400k.'); return; }
+    if (!box.querySelector('.verdict')) box.innerHTML = '<span class="sk" style="height:200px;width:100%"></span>';
+    const seq = ++ofSeq;
+    const r = await api('/api/offer', { uid: of.p.uid, fee, wage: w, mode: MODE }).catch(() => null);
+    if (seq !== ofSeq) return;
+    if (!r || !r.ok) { box.innerHTML = emptyState('Could not evaluate', r && r.status === 404 ? 'The /api/offer endpoint is not live yet.' : 'The server did not answer. Try again in a moment.'); return; }
+    of.res = await r.json(); renderVerdict(of.res);
+  }, 300);
+}
+function renderVerdict(o) {
+  const [vt, vc] = VERDICT[o.verdict] || VERDICT.unknown, [at, ac] = ACCEPT[o.acceptance] || ['Acceptance unknown', C.muted];
+  const lo = o.fair_fee_range?.[0], hi = o.fair_fee_range?.[1];
+  const marks = [['Fair fee', o.fair_fee, C.good, ''], ['Your offer', o.fee, vc, 'you'], ['Asking', o.asking_estimate, C.warn, 'below'], ['Game value', o.transfer_value, C.accent, 'below']]
+    .filter(m => m[1] != null && (m[1] > 0 || m[3] === 'you'));
+  const max = Math.max(...marks.map(m => m[1]), hi || 0, 1) * 1.06;
+  // ponytail: sqrt scale so a huge asking price doesn't squash the fair band; switch to log if ranges grow wider.
+  const x = v => Math.sqrt(Math.max(0, v) / max) * 100;
+  // Flip a marker to the other side of the track when it would collide with a neighbour's label.
+  const placed = { top: [], bot: [] };
+  [...marks].sort((a, b) => a[1] - b[1]).forEach(m => {
+    const side = m[3] === 'below' ? 'bot' : 'top', other = side === 'top' ? 'bot' : 'top', px = x(m[1]);
+    const near = s => placed[s].some(p => Math.abs(p - px) < 12);
+    const use = near(side) && !near(other) ? other : side;
+    m[5] = near(use); // still crowded: tick only, the legend carries the value
+    placed[use].push(px); m[4] = use === 'bot' ? 'below' : '';
+  });
+  const pkgDeal = o.fair_package ? (1 - o.package / o.fair_package) * 100 : null, wv = wageVerdict(o.wage, o.fair_wage);
+  const quick = [['Offer fair fee', o.fair_fee], ['Offer asking price', o.asking_estimate], ['Match game value', o.transfer_value], ['Top of fair range', hi]].filter(q => q[1] != null && q[1] > 0);
+  const quickW = o.fair_wage && o.wage !== Math.round(o.fair_wage) ? `<button class="btn" data-ofwage="${Math.round(o.fair_wage)}">Offer fair wage · ${wage(o.fair_wage)}</button>` : '';
+  $('#ofResult').innerHTML = `
+    ${o.for_sale === false ? `<div class="nfs-banner">${NFS}<span>The game puts no price on ${esc(o.name)}: his club will not sell, whatever the fee. The verdict below only says what he would be worth.</span></div>` : ''}
+    <div class="verdict"><span class="vbadge" style="--c:${vc}">${vt}</span>
+      <div><div class="accept" style="--c:${ac}">${at}</div>
+        <div class="muted" style="font-size:13px">${o.ratio != null ? `Your fee is <b class="mono" style="color:var(--text)">${o.ratio.toFixed(2)}×</b> the fair fee` : 'No fair fee for this player in this mode'} · <span class="mode-chip">${MODES[o.mode] || esc(o.mode)}</span></div></div></div>
+    <div class="gauge" role="img" aria-label="${marks.map(m => `${m[0]} ${money(m[1])}`).join(', ')}${hi != null ? `, fair range ${money(lo)} to ${money(hi)}` : ''}">
+      <div class="track"></div>
+      ${hi != null ? `<div class="band" style="left:${x(lo)}%;width:${Math.max(1, x(hi) - x(lo))}%" title="Fair range ${money(lo)} – ${money(hi)}"></div>` : ''}
+      ${marks.map(([l, v, c, cls, side, crowded]) => `<div class="mk ${cls === 'you' ? 'you ' : ''}${side}" style="left:${x(v)}%;--c:${c}">${crowded ? '' : `<span>${l}</span><b>${money(v)}</b>`}<i></i></div>`).join('')}
+    </div>
+    <div class="legend-row">${marks.map(([l, v, c]) => `<span><i style="background:${c}"></i>${l} <b class="mono">${money(v)}</b></span>`).join('')}${hi != null ? `<span><i class="band-dot"></i>Fair range <b class="mono">${money(lo)} – ${money(hi)}</b></span>` : ''}</div>
+    <div class="of-grid">
+      <div class="kv">Your fee<b>${money(o.fee)}</b></div>
+      <div class="kv">Fair fee<b>${money(o.fair_fee)}</b>${hi != null ? `<span class="muted" style="text-transform:none;letter-spacing:0">range ${money(lo)} – ${money(hi)}</span>` : ''}</div>
+      <div class="kv">Wage<b>${wage(o.wage)}</b>${o.current_wage != null && o.wage !== o.current_wage ? `<span class="muted" style="text-transform:none;letter-spacing:0">now ${wage(o.current_wage)}</span>` : ''}</div>
+      <div class="kv">Fair wage<b>${wage(o.fair_wage)}</b>${wv ? `<span class="tag" style="color:${wv[1]};background:color-mix(in srgb, ${wv[1]} 14%, transparent)">${wv[0]}</span>` : ''}</div>
+    </div>
+    <div class="pkg">Package (3y) <b class="mono">${money(o.package)}</b> vs fair <b class="mono">${money(o.fair_package)}</b> ${pkgDeal != null ? dealBadge(pkgDeal) : ''}</div>
+    <div class="of-quick">${quick.map(([l, v]) => `<button class="btn" data-offee="${Math.round(v)}">${l} · ${money(v)}</button>`).join('')}${quickW}</div>
+    ${o.notes?.length ? `<div class="sec"><h3>Scout's notes</h3><ul class="notes">${o.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul></div>` : ''}
+    ${o.lenses?.length ? `<div class="sec"><h3>How the fair price is built</h3><table class="lens-tbl"><thead><tr><th>Lens</th><th class="r">Fair fee</th><th class="r">Fair wage</th><th class="r">Fair package</th></tr></thead><tbody>
+      ${o.lenses.map(l => `<tr><td>${esc((LENSES.find(x => x.id === l.lens) || { label: l.lens }).label)}${r2(l.lens) ? ` <span class="r2">R² ${r2(l.lens)}</span>` : ''}</td><td class="mono">${money(l.fair_fee)}</td><td class="mono">${l.fair_wage != null ? wage(l.fair_wage) : '–'}</td><td class="mono">${money(l.fair_package)}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
+}
+let acT, acSeq = 0;
+function offerSearch() {
+  clearTimeout(acT);
+  const q = $('#ofSearch').value.trim();
+  if (q.length < 2) { $('#ofList').innerHTML = ''; $('#ofSearch').setAttribute('aria-expanded', 'false'); return; }
+  acT = setTimeout(async () => {
+    const seq = ++acSeq;
+    const r = await api('/api/players', { search: q, start: 0, end: 8, mode: MODE, gender: gender() }).catch(() => null);
+    if (seq !== acSeq || !r || !r.ok) return;
+    of.list = (await r.json()).rows; of.idx = 0; renderAC();
+  }, 200);
+}
+function renderAC() {
+  $('#ofList').innerHTML = of.list.length ? of.list.map((p, i) => `<button class="ac-item${i === of.idx ? ' on' : ''}" role="option" aria-selected="${i === of.idx}" data-ofi="${i}"><b>${flag(p.nationality_code)} ${esc(p.name)}</b><b class="mono">${feeHTML(p)}</b><span>${esc(p.club_name || 'Free agent')} · ${p.age} yrs · ${esc((p.natural_positions || '').replaceAll(';', ' '))}</span><span>${wage(p.contract_wage)}</span></button>`).join('')
+    : '<p class="muted" style="padding:8px 10px;margin:0;font-size:13px">No player found.</p>';
+  $('#ofSearch').setAttribute('aria-expanded', 'true');
+}
+
+// ---------- Mode & actions ----------
+function setMode(m, initial) {
+  MODE = m; HIDDEN = new Set(META.modes?.[m]?.hidden_columns || []);
+  document.body.classList.remove('mode-full', 'mode-fair', 'mode-moneyball'); document.body.classList.add('mode-' + m);
+  $$('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m));
+  try { localStorage.setItem('fm26_mode', m); } catch {}
+  if (initial) return;
+  const pr = META.presets.find(x => x.id === st.preset);
+  if (pr && !presetOk(pr)) st.preset = null;
+  if (!lensOk(lens())) st.lens = 'blend';
+  if (st.view !== 'overview' && !VIEWS[st.view].some(c => !hid(c))) st.view = 'overview';
+  const fm = grid.getFilterModel(); Object.keys(fm).forEach(k => hid(k) && delete fm[k]); grid.setFilterModel(fm);
+  grid.applyColumnState({ state: grid.getColumnState().filter(c => hid(c.colId) && c.sort).map(c => ({ colId: c.colId, sort: null })) });
+  peerCache.clear();
+  renderLists(); renderViews(); renderLenses(); renderSummary();
+  if (st.page === 'scout' || st.page === 'deals') applyColumns();
+  refresh();
+  CLUB = null; if (st.page === 'club') loadClub();
+  if (st.page === 'offers') renderOffers();
+  if (drawerUid) openPlayer(drawerUid);
+  toast({ full: 'Full mode: everything visible', fair: 'Fair play: no CA/PA, hidden attributes or personality', moneyball: 'Moneyball: statistics and money only' }[m], 'good');
+}
+async function exportCSV() {
+  toast('Preparing CSV…', '', 0);
+  const r = await api('/api/export', query({ start: 0, end: 0, sort: grid.getColumnState().filter(c => c.sort).map(c => ({ colId: c.colId, sort: c.sort })), filters: grid.getFilterModel() })).catch(() => null);
+  if (!r || !r.ok) return toast('Export failed. Is the server running?', 'bad');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = `fm26_players_${MODE}.csv`; a.click();
+  toast('CSV downloaded', 'good');
+}
+function resetAll() {
+  F = F0(); setGender('');
+  $('#search').value = ''; grid.setFilterModel(null);
+  if (st.preset) { st.preset = null; renderLists(); }
+  if (st.page === 'scout') applyColumns();
+  refresh(); renderSummary();
+}
+function setGender(g) {
+  $$('#gender button').forEach(b => b.setAttribute('aria-pressed', b.dataset.g === g));
+  try { g ? localStorage.setItem('fm26_gender', g) : localStorage.removeItem('fm26_gender'); } catch {}
+}
+let uploading = false;
+async function upload(f) {
+  if (!f || uploading) return;
+  if (!/\.fm$/i.test(f.name)) return toast('That is not a .fm save file.', 'bad');
+  uploading = true;
+  const btn = $('#loadBtn'), t0 = Date.now();
+  btn.disabled = true; $('#progress').classList.add('on');
+  const tick = () => { btn.innerHTML = `<span class="spin" aria-hidden="true"></span><span>Extracting… ${Math.round((Date.now() - t0) / 1000)}s</span>`; };
+  tick(); const iv = setInterval(tick, 1000);
+  toast('Extracting players from your save. This usually takes 40 to 60 seconds.', '', 6000);
+  try {
+    const fd = new FormData(); fd.append('file', f);
+    const r = await fetch('/api/upload', { method: 'POST', body: fd });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.detail || 'Upload failed');
+    META.game_date = d.game_date; peerCache.clear();
+    toast(`Loaded ${Number(d.rows).toLocaleString()} players · game date ${d.game_date}`, 'good', 5000);
+    refresh(); renderSummary();
+    if (CLUB) { CLUB = null; if (st.page === 'club') loadClub(); }
+  } catch (e) { toast('Upload failed: ' + e.message, 'bad', 8000); }
+  finally { clearInterval(iv); uploading = false; btn.disabled = false; btn.innerHTML = '<span>Load save</span>'; $('#progress').classList.remove('on'); $('#file').value = ''; }
+}
+
+// ---------- Init & events ----------
+async function init() {
+  let r; try { r = await api('/api/meta', undefined, 8); } catch {}
+  if (!r || !r.ok) { $('#grid').innerHTML = emptyState('Cannot reach the server', 'Start it with uvicorn on port 8000, then reload.', '<button class="btn" onclick="location.reload()">Reload</button>'); return; }
+  META = await r.json();
+  setMode(MODE in (META.modes || {}) ? MODE : 'full', true);
+  const cols = new Set(META.columns);
+  const A = k => ATTR[k].map(a => 'attributes_' + a);
+  VIEWS = {
+    overview: OVERVIEW.full,
+    technical: A('technical'), mental: A('mental'), physical: [...A('physical'), 'height_cm'], goalkeeping: A('goalkeeping'),
+    hidden: [...A('hidden'), ...PERS.map(p => 'personality_' + p)],
+    season: ['stat_score', ...SEASON.map(s => s[0])].filter(c => cols.has(c)),
+    roles: ['best_role', 'best_role_score', ...Object.keys(META.roles).map(r => 'role_' + r)],
+    contract: ['club_name', 'contract_squad_status', 'transfer_value', 'contract_wage', 'contract_end', 'months_left', 'on_loan', 'free_agent'],
+  };
+  const dealCols = [...LENSES.flatMap(l => [l.deal, l.fair, l.ffee, l.fwage]), 'package_cost'];
+  const all = ['star', ...new Set([...FIXED.slice(1), ...Object.values(VIEWS).flat(), ...Object.values(OVERVIEW).flat(), ...dealCols, ...LENSES.flatMap(l => l.ctx)])]
+    .filter(c => c === 'star' || VIRTUAL.includes(c) || cols.has(c));
+  try { const g = localStorage.getItem('fm26_gender'); if (g) setGender(g); } catch {}
+  $('#positions').innerHTML = META.positions.map(p => `<button class="chip" data-pos="${p}" aria-pressed="false">${p}</button>`).join('');
+
+  grid = agGrid.createGrid($('#grid'), {
+    columnDefs: all.map(colDef), defaultColDef: { sortable: true, resizable: true, floatingFilter: true, suppressHeaderMenuButton: true },
+    rowModelType: 'infinite', cacheBlockSize: 100, maxBlocksInCache: 60, rowHeight: 40, headerHeight: 36, floatingFiltersHeight: 34,
+    getRowId: p => String(p.data.uid),
+    overlayNoRowsTemplate: emptyState('Nobody on the teamsheet', 'No players match these filters. Loosen one or reset.', '<button class="btn" onclick="resetAll()">Reset filters</button>'),
+    onCellClicked: p => p.colDef.colId !== 'star' && p.data && openPlayer(p.data.uid),
+    onCellKeyDown: p => p.event.key === 'Enter' && p.data && (p.colDef.colId === 'star' ? toggleStar(p.data.uid, p.data.name, p.data.club_uid) : openPlayer(p.data.uid)),
+    onFilterChanged: renderSummary,
+    datasource: { getRows: async p => {
+      try {
+        const r = await api('/api/players', query({ start: p.startRow, end: p.endRow, sort: p.sortModel, filters: p.filterModel }));
+        if (!r.ok) throw r.status;
+        const d = await r.json();
+        total = d.total; renderSummary(); firstPageDone();
+        d.total === 0 ? grid.showNoRowsOverlay() : grid.hideOverlay();
+        p.successCallback(d.rows, d.total);
+      } catch { p.failCallback(); toast('Could not load players. The server may be restarting.', 'bad'); }
+    } },
+  });
+  renderViews(); renderLists(); renderLenses(); applyColumns(); renderSummary();
+  // Load club in the background (after the first grid page: concurrent DuckDB queries can clash server-side).
+  await firstPage;
+  if (CLUB) return;
+  api('/api/club' + mq()).then(r => r.ok ? r.json() : null).then(d => { if (d && !CLUB) { CLUB = d; formation = [...d.formation];
+    let sv = null; try { sv = JSON.parse(localStorage.getItem('fm26_formation') || 'null'); } catch {}
+    if (Array.isArray(sv) && sv.join() !== formation.join()) CLUB = null; else grid.refreshCells({ columns: ['name'], force: true }); } }).catch(() => {});
+}
+
+let qt;
+const debounced = (fn, ms = 300) => { clearTimeout(qt); qt = setTimeout(fn, ms); };
+$('#search').addEventListener('input', () => { if (st.page === 'club' || st.page === 'offers') setPage('scout'); debounced(() => { refresh(); renderSummary(); }, 250); });
+$$('.qf').forEach(el => el.addEventListener('input', () => { F[el.dataset.q] = el.value === '' ? null : Number(el.value); debounced(() => { renderSummary(); refresh(); }); }));
+$('#reset').onclick = resetAll;
+$('#exportBtn').onclick = exportCSV;
+$('#loadBtn').onclick = () => $('#file').click();
+$('#file').onchange = e => upload(e.target.files[0]);
+$('#palBtn').onclick = () => openPalette();
+$('#esBtn').onclick = () => META && openES();
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t || t.closest('#es')) return;
+  const d = t.dataset;
+  if (d.page && t.closest('.nav')) setPage(d.page);
+  else if (d.mode && t.closest('#modes')) { if (META && d.mode !== MODE) setMode(d.mode); }
+  else if (d.g != null && t.closest('#gender')) { setGender(d.g); refresh(); if (st.page === 'club' && CLUB) loadRecos(); }
+  else if (d.pos && t.closest('#positions')) { F.positions = F.positions.includes(d.pos) ? F.positions.filter(x => x !== d.pos) : [...F.positions, d.pos]; renderSummary(); refresh(); }
+  else if (d.list) pickList(d.list);
+  else if (d.view) { st.view = d.view; renderViews(); applyColumns(); }
+  else if (d.lens) pickLens(d.lens);
+  else if (d.openPal != null) openPalette();
+  else if (d.esOpen != null) openES();
+  else if (d.crit != null) { critList()[+d.crit]?.[1](); renderSummary(); refresh(); }
+  else if (d.close != null) closeDrawer();
+  else if (d.i != null && t.closest('#palList')) runPal(+d.i);
+  else if (d.star && !t.closest('.ag-cell')) { const p = drawerPlayer && drawerPlayer.uid === +d.star ? drawerPlayer : null;
+    toggleStar(+d.star, p ? p.name : d.name, p ? p.club_uid : (d.club === '' ? null : +d.club)); }
+  else if (d.offer) { const p = drawerPlayer; closeDrawer(); setPage('offers'); pickOfferPlayer(p); }
+  else if (d.ofi != null) pickOfferPlayer(of.list[+d.ofi]);
+  else if (d.offee) { $('#ofFee').value = money(+d.offee).replace('£', ''); evalOffer(); }
+  else if (d.ofwage) { $('#ofWage').value = wage(+d.ofwage).replace(/^£|\/w$/g, ''); evalOffer(); }
+  else if (d.player) openPlayer(+d.player);
+  else if (d.slot != null) selectSlot(+d.slot);
+  else if (d.clearSlot != null) selectSlot(null);
+  else if (d.posEdit != null) { posEdit = !posEdit; renderSlotCard(); }
+  else if (d.setpos) { if (formation[slotSel] === d.setpos) return; formation[slotSel] = d.setpos; renderClub(); refetchClub(); }
+  else if (d.reco) { recoTab = d.reco; $$('[data-reco]').forEach(b => b.setAttribute('aria-pressed', b === t)); renderScope(); loadRecos(); }
+  else if (t.id === 'clubRetry') { CLUB = null; loadClub(true); }
+});
+document.addEventListener('change', e => {
+  if (e.target.id === 'cShape') { formation = [...shapes()[e.target.value]]; slotSel = null; renderClub(); refetchClub(); }
+});
+document.addEventListener('input', e => {
+  if (['cBudget', 'cWage', 'cAge'].includes(e.target.id)) { clearTimeout(recoT); recoT = setTimeout(loadRecos, 400); }
+  if (e.target.id === 'ofSearch') offerSearch();
+  if (e.target.id === 'ofFee' || e.target.id === 'ofWage') evalOffer();
+});
+$('#offers').addEventListener('keydown', e => {
+  if (e.target.id !== 'ofSearch' || !of.list.length) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); of.idx = (of.idx + (e.key === 'ArrowDown' ? 1 : -1) + of.list.length) % of.list.length; renderAC(); }
+  else if (e.key === 'Enter') { e.preventDefault(); pickOfferPlayer(of.list[of.idx]); }
+  else if (e.key === 'Escape') { e.stopPropagation(); of.list = []; $('#ofList').innerHTML = ''; }
+});
+
+// Edit search dialog events
+$('#es').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t || !D) return;
+  const d = t.dataset;
+  if (d.esClose != null) $('#es').close();
+  else if (d.espos) { D.positions = D.positions.includes(d.espos) ? D.positions.filter(x => x !== d.espos) : [...D.positions, d.espos]; t.setAttribute('aria-pressed', D.positions.includes(d.espos)); esLive(); }
+  else if (d.esg != null) { D.gender = d.esg; $$('[data-esg]').forEach(b => b.setAttribute('aria-pressed', b === t)); esLive(); }
+  else if (d.esnatRm) { D.nations = D.nations.filter(x => x !== d.esnatRm); renderES(); }
+  else if (d.esload != null) { D = { ...F0(), ...clone(saved[+d.esload].f) }; $('#esName').value = saved[+d.esload].name; renderES(); }
+  else if (d.esdel != null) { saved.splice(+d.esdel, 1); saveSearches(); renderES(); }
+  else if (t.id === 'esApply') applyES();
+  else if (t.id === 'esClear') { D = F0(); renderES(); }
+  else if (t.id === 'esSave') { const n = $('#esName').value.trim(); if (!n) { $('#esName').focus(); $('#esName').setAttribute('aria-invalid', 'true'); return; }
+    $('#esName').removeAttribute('aria-invalid');
+    const f = clone(D); delete f.gender; saved = [...saved.filter(s => s.name !== n), { name: n, f }]; saveSearches(); renderES(); toast(`Saved search “${n}”`, 'good'); }
+});
+$('#es').addEventListener('input', e => {
+  const t = e.target, d = t.dataset;
+  if (!D || t.id === 'esName') return;
+  if (t.id === 'esNatQ') { const pos = t.selectionStart; renderES(); const q = $('#esNatQ'); q.focus(); q.setSelectionRange(pos, pos); return; }
+  if (d.esf) D[d.esf] = d.esf === 'squad' ? t.value : esNum(t.value);
+  else if (d.esb) D[d.esb] = t.checked;
+  else if (d.esnat) { D.nations = t.checked ? [...D.nations, d.esnat] : D.nations.filter(x => x !== d.esnat); }
+  else if (d.esmin) { if (t.value === '') delete D.min[d.esmin]; else D.min[d.esmin] = Number(t.value); }
+  else if (d.rmin || d.rmax) {
+    const isMax = d.rmax != null, col = d.rmin || d.rmax, v = Number(t.value), off = isMax ? v >= Number(t.max) : v <= 0;
+    if (off) delete (isMax ? D.max : D.min)[col]; else (isMax ? D.max : D.min)[col] = v;
+    const o = t.nextElementSibling; o.textContent = off ? '–' : v; o.classList.toggle('on', !off);
+  }
+  esLive();
+});
+$('#es').addEventListener('change', e => { if (D && e.target.dataset.esnat) renderES(); });
+$('#es').addEventListener('close', () => { D = null; });
+$('#esForm').addEventListener('submit', e => { e.preventDefault(); if (D) applyES(); });
+
+$('#palQ').addEventListener('input', () => { palIdx = 0; renderPalette(); });
+$('#palQ').addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); palIdx = (palIdx + (e.key === 'ArrowDown' ? 1 : -1) + palItems.length) % Math.max(1, palItems.length); renderPalette(); }
+  else if (e.key === 'Enter') { e.preventDefault(); runPal(palIdx); }
+});
+$('#palList').addEventListener('mousemove', e => { const b = e.target.closest('[data-i]'); if (b && +b.dataset.i !== palIdx) { palIdx = +b.dataset.i; $$('.pal-item').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b); }); } });
+$('#pal').addEventListener('click', e => { if (e.target === $('#pal')) $('#pal').close(); });
+
+document.addEventListener('keydown', e => {
+  if ($$('dialog[open]').length) return;
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openPalette(); return; }
+  if (e.key === 'Escape') { closeDrawer(); return; }
+  const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName);
+  if (typing || e.metaKey || e.ctrlKey || e.altKey || !META) return;
+  if (e.key === '/') { e.preventDefault(); $('#search').focus(); }
+  else if (e.key === '1') setPage('scout'); else if (e.key === '2') setPage('deals'); else if (e.key === '3') setPage('club'); else if (e.key === '4') setPage('offers');
+  else if (e.key === 'e') { e.preventDefault(); openES(); }
+  else if (e.key === 's' && drawerPlayer) toggleStar(drawerPlayer.uid, drawerPlayer.name, drawerPlayer.club_uid);
+});
+
+let depth = 0;
+document.addEventListener('dragenter', e => { if (![...(e.dataTransfer?.types || [])].includes('Files')) return; e.preventDefault(); depth++; $('#overlay').hidden = false; });
+document.addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; $('#overlay').hidden = true; } });
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => { e.preventDefault(); depth = 0; $('#overlay').hidden = true; upload(e.dataTransfer.files[0]); });
+init();
+</script>
+</body></html>
