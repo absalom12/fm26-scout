@@ -99,3 +99,16 @@ def test_idle_expired(scout, monkeypatch):
     assert not scout.idle_expired(now=200.0) and scout.idle_expired(now=701.0)
     monkeypatch.setattr(scout, "BYE_AT", 150.0)
     assert not scout.idle_expired(now=149.0) and scout.idle_expired(now=151.0)
+
+
+def test_upload_fallback_rejects_non_fm_and_loads_fm(scout, client, monkeypatch):
+    assert client.post("/api/upload", files={"file": ("x.txt", b"x")}).status_code == 400
+
+    def fake_load(d=None):
+        scout.con().execute("CREATE OR REPLACE TABLE players AS SELECT 1 AS uid")
+        scout.GAME_DATE = "2031-01-01"
+
+    monkeypatch.setattr(scout, "extract", lambda src, out: (pathlib.Path(out) / "all_world_players.csv").write_text("up"))
+    monkeypatch.setattr(scout, "load", fake_load)
+    r = client.post("/api/upload", files={"file": ("My Save.FM", b"bytes")})
+    assert r.status_code == 200 and r.json() == {"rows": 1, "game_date": "2031-01-01"}
