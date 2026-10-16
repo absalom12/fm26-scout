@@ -1,3 +1,6 @@
+<img width="1512" height="826" alt="Capture d’écran 2026-10-16 à 12 35 38" src="https://github.com/user-attachments/assets/5ae00cb3-cfd1-405a-9079-e6c0a2369a64" />
+In save data - Decembre 2028.
+
 # FM26 Scout
 
 Local web app to scout, value and shortlist players from a *Football Manager 26* save, read with
