@@ -589,6 +589,10 @@ const SEASON = [['s_apps','Apps'],['s_minutes','Mins'],['s_avg_rating','Rating']
   ['s_clearances','Clr'],['s_blocks','Blk'],['s_distance_km','Dist km'],['s_player_of_the_match','PoM'],
   ['s_yellow_cards','Yel'],['s_red_cards','Red'],['s_clean_sheets','CS'],['s_goals_allowed','Conc'],['s_expected_goals_prevented','xGP']];
 const PERS = ['adaptability','ambition','loyalty','pressure','professionalism','sportsmanship','temperament','controversy'];
+// Personality quick picks: "high" = 15 or more on the 1-20 scale, "low controversy" = 5 or less. Several can be combined (all must match).
+const PCH = [['professionalism', 'Professional'], ['ambition', 'Ambitious'], ['loyalty', 'Loyal'], ['pressure', 'Big-game'],
+  ['sportsmanship', 'Sporting'], ['temperament', 'Level-headed'], ['adaptability', 'Adaptable'], ['controversy', 'Low controversy']];
+const persOn = (D, k) => k === 'controversy' ? (D.max.personality_controversy ?? 99) <= 5 : (D.min['personality_' + k] ?? 0) >= 15;
 const BAD = new Set(['attributes_injury_proneness','attributes_dirtiness','personality_controversy']);
 const FIXED = ['star','name','nationality','age','natural_positions','ability_current','ability_potential'];
 const VIRTUAL = ['key_attrs', 'key_stats'];
@@ -1178,6 +1182,8 @@ function renderES() {
       <label class="check" style="margin:10px 0"><input type="checkbox" data-esb="risks" ${D.risks ? 'checked' : ''}> Hide hidden-stat risks</label>
       ${rangeRow('attributes_consistency', 'Consistency ≥')}${rangeRow('attributes_important_matches', 'Important matches ≥')}${rangeRow('attributes_versatility', 'Versatility ≥')}
       ${rangeRow('attributes_injury_proneness', 'Injury proneness ≤', 20, true)}${rangeRow('attributes_dirtiness', 'Dirtiness ≤', 20, true)}
+      <div class="fld" style="margin-top:10px">Personality <span class="muted">pick several, all must match</span></div>
+      <div class="chips" style="margin:4px 0 10px">${PCH.map(([k, n]) => `<button type="button" class="chip" data-espers="${k}" aria-pressed="${persOn(D, k)}" title="${k === 'controversy' ? 'Controversy ≤ 5' : label('personality_' + k) + ' ≥ 15'} (scale 1-20)">${n}</button>`).join('')}</div>
       ${rangeRow('personality_professionalism', 'Professionalism ≥')}${rangeRow('personality_ambition', 'Ambition ≥')}${rangeRow('personality_pressure', 'Pressure ≥')}
       ${rangeRow('personality_controversy', 'Controversy ≤', 20, true)}
     </section>` : ''}`;
@@ -1654,6 +1660,12 @@ $('#es').addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t || !D) return;
   const d = t.dataset;
   if (d.esClose != null) $('#es').close();
+  else if (d.espers) {
+    const k = 'personality_' + d.espers, box = $('#esBody'), top = box.scrollTop;
+    if (d.espers === 'controversy') { if (persOn(D, d.espers)) delete D.max[k]; else D.max[k] = 5; }
+    else if (persOn(D, d.espers)) delete D.min[k]; else D.min[k] = 15;
+    renderES(); $('#esBody').scrollTop = top; return;
+  }
   else if (d.espos) { D.positions = D.positions.includes(d.espos) ? D.positions.filter(x => x !== d.espos) : [...D.positions, d.espos]; t.setAttribute('aria-pressed', D.positions.includes(d.espos)); esLive(); }
   else if (d.esg != null) { D.gender = d.esg; $$('[data-esg]').forEach(b => b.setAttribute('aria-pressed', b === t)); esLive(); }
   else if (d.esnatRm) { D.nations = D.nations.filter(x => x !== d.esnatRm); renderES(); }
