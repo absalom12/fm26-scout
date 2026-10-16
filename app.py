@@ -1,13 +1,33 @@
-import collections, csv, io, json, os, re, sys, tempfile, threading
+import collections, contextlib, csv, io, json, os, re, shutil, sys, tempfile, threading, time, traceback
 import duckdb, fmsave
 import numpy as np
 from nations import NATIONS
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
+from datadir import FILES, data_dir, list_saves, replace_data, resolve_save
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-app = FastAPI()
+RES = getattr(sys, "_MEIPASS", HERE)  # bundled read-only resources (static/) when frozen
+
+STATUS = "empty"  # empty | loading | ready
+_ingest_lock = threading.Lock()  # one load at a time (startup load or a save load)
+LAST_PING, BYE_AT = time.monotonic(), None
+OPEN_PATHS = {"/", "/api/status", "/api/saves", "/api/load-save", "/api/upload", "/api/ping", "/api/bye"}
+
+
+def need_data(request: Request):
+    if STATUS != "ready" and request.url.path not in OPEN_PATHS:
+        raise HTTPException(409, "no_save" if STATUS == "empty" else STATUS)
+
+
+@contextlib.asynccontextmanager
+async def lifespan(_):
+    threading.Thread(target=_load_data_dir, daemon=True).start()
+    yield
+
+
+app = FastAPI(lifespan=lifespan, dependencies=[Depends(need_data)])
 _db = duckdb.connect()  # in-memory
 _local = threading.local()
 
@@ -358,8 +378,9 @@ def add_deals():
     os.unlink(f.name)
 
 
-def load(d=HERE):
+def load(d=None):
     global GAME_DATE
+    d = str(d or data_dir())
     roles, best, name = _role_sql()
     j = lambda f: os.path.join(d, f)
     con().execute(f"CREATE OR REPLACE TEMP TABLE raw AS SELECT * FROM read_csv_auto('{j('all_world_players.csv')}', sample_size=-1)")
@@ -435,11 +456,24 @@ def source(mode):
     return f"(SELECT * EXCLUDE ({drop}), {', '.join(f'{p}_{mode} AS {p}' for p in PER_MODE)} FROM players)"
 
 
-if __name__ == "__main__":  # python app.py <save.fm>: write the players CSV (if missing) and the sidecars
-    extract(sys.argv[1], HERE, players=not os.path.exists(os.path.join(HERE, "all_world_players.csv")))
+if __name__ == "__main__":  # python app.py <save.fm>: write the data files into the data dir
+    extract(sys.argv[1], str(data_dir()))
     sys.exit()
 
-load()
+
+def _load_data_dir():
+    """Startup: load the data dir in the background if a previous save was extracted there."""
+    global STATUS
+    if not (data_dir() / FILES[0]).exists():
+        return
+    with _ingest_lock:
+        STATUS = "loading"
+        try:
+            load()
+            STATUS = "ready"
+        except Exception:
+            traceback.print_exc()
+            STATUS = "empty"
 
 # Community-favourite searches. SQL is server-defined (trusted); `view` picks the column set shown.
 # A preset is offered in every data mode whose visible columns its filter uses (see meta()).
@@ -631,21 +665,85 @@ def meta():
                         for k, (g, l, d, w, _, v) in PRESETS.items()]}
 
 
-@app.post("/api/upload")
-async def upload(file: UploadFile = File(...)):
-    if not (file.filename or "").endswith(".fm"):
-        raise HTTPException(400, "need .fm save")
-    with tempfile.TemporaryDirectory() as d:
-        src = os.path.join(d, "s.fm")
-        with open(src, "wb") as f:
-            while chunk := await file.read(1 << 20):
-                f.write(chunk)
+def ingest(src):
+    """Extract a .fm save and make it the only loaded data. One at a time; failures keep the old data."""
+    global STATUS
+    if not _ingest_lock.acquire(blocking=False):
+        raise HTTPException(409, "busy")
+    try:
+        dd = data_dir()
+        tmp = tempfile.mkdtemp(dir=dd)
         try:
-            extract(src, d)
+            extract(str(src), tmp)
+            replace_data(tmp, dd)
         except fmsave.FmsaveError as e:
             raise HTTPException(400, str(e))
-        load(d)
-    return {"rows": con().execute("SELECT count(*) FROM players").fetchone()[0], "game_date": GAME_DATE}
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        STATUS = "loading"
+        try:
+            load(dd)
+        except Exception:
+            STATUS = "empty"
+            raise
+        STATUS = "ready"
+        return {"rows": con().execute("SELECT count(*) FROM players").fetchone()[0], "game_date": GAME_DATE}
+    finally:
+        _ingest_lock.release()
+
+
+@app.post("/api/upload")
+def upload(file: UploadFile = File(...)):  # fallback picker: the browser sends the file bytes
+    if not (file.filename or "").lower().endswith(".fm"):
+        raise HTTPException(400, "need .fm save")
+    with tempfile.TemporaryDirectory(dir=data_dir()) as d:
+        src = os.path.join(d, "s.fm")
+        with open(src, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+        return ingest(src)
+
+
+class SaveReq(BaseModel):
+    name: str
+
+
+@app.post("/api/load-save")
+def load_save(q: SaveReq):
+    try:
+        src = resolve_save(q.name)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return ingest(src)
+
+
+@app.get("/api/status")
+def status():
+    return {"app": "fm26-scout", "status": STATUS}
+
+
+@app.get("/api/saves")
+def saves():
+    s = list_saves()
+    return {"folder_found": s is not None, "saves": s or []}
+
+
+@app.post("/api/ping")
+def ping():
+    global LAST_PING, BYE_AT
+    LAST_PING, BYE_AT = time.monotonic(), None
+    return {"ok": True}
+
+
+@app.post("/api/bye")  # sent by the page on pagehide; a reload pings again within the grace period
+def bye():
+    global BYE_AT
+    BYE_AT = time.monotonic() + 15
+    return {"ok": True}
+
+
+def idle_expired(now=None, hard=600):
+    now = time.monotonic() if now is None else now
+    return (BYE_AT is not None and now > BYE_AT) or now - LAST_PING > hard
 
 
 # ---- My Club: squad power ranking per formation slot, and transfer targets ----
@@ -906,4 +1004,4 @@ def offer(q: OfferQuery):
 
 @app.get("/")
 def index():
-    return FileResponse(os.path.join(HERE, "static", "index.html"))
+    return FileResponse(os.path.join(RES, "static", "index.html"))
