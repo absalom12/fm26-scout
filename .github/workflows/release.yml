@@ -1,0 +1,28 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            asset: FM26-Scout-mac.zip
+          - os: windows-latest
+            asset: FM26-Scout-windows.zip
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: python build.py
+      - if: runner.os == 'macOS'
+        run: ditto -c -k --keepParent dist/FM26-Scout.app ${{ matrix.asset }}
+      - if: runner.os == 'Windows'
+        run: Compress-Archive -Path dist/FM26-Scout -DestinationPath ${{ matrix.asset }}
+      - uses: softprops/action-gh-release@v2
+        with: { files: "${{ matrix.asset }}" }

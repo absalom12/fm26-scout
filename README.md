@@ -12,31 +12,31 @@ Fair play: no CA/PA or hidden attributes / Moneyball: stats only), Deal Finder (
 vs actual), My Club (formation inferred from recent matches, squad power ranking, targets per
 slot), Offers (fair-fee verdict and acceptance estimate), nationalities, men/women filter.
 
-## Setup
+## Download (no install, no terminal)
+
+1. Go to [Releases](https://github.com/absalom12/fm26-scout/releases/latest) and download **FM26-Scout-mac.zip** (Apple Silicon Macs) or **FM26-Scout-windows.zip**.
+2. Unzip, then double-click **FM26-Scout** (Windows: `FM26-Scout.exe` inside the folder).
+3. Your browser opens. Click your save in the list and wait about a minute. That's it.
+
+The app closes by itself a few seconds after you close the browser tab.
+
+**First launch warnings** (the app is not code-signed):
+- **Mac:** it refuses to open. Open *System Settings → Privacy & Security*, scroll down and click **Open Anyway** next to "FM26-Scout", then confirm. Only needed once.
+- **Windows:** SmartScreen says "Windows protected your PC". Click **More info → Run anyway**.
+
+Your save is read locally and never leaves your computer. Loading another save replaces the previous one.
+
+## For developers
 
 ```bash
 python3.12 -m venv venv
-venv/bin/pip install -r requirements.txt
+venv/bin/pip install -r requirements.txt -r requirements-dev.txt
+venv/bin/python launcher.py     # or: venv/bin/uvicorn app:app --port 8000
+venv/bin/pytest
+venv/bin/python build.py        # builds dist/ with PyInstaller
 ```
 
-## Data
-
-The save's data is not in this repo. Generate it once from your save (about 1 minute):
-
-```bash
-venv/bin/python app.py "<path to your save.fm>"
-```
-
-This writes `all_world_players.csv`, `club_gender.csv`, `season_stats.csv` and `club.json` next to
-`app.py`. Later you can refresh everything by dropping a newer `.fm` save on the page.
-
-## Run
-
-```bash
-venv/bin/uvicorn app:app --port 8000
-```
-
-Open http://localhost:8000.
+Generated data lives in `~/Library/Application Support/FM26 Scout` (macOS) or `%APPDATA%/FM26 Scout` (Windows); set `FM26_DATA_DIR` to change it.
 
 It's an interface dedicated to every type of recruitment style :
 * CA / PA
