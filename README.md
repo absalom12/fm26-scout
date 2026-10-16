@@ -15,7 +15,7 @@ slot), Offers (fair-fee verdict and acceptance estimate), nationalities, men/wom
 ## Download (no install, no terminal)
 
 1. Go to [Releases](https://github.com/absalom12/fm26-scout/releases/latest) and download **FM26-Scout-mac.zip** (Apple Silicon Macs) or **FM26-Scout-windows.zip**.
-2. Unzip, then double-click **FM26-Scout** (Windows: `FM26-Scout.exe` inside the folder).
+2. Unzip. Mac: drag **FM26-Scout** to your Applications folder (optional), then double-click it. Windows: move the whole **FM26-Scout** folder anywhere (don't run it from inside the zip) and double-click `FM26-Scout.exe`.
 3. Your browser opens. Click your save in the list and wait about a minute. That's it.
 
 The app closes by itself a few seconds after you close the browser tab.

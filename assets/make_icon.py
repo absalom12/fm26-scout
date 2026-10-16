@@ -36,25 +36,42 @@ def build():
     mask = Image.new("L", (n, n), 0)
     ImageDraw.Draw(mask).rounded_rectangle([m, m, n - m, n - m], radius=int(n * 0.2), fill=255)
     img.paste(bg, (0, 0), mask)
-    # shield
-    big, _ = shield(n * 0.47, n * 0.47, n * 0.54, n * 0.62)  # white rim = slightly larger shield behind
-    d.polygon(big, fill=(232, 238, 243, 255))
-    pts, P = shield(n * 0.47, n * 0.47, n * 0.50, n * 0.58)
-    d.polygon(pts, fill=(74, 163, 255, 255))
-    quarter = Image.new("L", (n, n), 0)
-    qd = ImageDraw.Draw(quarter)
-    qd.polygon(pts, fill=255)
-    cut = Image.new("L", (n, n), 0)
-    cx, cy = P(13, 15)
-    ImageDraw.Draw(cut).rectangle([0, cy, cx, n], fill=255)  # bottom-left quarter, dark like the page logo
-    from PIL import ImageChops
-    dark = ImageChops.multiply(quarter, cut)
-    img.paste(Image.new("RGBA", (n, n), (14, 22, 34, 255)), (0, 0), dark)
-    # magnifier: white ring + handle, bottom-right, over the shield
-    lx, ly, r = n * 0.60, n * 0.60, n * 0.13
-    d.line([(lx + r * 0.7, ly + r * 0.7), (n * 0.80, n * 0.80)], fill=(232, 238, 243, 255), width=int(n * 0.05))
-    d.ellipse([lx - r, ly - r, lx + r, ly + r], fill=(24, 44, 70, 255), outline=(232, 238, 243, 255), width=int(n * 0.03))
-    d.arc([lx - r * 0.6, ly - r * 0.6, lx + r * 0.6, ly + r * 0.6], 200, 260, fill=(120, 190, 255, 255), width=int(n * 0.015))  # glass glint
+    # footballer mid-kick (blue, white rim), ball, magnifier. Coordinates are a 0-100 grid.
+    u = n / 100
+    X = lambda x, y: (x * u, y * u)
+    BLUE, RIM, DARK = (74, 163, 255, 255), (232, 238, 243, 255), (11, 15, 19, 255)
+
+    def limb(pts, w, col):
+        d.line([X(*q) for q in pts], fill=col, width=int(w * u), joint="curve")
+        for q in (pts[0], pts[-1]):
+            x, y = X(*q); r = w * u / 2
+            d.ellipse([x - r, y - r, x + r, y + r], fill=col)
+
+    def figure(col, grow):
+        g = grow
+        limb([(51, 30), (48, 52)], 10 + g, col)               # torso
+        limb([(50, 34), (40, 42), (33, 33)], 5 + g, col)      # back arm
+        limb([(52, 34), (62, 39), (68, 47)], 5 + g, col)      # front arm
+        limb([(48, 52), (46, 68), (42, 85)], 7 + g, col)      # standing leg
+        limb([(48, 52), (60, 62), (73, 68)], 7 + g, col)      # kicking leg
+        x, y = X(52, 18); r = (7.5 + g / 2) * u
+        d.ellipse([x - r, y - r, x + r, y + r], fill=col)     # head
+        x, y = X(83, 78); r = (6 + g / 2) * u
+        d.ellipse([x - r, y - r, x + r, y + r], fill=col)     # ball
+
+    figure(RIM, 3.5)   # white rim first, then the blue figure on top
+    figure(BLUE, 0)
+    x, y = X(83, 78); r = 6 * u
+    d.ellipse([x - r, y - r, x + r, y + r], fill=(255, 255, 255, 255))
+    import math
+    cx, cy = X(83, 78)
+    d.polygon([(cx + 2.6 * u * math.sin(a * math.pi / 2.5), cy - 2.6 * u * math.cos(a * math.pi / 2.5)) for a in range(5)], fill=DARK)  # ball patch
+    # magnifier, bottom-left
+    lx, ly, r = X(26, 70)[0], X(26, 70)[1], 11 * u
+    d.line([(lx - r * 0.7, ly + r * 0.7), X(11.5, 84.5)], fill=RIM, width=int(4.6 * u))
+    d.ellipse([X(11.5, 84.5)[0] - 2.3 * u, X(11.5, 84.5)[1] - 2.3 * u, X(11.5, 84.5)[0] + 2.3 * u, X(11.5, 84.5)[1] + 2.3 * u], fill=RIM)
+    d.ellipse([lx - r, ly - r, lx + r, ly + r], fill=(24, 44, 70, 255), outline=RIM, width=int(2.8 * u))
+    d.arc([lx - r * 0.6, ly - r * 0.6, lx + r * 0.6, ly + r * 0.6], 200, 260, fill=(120, 190, 255, 255), width=int(1.4 * u))
     return img.resize((S, S), Image.LANCZOS)
 
 
