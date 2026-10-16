@@ -806,7 +806,8 @@ function query(extra = {}, f = F) {
   if (f.free_agent) filters.free_agent = num('equals', 1);
   if (f.on_loan) filters.on_loan = num('equals', 1);
   Object.entries(f.min).forEach(([c, v]) => { if (!hid(c)) filters[c] = num('greaterThanOrEqual', v); });
-  Object.entries(f.max).forEach(([c, v]) => { if (!hid(c)) filters[c] = num('lessThanOrEqual', v); });
+  Object.entries(f.max).forEach(([c, v]) => { if (hid(c)) return;  // a min and a max on one column (height) must both apply
+    filters[c] = f.min[c] != null ? { ...num('inRange', f.min[c]), filterTo: v } : num('lessThanOrEqual', v); });
   return { search: $('#search').value.trim(),
     preset: deals ? lens().preset : st.preset && st.preset !== '__shortlist' ? st.preset : null,
     shortlist: !deals && st.preset === '__shortlist' ? [...shortlist] : null,
@@ -1141,6 +1142,7 @@ function renderES() {
     <section class="es-sec"><h3>General</h3>
       <div class="es-fields">
         <label class="fld">Age min ${nf('age_min', 'any')}</label><label class="fld">Age max ${nf('age_max', 'any')}</label>
+        <label class="fld">Height min <span class="muted">cm</span><input class="in" data-esmin="height_cm" type="number" min="140" max="220" step="1" value="${D.min.height_cm ?? ''}" placeholder="any"></label><label class="fld">Height max <span class="muted">cm</span><input class="in" data-esmax="height_cm" type="number" min="140" max="220" step="1" value="${D.max.height_cm ?? ''}" placeholder="any"></label>
       </div>
       <div class="fld" style="margin-top:10px">Positions</div>
       <div class="chips" style="margin-top:4px">${META.positions.map(p => `<button type="button" class="chip" data-espos="${p}" aria-pressed="${D.positions.includes(p)}">${p}</button>`).join('')}</div>
@@ -1671,6 +1673,7 @@ $('#es').addEventListener('input', e => {
   else if (d.esb) D[d.esb] = t.checked;
   else if (d.esnat) { D.nations = t.checked ? [...D.nations, d.esnat] : D.nations.filter(x => x !== d.esnat); }
   else if (d.esmin) { if (t.value === '') delete D.min[d.esmin]; else D.min[d.esmin] = Number(t.value); }
+  else if (d.esmax) { if (t.value === '') delete D.max[d.esmax]; else D.max[d.esmax] = Number(t.value); }
   else if (d.rmin || d.rmax) {
     const isMax = d.rmax != null, col = d.rmin || d.rmax, v = Number(t.value), off = isMax ? v >= Number(t.max) : v <= 0;
     if (off) delete (isMax ? D.max : D.min)[col]; else (isMax ? D.max : D.min)[col] = v;
