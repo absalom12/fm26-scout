@@ -38,5 +38,12 @@ venv/bin/uvicorn app:app --port 8000
 
 Open http://localhost:8000.
 
+It's an interface dedicated to every type of recruitment style :
+* CA / PA
+* Player Attributes (no hidden attributes are displayed)
+* Moneyball, only displaying in game statistics
+
+All the available data of your save are in there and you can filter your way out to find the best possible player for your team.
+
 Shoutouts to https://x.com/randal_olson for creating the fmsave python library, couldn't be possible without it.
 Please check more of his work here https://github.com/rhiever.
