@@ -1496,10 +1496,9 @@ function setGender(g) {
   $$('#gender button').forEach(b => b.setAttribute('aria-pressed', b.dataset.g === g));
   try { g ? localStorage.setItem('fm26_gender', g) : localStorage.removeItem('fm26_gender'); } catch {}
 }
-let uploading = false;
-async function upload(f) {
-  if (!f || uploading) return;
-  if (!/\.fm$/i.test(f.name)) return toast('That is not a .fm save file.', 'bad');
+let uploading = false, EMPTY = false;
+async function runLoad(doFetch) {
+  if (uploading) return;
   uploading = true;
   const btn = $('#loadBtn'), t0 = Date.now();
   btn.disabled = true; $('#progress').classList.add('on');
@@ -1507,10 +1506,10 @@ async function upload(f) {
   tick(); const iv = setInterval(tick, 1000);
   toast('Extracting players from your save. This usually takes 40 to 60 seconds.', '', 6000);
   try {
-    const fd = new FormData(); fd.append('file', f);
-    const r = await fetch('/api/upload', { method: 'POST', body: fd });
+    const r = await doFetch();
     const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.detail || 'Upload failed');
+    if (!r.ok) throw new Error(d.detail === 'busy' ? 'Another save is already loading.' : d.detail || 'Upload failed');
+    if (EMPTY) return location.reload();
     META.game_date = d.game_date; peerCache.clear();
     toast(`Loaded ${Number(d.rows).toLocaleString()} players · game date ${d.game_date}`, 'good', 5000);
     refresh(); renderSummary();
@@ -1518,11 +1517,35 @@ async function upload(f) {
   } catch (e) { toast('Upload failed: ' + e.message, 'bad', 8000); }
   finally { clearInterval(iv); uploading = false; btn.disabled = false; btn.innerHTML = '<span>Load save</span>'; $('#progress').classList.remove('on'); $('#file').value = ''; }
 }
+function upload(f) {
+  if (!f) return;
+  if (!/\.fm$/i.test(f.name)) return toast('That is not a .fm save file.', 'bad');
+  const fd = new FormData(); fd.append('file', f);
+  return runLoad(() => fetch('/api/upload', { method: 'POST', body: fd }));
+}
+const loadNamed = name => runLoad(() => fetch('/api/load-save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) }));
+
+async function showWelcome() {
+  $('#grid').innerHTML = emptyState('Load your save', 'Pick a Football Manager 26 save to start scouting. Extraction takes about a minute.', '<div id="saves" style="display:flex;flex-direction:column;gap:8px;align-items:center;margin-top:12px"></div>');
+  let d = { folder_found: false, saves: [] };
+  try { d = await (await api('/api/saves')).json(); } catch {}
+  const box = $('#saves');
+  box.innerHTML = d.saves.length
+    ? d.saves.map(s => `<button class="btn" data-save="${esc(s.name)}">${esc(s.name)} · ${Math.round(s.size / 1048576)} MB · ${new Date(s.mtime * 1000).toLocaleString()}</button>`).join('')
+    : `<p>${d.folder_found ? 'No .fm save found in the default FM26 folder.' : 'FM26 save folder not found.'} Use “Load save” (top right) to pick your .fm file.</p>`;
+  box.onclick = e => { const b = e.target.closest('[data-save]'); if (b) loadNamed(b.dataset.save); };
+}
+async function waitReady() {
+  $('#grid').innerHTML = emptyState('Loading your data…', 'This takes a few seconds.');
+  while ((await (await api('/api/status')).json()).status === 'loading') await sleep(1000);
+  location.reload();
+}
 
 // ---------- Init & events ----------
 async function init() {
   let r; try { r = await api('/api/meta', undefined, 8); } catch {}
-  if (!r || !r.ok) { $('#grid').innerHTML = emptyState('Cannot reach the server', 'Start it with uvicorn on port 8000, then reload.', '<button class="btn" onclick="location.reload()">Reload</button>'); return; }
+  if (r && r.status === 409) { EMPTY = true; const d = await r.json().catch(() => ({})); return d.detail === 'loading' ? waitReady() : showWelcome(); }
+  if (!r || !r.ok) { $('#grid').innerHTML = emptyState('Cannot reach the server', 'Close this tab, open FM26 Scout again, then reload.', '<button class="btn" onclick="location.reload()">Reload</button>'); return; }
   META = await r.json();
   setMode(MODE in (META.modes || {}) ? MODE : 'full', true);
   const cols = new Set(META.columns);
@@ -1684,6 +1707,9 @@ document.addEventListener('dragenter', e => { if (![...(e.dataTransfer?.types ||
 document.addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; $('#overlay').hidden = true; } });
 document.addEventListener('dragover', e => e.preventDefault());
 document.addEventListener('drop', e => { e.preventDefault(); depth = 0; $('#overlay').hidden = true; upload(e.dataTransfer.files[0]); });
+const ping = () => fetch('/api/ping', { method: 'POST' }).catch(() => {});
+ping(); setInterval(ping, 5000);
+addEventListener('pagehide', () => navigator.sendBeacon('/api/bye'));
 init();
 </script>
 </body></html>
