@@ -34,3 +34,6 @@ venv/bin/uvicorn app:app --port 8000
 ```
 
 Open http://localhost:8000.
+
+Shoutouts to https://x.com/randal_olson for creating the fmsave python library, couldn't be possible without it.
+Please check more of his work here https://github.com/rhiever.
