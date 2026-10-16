@@ -1,0 +1,8 @@
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+# Data extracted from the user's save (regenerate it, see README)
+*.csv
+club.json
+*.fm
