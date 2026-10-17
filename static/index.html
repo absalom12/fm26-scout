@@ -295,6 +295,7 @@ details[open] summary::before { content: "−"; }
 .sim-mini .sim-row { min-height: 0; padding: 3px 6px; grid-template-columns: minmax(0, 1fr) auto 34px; gap: 8px; } .sim-mini .sim-row b, .sim-mini .sim-row small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sim-mini .sim-row .tag { font-size: 11px; padding: 0 6px; } .pp-card .link[data-ppgo] { align-self: flex-start; margin-top: 4px; }
 .pp-card[data-pp="radar"] .radar-wrap { grid-template-columns: minmax(0, 180px) 1fr; gap: 40px; padding-left: 34px; } .pp-card[data-pp="radar"] .radar { width: 100%; height: auto; max-height: 100%; }
+.svg-tip { position: fixed; z-index: 100; pointer-events: none; padding: 4px 9px; border-radius: var(--r-sm); border: 1px solid var(--line2); background: var(--raise); color: var(--text); font: 600 12px var(--f-body); white-space: nowrap; box-shadow: var(--shadow); }
 .hm-c { position: relative; } .hm-c[data-n]:hover::after { content: attr(data-n); position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); z-index: 20; padding: 3px 8px; border-radius: var(--r-sm); border: 1px solid var(--line2); background: var(--raise); color: var(--text); font: 600 12px var(--f-body); white-space: nowrap; pointer-events: none; }
 .pp-kpis { display: flex; gap: 6px; flex: none; }
 .kpi { display: grid; min-width: 88px; max-width: 150px; padding: 4px 10px 5px; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); }
@@ -2155,6 +2156,20 @@ async function renderProfile() {
     api('/api/players', { start: 0, end: 25, positions: [grp], gender: p.gender || null, mode: MODE, similar_to: p.uid, filters: mb ? { s_minutes: num('greaterThanOrEqual', 600) } : {} }).then(j).catch(() => null)])
     .then(([crit, res]) => { x.sim = { crit, rows: (res?.rows || []).filter(r => r.uid !== p.uid).slice(0, 24) }; again(); });
 }
+// Instant tooltip for chart marks: the browser waits about a second before showing an SVG <title>, so its text moves to data-tt and shows at once.
+const tipEl = Object.assign(document.createElement('div'), { className: 'svg-tip', hidden: true }); document.body.append(tipEl);
+const tipOf = el => {
+  for (let n = el; n && n.nodeName.toLowerCase() !== 'svg'; n = n.parentNode) {
+    const t = n.querySelector?.(':scope > title');
+    if (t) { n.dataset.tt = t.textContent; n.setAttribute('aria-label', t.textContent); t.remove(); }
+    if (n.dataset?.tt) return n.dataset.tt;
+  }
+  return null;
+};
+document.addEventListener('mouseover', e => { if (!(e.target instanceof SVGElement)) return; const t = tipOf(e.target); tipEl.hidden = !t; if (t) tipEl.textContent = t; });
+document.addEventListener('mouseout', e => { if (e.target instanceof SVGElement) tipEl.hidden = true; });
+document.addEventListener('mousemove', e => { if (tipEl.hidden) return; const r = e.clientX > innerWidth - 260;
+  tipEl.style.left = (r ? e.clientX - 12 - tipEl.offsetWidth : e.clientX + 12) + 'px'; tipEl.style.top = e.clientY + 14 + 'px'; });
 // Page tabs (click, arrows), role picker, scatter points.
 $('#player').addEventListener('click', e => {
   const t = e.target.closest('[data-pptab],[data-ppgo]'); if (t) { setPpTab(t.dataset.pptab || t.dataset.ppgo); return; }
