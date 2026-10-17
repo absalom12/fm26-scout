@@ -291,6 +291,7 @@ details[open] summary::before { content: "−"; }
 .pp-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .pp-body[hidden] { display: none; }
 .pp-body:not(.pg-over) { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); grid-auto-rows: minmax(0, 1fr); }
+.pg-price.m-fair { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }  /* Fair play: fee map full width, price strips under it */
 .pg-stats.m-full, .pg-stats.m-fair { grid-template-columns: minmax(0, .95fr) minmax(0, 1.5fr) minmax(0, .8fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "swarm stats pizza"; }
 .pg-stats [data-pp="pizza"] { justify-content: center; } .pg-stats [data-pp="pizza"] > h3 { position: absolute; top: 10px; left: 14px; right: 14px; } .pg-stats [data-pp="pizza"] .pizza { flex: none; height: auto; }
 .sim-mini .sim-row { min-height: 0; padding: 3px 6px; grid-template-columns: minmax(0, 1fr) auto 34px; gap: 8px; } .sim-mini .sim-row b, .sim-mini .sim-row small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -319,7 +320,6 @@ details[open] summary::before { content: "−"; }
 .pp-body { flex: 1; min-height: 0; display: grid; gap: 10px; margin-top: 10px; }
 .pg-over.m-full, .pg-over.m-fair { grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(300px, 380px); grid-template-rows: minmax(0, 1fr) minmax(0, 1.2fr); grid-template-areas: "role attr sg" "role canvas radar"; }
 .pg-over.m-full { grid-template-areas: "role attr sg" "role canvas dev"; }
-.m-fair { grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(300px, 380px); grid-template-rows: minmax(0, 1.38fr) minmax(0, 1fr); grid-template-areas: "role canvas sg" "role attr radar"; }
 .pg-over.m-moneyball { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(270px, 320px); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "canvas swarm pizza" "canvas swarm simmini"; }
 .pp-card[data-pp="canvas"] { background: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 140%27 preserveAspectRatio=%27none%27 fill=%27none%27 stroke=%27rgba(255,255,255,0.10)%27 stroke-width=%270.4%27%3E%3Crect x=%274%27 y=%273%27 width=%2792%27 height=%27134%27/%3E%3Cpath d=%27M4 70h92%27/%3E%3Ccircle cx=%2750%27 cy=%2770%27 r=%2711%27/%3E%3Crect x=%2727%27 y=%273%27 width=%2746%27 height=%2720%27/%3E%3Crect x=%2727%27 y=%27117%27 width=%2746%27 height=%2720%27/%3E%3C/svg%3E") center / 100% 100% no-repeat, repeating-linear-gradient(180deg, var(--pitch) 0 9.09%, var(--pitch2) 9.09% 18.18%); border-color: #1d3d2a; }
 .pp-card[data-pp="canvas"] .phz { background: color-mix(in srgb, var(--panel) 88%, transparent); border-color: var(--line); }
@@ -1702,11 +1702,11 @@ function simMetric(r) {
 function scatter(p, rows, H = 250, W = 540) {
   if ([p, ...rows].filter(r => simMetric(r)[1] != null).length < 2) return '<p class="note" style="margin:0">Not enough rated players to plot.</p>';
   const all = [p, ...rows], near = new Set(rows.slice(0, 8).map(r => r.uid)), [, , , , ymax] = simMetric(p), L = 96, Rr = 70, T = 12, B = 42;
-  const fees = all.map(r => r.transfer_value).filter(x => x > 0), lo = Math.log(Math.min(...fees, 1e5) * .8), hi = Math.log(Math.max(...fees, 1e6) * 1.25);
+  const fees = all.map(r => r.transfer_value).filter(x => x > 0), lo = Math.log((fees.length ? Math.min(...fees) : 1e5) * .7), hi = Math.log((fees.length ? Math.max(...fees) : 1e6) * 1.4);  // axis fits the fees shown
   const ys = all.map(r => simMetric(r)[1]).filter(x => x != null), y0 = Math.max(0, Math.floor((Math.min(...ys) - ymax * .06) / 10) * 10), y1 = Math.min(ymax, Math.ceil((Math.max(...ys) + ymax * .04) / 10) * 10);
   const X = r => r.free_agent ? L - 34 : r.transfer_value == null ? W - Rr + 34 : L + (Math.log(r.transfer_value) - lo) / (hi - lo) * (W - L - Rr);
   const Y = v => T + (1 - (v - y0) / ((y1 - y0) || 1)) * (H - T - B);
-  const ticks = [1e5, 1e6, 1e7, 1e8, 1e9].filter(t => Math.log(t) > lo && Math.log(t) < hi);
+  const ticks = [1e5, 2e5, 5e5, 1e6, 2e6, 5e6, 1e7, 2e7, 5e7, 1e8, 2e8, 5e8, 1e9].filter(t => Math.log(t) > lo && Math.log(t) < hi);
   const pts = all.filter(r => simMetric(r)[1] != null);
   return `<svg class="scat" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc('Fee against ' + simMetric(p)[0] + ': ' + pts.map(r => `${r.name} ${feeHTML(r).replace(/<[^>]+>/g, '')} ${simMetric(r)[2]}`).join('; '))}">
     <rect x="${L - 50}" y="${T}" width="32" height="${H - T - B}" rx="4" fill="#151e27"/><rect x="${W - Rr + 18}" y="${T}" width="32" height="${H - T - B}" rx="4" fill="#151e27"/>
@@ -2264,7 +2264,7 @@ function sideBody(k) {
   }
   if (k === 'apx') return apxScatter();
   if (k === 'attrs') return heatMap(p, false);
-  if (k === 'map') return !sim ? '<span class="sk" style="height:200px;width:100%"></span>' : sim.rows.length ? `<p class="note" style="margin:0 0 6px">Similar players: fee (log) against ${simMetric(p)[0].toLowerCase()} · him = ring · click a dot.</p>${scatter(p, sim.rows, 480, 760)}` : '<p class="note">No close match found.</p>';
+  if (k === 'map') return !sim ? '<span class="sk" style="height:200px;width:100%"></span>' : sim.rows.length ? `<p class="note" style="margin:0 0 6px">Similar players: fee (log) against ${simMetric(p)[0].toLowerCase()} · him = ring · click a dot.</p>${MODE === 'fair' ? scatter(p, sim.rows, 330, 1300) : scatter(p, sim.rows, 480, 760)}` : '<p class="note">No close match found.</p>';
   if (k === 'season') return '<div data-sec="season"></div>';
   if (k === 'position') {
     const fam = POSITIONS.map(x => [x, p[posKey(x)]]).filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]);
