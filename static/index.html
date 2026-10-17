@@ -428,8 +428,22 @@ table.reg td { padding: 4px 6px; border-bottom: 1px solid var(--line); color: va
 .scat text { font: 600 11px var(--f-body); fill: var(--text2); } .scat .ax { font: 500 10px var(--f-mono); fill: var(--muted); }
 .scat .pt[data-pp-uid] { cursor: pointer; } .scat .pt[data-pp-uid]:hover circle { stroke: var(--text); stroke-width: 2; }
 .scat .me text { fill: var(--mode); font-weight: 700; }
-.pp-all .facts { margin: 0; grid-template-columns: repeat(2, minmax(0, auto) minmax(56px, 1fr)); gap: 3px 14px; font-size: 12.5px; }
-.m-moneyball .pp-all .facts, .m-fair .pp-all .facts { grid-template-columns: repeat(3, minmax(0, auto) minmax(56px, 1fr)); }
+/* All stats card: phases flow in balanced columns; strong rows light up, weak rows glow red, the rest stays quiet. */
+.ast-hl { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-bottom: 6px; font-size: 11.5px; }
+.ast-hl .pill { display: inline-block; padding: 1px 8px; font: 600 11.5px var(--f-body); } .ast-hl .pill b { font-family: var(--f-mono); }
+.ast-t { font: 700 10.5px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); } .ast-t:not(:first-child) { margin-left: 6px; }
+.ast-k { margin-left: auto; font: 500 10.5px var(--f-mono); color: var(--faint); white-space: nowrap; }
+.ast-g { columns: 4 172px; column-gap: 14px; column-rule: 1px solid var(--line); }
+.ast-p { break-inside: avoid; margin-bottom: 7px; }
+.ast-p h5 { display: flex; justify-content: space-between; align-items: center; margin: 0 0 2px; padding-bottom: 2px; border-bottom: 1px solid var(--line); font: 700 10.5px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.ast-p h5 b { font: 700 11px var(--f-mono); color: var(--c); }
+.ast-r { display: grid; grid-template-columns: minmax(0, 1fr) auto 34px 26px; gap: 5px; align-items: center; height: 17px; padding-left: 5px; border-left: 2px solid transparent; font-size: 11.5px; color: var(--muted); }
+.ast-r > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ast-r b { font: 600 11.5px var(--f-mono); color: var(--text2); text-align: right; white-space: nowrap; } .ast-r b small { font-size: 10px; color: var(--faint); }
+.ast-r em { font: 500 10.5px var(--f-mono); font-style: normal; color: var(--faint); text-align: right; }
+.ast-r .pill { font-size: 10.5px; line-height: 15px; padding: 0 2px; }
+.ast-r.hi, .ast-r.lo { border-left-color: var(--c); background: linear-gradient(90deg, color-mix(in srgb, var(--c) 12%, transparent), transparent 70%); }
+.ast-r.hi > span, .ast-r.lo > span { color: var(--text); font-weight: 600; } .ast-r.hi b, .ast-r.lo b { color: var(--text); font-weight: 700; } .ast-r.hi em, .ast-r.lo em { color: var(--text2); }
 /* v3: hero, deal equation, strengths & gaps, ability vs price, pitch canvas, beeswarm, phases */
 .hero-n { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .hero-n b { font: 700 76px/.95 var(--f-mono); letter-spacing: -.03em; } .hero-n span { font: 700 26px/1 var(--f-display); letter-spacing: .02em; text-transform: uppercase; }
@@ -1869,6 +1883,56 @@ function statPanel(key) {
     const tip = a == null ? (small ? `Percentiles need 900 min (${p.s_minutes || 0})` : 'No peer data') : `Better than ${a}% of ${plural(grp)}${b != null ? ` and ${b}% of all positions` : ''}`;
     return `<div title="${esc(n + ': ' + tip)}"><span>${n}</span><b>${fmt ? fmt(p) : f2(v)}</b>${a == null ? '<span class="pill">–</span>' : `<span class="pill" style="--c:${pctColor(a)}">${a}${b != null ? `<i style="left:${b}%" aria-hidden="true"></i>` : ''}</span>`}</div>`; }).join('')}</div>`;
 }
+// "All stats" card: every season stat by phase of play. Row = [label, total(p), per90(p) or null, lowerIsBetter, kind] — kind: 1 = one decimal, '%' = rate, 'r' = rating, 'x' = context (no percentile).
+const cntS = (l, k, lower, kind) => [l, p => p[k], per90(k), lower, kind];
+const rateS = (l, fn) => [l, fn, null, false, '%'];
+const ratio = (a, b) => p => p[b] ? (p[a] || 0) / p[b] * 100 : null;
+const gkSaves = p => p.s_saves_held == null && p.s_saves_parried == null && p.s_saves_tipped == null ? null : (p.s_saves_held || 0) + (p.s_saves_parried || 0) + (p.s_saves_tipped || 0);
+const ALL_STATS = {
+  fin: ['Finishing', [cntS('Goals', 's_goals'), cntS('xG', 's_expected_goals', false, 1), ['Goals − xG', p => p.s_goals != null && p.s_expected_goals != null ? p.s_goals - p.s_expected_goals : null,
+    p => p.s_minutes && p.s_goals != null && p.s_expected_goals != null ? (p.s_goals - p.s_expected_goals) * 90 / p.s_minutes : null, false, 1],
+    cntS('Shots', 's_shots'), cntS('Shots on target', 's_shots_on_target'), rateS('Shot accuracy', ratio('s_shots_on_target', 's_shots'))]],
+  cre: ['Creating', [cntS('Assists', 's_assists'), cntS('xA', 's_expected_assists', false, 1), cntS('Key passes', 's_key_passes'), cntS('Clear-cut chances', 's_clear_cut_chances_created'),
+    cntS('Crosses completed', 's_crosses_completed'), cntS('Crosses attempted', 's_crosses_attempted'), rateS('Cross accuracy', ratio('s_crosses_completed', 's_crosses_attempted'))]],
+  car: ['Carrying & passing', [cntS('Dribbles', 's_dribbles'), cntS('Progressive passes', 's_progressive_passes'), cntS('Passes completed', 's_passes_completed'),
+    cntS('Passes attempted', 's_passes_attempted'), rateS('Pass completion', p => p.s_pass_pct)]],
+  def: ['Defending', [cntS('Tackles won', 's_tackles_completed'), cntS('Tackles attempted', 's_tackles_attempted'), rateS('Tackle success', p => p.s_tackle_pct), cntS('Interceptions', 's_interceptions'),
+    cntS('Possession won', 's_possession_won'), cntS('Pressures', 's_pressures_completed'), ['Defensive actions', () => null, p => p.s_def_actions_p90],
+    cntS('Headers won', 's_headers_won'), cntS('Aerial duels', 's_aerial_challenges_attempted'), rateS('Aerial success', p => p.s_header_pct), cntS('Clearances', 's_clearances'), cntS('Blocks', 's_blocks')]],
+  wrk: ['Workload & discipline', [['Avg rating', p => p.s_avg_rating, null, false, 'r'], ['Apps', p => p.s_apps, null, false, 'x', p => `${p.s_apps ?? 0} <small>(${p.s_starts ?? 0}+${p.s_substitute_appearances ?? 0})</small>`],
+    ['Minutes', p => p.s_minutes, null, false, 'x'], cntS('Distance (km)', 's_distance_km', false, 1), cntS('Player of the match', 's_player_of_the_match'),
+    cntS('Yellow cards', 's_yellow_cards', true), cntS('Red cards', 's_red_cards', true)]],
+  gks: ['Shot stopping', [['Saves', gkSaves, p => p.s_minutes && gkSaves(p) != null ? gkSaves(p) * 90 / p.s_minutes : null], cntS('Saves held', 's_saves_held'), cntS('Saves parried', 's_saves_parried'),
+    cntS('Saves tipped', 's_saves_tipped'), cntS('Shots on target faced', 's_shots_on_target_faced'), cntS('xG prevented', 's_expected_goals_prevented', false, 1)]],
+  gka: ['Goals against', [cntS('Conceded', 's_goals_allowed', true), cntS('Clean sheets', 's_clean_sheets'), rateS('Clean sheet rate', ratio('s_clean_sheets', 's_apps'))]],
+  gkd: ['Distribution', [cntS('Passes completed', 's_passes_completed'), cntS('Passes attempted', 's_passes_attempted'), rateS('Pass completion', p => p.s_pass_pct), cntS('Progressive passes', 's_progressive_passes')]],
+};
+function allStats() {
+  const { p, grp, bench } = ppx, gk = grp === 'GK', small = (p.s_minutes || 0) < 900, pool = small ? [] : bench?.pool || [];
+  if (!p.s_minutes) return '<p class="note">No league minutes this season: no stats to show yet.</p>';
+  const order = gk ? ['gks', 'gka', 'gkd', 'wrk', 'def', 'cre', 'fin'] : [...(PHASE_ORDER[grp] || PHASE_ORDER.CM), 'wrk'];
+  const fmtT = (v, kind) => v == null ? '–' : kind === '%' ? Math.round(v) + '%' : kind === 'r' ? v.toFixed(2) : kind === 1 ? (Math.abs(v) < 100 ? v.toFixed(1) : Math.round(v).toLocaleString()) : Math.round(v).toLocaleString();
+  const all = [];
+  const phases = order.map(g => { const [t, specs] = ALL_STATS[g];
+    return [t, specs.map(([l, tot, p90, lower, kind, show]) => {
+      const T = tot(p), N = p90 ? p90(p) : null, rk = p90 || tot, v = rk(p);
+      const xs = kind === 'x' || v == null ? [] : pool.map(rk).filter(x => x != null), pc = xs.length >= 20 ? pctOf(xs, v, lower) : null;
+      const r = { l, g: t, T, N, pc, kind, show, lower }; if (pc != null) all.push(r); return r; })]; });
+  // Only his 5 best and 5 worst rows light up, so they jump out even for an all-green star.
+  const top = all.filter(r => r.pc >= 70 && !r.lower).sort((a, b) => b.pc - a.pc).slice(0, 5), low = all.filter(r => r.pc <= 30).sort((a, b) => a.pc - b.pc).slice(0, 5);
+  const groups = phases.map(([t, rows]) => {
+    if (rows.every(r => !r.T && !r.N)) return '';  // phase empty for him (keepers' saves for an outfielder, etc.)
+    const ps = rows.map(r => r.pc).filter(x => x != null), md = ps.length ? median(ps) : null;
+    return `<section class="ast-p"><h5>${t}${md != null ? `<b style="--c:${pctColor(md)}" title="Median percentile of this phase">${Math.round(md)}</b>` : ''}</h5>${rows.map(r => {
+      const cls = top.includes(r) ? ' hi' : low.includes(r) ? ' lo' : '';
+      const tip = `${r.l}: ${fmtT(r.T, r.kind)}${r.N != null ? ` · ${r.N.toFixed(2)} per 90` : ''}${r.pc != null ? ` · better than ${r.pc}% of ${plural(grp)}` : ''}${r.lower ? ' (fewer is better)' : ''}`;
+      return `<div class="ast-r${cls}" title="${esc(tip)}"${r.pc != null ? ` style="--c:${pctColor(r.pc)}"` : ''}><span>${r.l}</span><b>${r.T == null && r.N != null ? '' : r.show ? r.show(p) : fmtT(r.T, r.kind)}</b><em>${r.N == null ? '' : r.N.toFixed(r.kind === 1 && r.N >= 10 ? 1 : 2)}</em>${r.pc == null ? (small || r.kind === 'x' ? '<i></i>' : '<i class="pill">–</i>') : `<i class="pill">${r.pc}</i>`}</div>`; }).join('')}</section>`; }).join('');
+  const chip = r => `<span class="pill" style="--c:${pctColor(r.pc)}" title="${esc(r.g)}">${esc(r.l)} <b>${r.pc}</b></span>`;
+  const hl = small ? `<span class="note">Percentiles from 900 min (he has ${p.s_minutes.toLocaleString()}).</span>`
+    : !bench ? '<span class="note">Loading peers…</span>'
+    : `${top.length ? `<span class="ast-t">Best</span>${top.slice(0, 3).map(chip).join('')}` : ''}${low.length ? `<span class="ast-t">Weakest</span>${low.slice(0, 3).map(chip).join('')}` : ''}${!top.length && !low.length ? '<span class="note">No standout number: everything sits mid-pack.</span>' : ''}`;
+  return `<div class="ast"><div class="ast-hl">${hl}<span class="ast-k" title="Total this season · per 90 · percentile vs ${plural(grp)} with 900+ min">total · /90 · pct${small ? '' : ` vs ${pool.length} ${plural(grp)}`}</span></div><div class="ast-g">${groups}</div></div>`;
+}
 const PHASE_ATTR = { out: [['Finishing', ['finishing', 'composure', 'off_the_ball', 'long_shots']], ['Creating', ['passing', 'vision', 'technique', 'crossing']], ['Carrying', ['dribbling', 'pace', 'acceleration', 'agility']], ['Defending', ['tackling', 'marking', 'positioning', 'work_rate']]],
   gk: [['Shot stopping', ['reflexes', 'one_on_ones', 'handling']], ['Aerial', ['aerial_reach', 'command_of_area', 'punching']], ['Distribution', ['kicking', 'throwing', 'passing']], ['Sweeping', ['rushing_out', 'acceleration', 'anticipation']]] };
 // Pitch-canvas lane (proposal 3): positions as bubbles sized and coloured by familiarity, on a narrow vertical lane between the panels.
@@ -1968,7 +2032,7 @@ function sideBody(k) {
     return `<div class="sd-pos"><div>${pitchMap(p)}</div><div><div class="fbs">${fam.map(([x, v]) => { const f = famil(v); return fbar(x, v, v / 20, f[2], f[1]); }).join('')}</div>
       ${mb ? '' : `<h4>Role fit</h4>${roleBars(roleList(p))}`}</div></div>`;
   }
-  if (k === 'stats') return `<div class="pp-all">${seasonAll(p, 'x').replace(/^[\s\S]*?<dl/, '<dl').replace(/<\/details>[\s\S]*$/, '') || '<p class="note">No season stats.</p>'}</div>`;
+  if (k === 'stats') return allStats();
   if (k === 'profile') return profileInner(p);
   return '';
 }
