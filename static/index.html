@@ -509,7 +509,8 @@ table.reg td { padding: 4px 6px; border-bottom: 1px solid var(--line); color: va
 .phz > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; color: var(--text2); } .phz > div > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .phz > div > b { font: 700 12.5px var(--f-mono); color: var(--text); } .phz > small { color: var(--faint); font-size: 10.5px; margin-top: 2px; }
 .phz.st > div { grid-template-columns: minmax(0, 1fr) auto 30px; }
-.cnv.mb { grid-template-rows: minmax(0, 1fr) auto; } .cnv.mb .legend { display: none; }
+.cnv.mb { grid-template-rows: minmax(0, 1fr) auto; }
+.cnv.mb .cnv-p { grid-column: 1 / -1; grid-row: 1; } .cnv.mb .cnv-s { position: relative; z-index: 1; grid-row: 1; } .cnv.mb > .cnv-s:first-child { grid-column: 1; } .cnv.mb .cnv-p + .cnv-s { grid-column: 3; }  /* Moneyball: pitch full width behind the stat panels */ .cnv.mb .legend { display: none; }
 .cnv-w { grid-column: 1 / -1; } .cnv-w .phz { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 14px; } .cnv-w .phz h5 { grid-column: 1 / -1; }
 .phz.st > div > span { white-space: normal; line-height: 1.2; }
 .pill { position: relative; display: block; font: 700 11px var(--f-mono); text-align: center; border-radius: var(--r-pill); padding: 0 4px; color: var(--c, var(--muted)); background: color-mix(in srgb, var(--c, var(--muted)) 16%, transparent); }
@@ -1984,11 +1985,11 @@ function allStats() {
 const PHASE_ATTR = { out: [['Finishing', ['finishing', 'composure', 'off_the_ball', 'long_shots']], ['Creating', ['passing', 'vision', 'technique', 'crossing']], ['Carrying', ['dribbling', 'pace', 'acceleration', 'agility']], ['Defending', ['tackling', 'marking', 'positioning', 'work_rate']]],
   gk: [['Shot stopping', ['reflexes', 'one_on_ones', 'handling']], ['Aerial', ['aerial_reach', 'command_of_area', 'punching']], ['Distribution', ['kicking', 'throwing', 'passing']], ['Sweeping', ['rushing_out', 'acceleration', 'anticipation']]] };
 // Pitch-canvas lane (proposal 3): positions as bubbles sized and coloured by familiarity, on a narrow vertical lane between the panels.
-function bigPitch(p, wide = true) {  // wide: Fair play / Full lane; narrow: Moneyball, whose stat panels need the width
+function bigPitch(p) {
   const pts = POSITIONS.map(k => [k, p[posKey(k)]]).filter(x => x[1] != null);
   const known = pts.filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]);
-  return `<svg class="lane" viewBox="0 0 ${wide ? 140 : 70} 124" role="img" aria-label="${esc(known.length ? 'Position familiarity: ' + known.map(([k, v]) => `${k} ${v} (${famil(v)[1]})`).join(', ') : 'No position familiarity in this save')}">
-    ${pts.map(([k, v]) => { const [x0, y0] = PITCH[k], f = v >= 9 ? famil(v) : null, cx = (wide ? 70 + (x0 - 50) * 1.35 : 35 + (x0 - 50) * .6).toFixed(1), cy = (y0 * 1.18 + 5).toFixed(1), r = f ? (7.6 + (v - 9) * .35).toFixed(1) : 4;
+  return `<svg class="lane" viewBox="0 0 140 124" role="img" aria-label="${esc(known.length ? 'Position familiarity: ' + known.map(([k, v]) => `${k} ${v} (${famil(v)[1]})`).join(', ') : 'No position familiarity in this save')}">
+    ${pts.map(([k, v]) => { const [x0, y0] = PITCH[k], f = v >= 9 ? famil(v) : null, cx = (70 + (x0 - 50) * 1.35).toFixed(1), cy = (y0 * 1.18 + 5).toFixed(1), r = f ? (7.6 + (v - 9) * .35).toFixed(1) : 4;
       return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${f ? f[2] : 'rgba(255,255,255,.05)'}" stroke="rgba(255,255,255,.18)" stroke-width=".3"><title>${k} · ${f ? f[1] : 'Unfamiliar'}</title></circle><text x="${cx}" y="${+cy + 1.8}" text-anchor="middle" font-size="${f ? 5.2 : 3}" font-weight="700" font-family="var(--f-display)" fill="${f ? '#04110a' : 'rgba(255,255,255,.45)'}" pointer-events="none">${k}</text>`; }).join('')}
   </svg>`;
 }
@@ -1998,7 +1999,7 @@ function secCanvas() {
   if (MODE === 'moneyball') {
     const o = PHASE_ORDER[grp] || PHASE_ORDER.CM;
     return `${h3i('where', 'Where he plays and what he does there', `bubble colour = familiarity · pill = percentile vs ${plural(grp)} · tick in the pill = vs all positions`)}
-      <div class="cnv mb"><div class="cnv-s">${statPanel(o[0])}${statPanel(o[2])}</div><div class="cnv-p">${bigPitch(p, false)}</div><div class="cnv-s">${statPanel(o[1])}${statPanel(o[3])}</div>${grp === 'GK' ? '' : `<div class="cnv-w">${statPanel('wrk')}</div>`}</div>${famLegend()}`;
+      <div class="cnv mb"><div class="cnv-s">${statPanel(o[0])}${statPanel(o[2])}</div><div class="cnv-p">${bigPitch(p)}</div><div class="cnv-s">${statPanel(o[1])}${statPanel(o[3])}</div>${grp === 'GK' ? '' : `<div class="cnv-w">${statPanel('wrk')}</div>`}</div>${famLegend()}`;
   }
   const ph = PHASE_ATTR[grp === 'GK' ? 'gk' : 'out'];
   const hl = v => v >= 15 ? C.good : v <= 5 ? C.bad : 'var(--text)';  // FM's own colouring: 15+ green, 5 or less red
