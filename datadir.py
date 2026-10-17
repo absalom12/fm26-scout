@@ -1,7 +1,7 @@
 import os, sys
 from pathlib import Path
 
-FILES = ("all_world_players.csv", "club_gender.csv", "season_stats.csv", "club.json")
+FILES = ("all_world_players.csv", "club_gender.csv", "club_league.csv", "season_stats.csv", "club.json")
 
 
 def data_dir() -> Path:

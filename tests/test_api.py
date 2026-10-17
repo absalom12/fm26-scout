@@ -125,3 +125,9 @@ def test_rejects_oversized_upload(scout, client, monkeypatch):
     monkeypatch.setattr(scout, "MAX_UPLOAD", 10)
     r = client.post("/api/upload", files={"file": ("a.fm", b"x" * 100)})
     assert r.status_code == 413
+
+
+def test_club_leagues_picks_biggest_domestic_table(scout):
+    tables = [(1, 20, [10, 11]), (2, 36, [10]), (3, 8, [10, 12]), (4, 5, [13])]
+    # club 10 is in a 20-club league, a 36-club league phase (too big) and an 8-club table (smaller); 13's table is too small
+    assert scout.club_leagues(tables) == {10: 1, 11: 1, 12: 3}

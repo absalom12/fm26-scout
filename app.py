@@ -184,8 +184,22 @@ def infer_formation(matches, last=5):
     return out[:11]
 
 
+def club_leagues(tables):
+    """club_uid -> league (competition) id, from (competition_id, club_count, club_uids) classification tables.
+    The caller passes only competitions with promotion or relegation (real leagues, not cups or playoffs). A club can
+    still sit in several (a league plus a regional group), so its league is the biggest domestic-sized one (8-24 clubs).
+    Clubs in no such table (the large majority: only simulated leagues have tables) get no league."""
+    best = {}
+    for comp, n, clubs in tables:
+        if 8 <= n <= 24:
+            for c in clubs:
+                if c not in best or n > best[c][0]:
+                    best[c] = (n, comp)
+    return {c: comp for c, (n, comp) in best.items()}
+
+
 def extract(save_path, out_dir, players=True):
-    """Write all_world_players.csv (optional), club_gender.csv and season_stats.csv from a save."""
+    """Write all_world_players.csv (optional), club_gender.csv, club_league.csv and season_stats.csv from a save."""
     E = fmsave.export
     with fmsave.open(save_path) as s:
         if players:
@@ -194,7 +208,11 @@ def extract(save_path, out_dir, players=True):
         S = fmsave.PlayerSeasonStats
         overall = (r for r in s.player_season_stats() if r.kind == fmsave.SeasonStatsKind.OVERALL)
         E.write_csv(E.flat_rows(overall, S), E.column_names(S), os.path.join(out_dir, "season_stats.csv"))
-        groups = [[r.team_id for r in t.rows] for t in s.league_tables()]
+        tables = list(s.league_tables())
+        rules = {r.competition_id: r for r in s.competition_rules()}
+        leagues = club_leagues((t.competition_id, t.club_count, [r.club_uid for r in t.rows]) for t in tables
+                               if (r := rules.get(t.competition_id)) and (r.promotion_places or r.relegation_places))
+        groups = [[r.team_id for r in t.rows] for t in tables]
         groups += [[f.home_team_id, f.away_team_id] for f in s.fixtures()]
         lab = club_genders(list(s.clubs()), groups)
         club = next(iter(s.managed_clubs()), None)
@@ -205,6 +223,8 @@ def extract(save_path, out_dir, players=True):
                 json.dump({"club_uid": club.club_uid, "club_name": club.club_name, "formation": formation}, f)
     with open(os.path.join(out_dir, "club_gender.csv"), "w", newline="") as f:
         w = csv.writer(f); w.writerow(["club_uid", "gender"]); w.writerows(lab.items())
+    with open(os.path.join(out_dir, "club_league.csv"), "w", newline="") as f:
+        w = csv.writer(f); w.writerow(["club_uid", "league_id"]); w.writerows(leagues.items())
 
 
 GAME_DATE = CLUB = None
@@ -224,11 +244,17 @@ def _stats_sql(path):
         WITH t AS (SELECT player_uid, {sums},
                           sum(average_rating * rated_appearances) / nullif(sum(rated_appearances), 0) AS rating,
                           -- level of the teams he actually played for (B teams are separate clubs), minutes-weighted
-                          sum(minutes * r.rep) / nullif(sum(minutes) FILTER (WHERE r.rep IS NOT NULL), 0) AS s_league_rep
+                          sum(minutes * r.rep) / nullif(sum(minutes) FILTER (WHERE r.rep IS NOT NULL), 0) AS s_league_rep,
+                          -- the league where he played most minutes
+                          arg_max(cl.league_id, minutes) FILTER (WHERE cl.league_id IS NOT NULL) AS s_league_id
                    FROM read_csv_auto('{path}', sample_size=-1)
                         LEFT JOIN (SELECT club_uid, max(club_reputation) AS rep FROM raw GROUP BY 1) r USING (club_uid)
-                   GROUP BY player_uid)
-        SELECT *, coalesce(s_starts, 0) + coalesce(s_substitute_appearances, 0) AS s_apps,
+                        LEFT JOIN cl USING (club_uid)
+                   GROUP BY player_uid),
+             ls AS (SELECT cl.league_id, avg(r.rep) AS league_strength  -- league level = mean reputation of its clubs
+                    FROM cl JOIN (SELECT club_uid, max(club_reputation) AS rep FROM raw GROUP BY 1) r USING (club_uid)
+                    GROUP BY 1)
+        SELECT t.*, ls.league_strength, coalesce(s_starts, 0) + coalesce(s_substitute_appearances, 0) AS s_apps,
                round(rating, 2) AS s_avg_rating,
                round(100.0 * s_passes_completed / nullif(s_passes_attempted, 0), 1) AS s_pass_pct,
                round(100.0 * s_tackles_completed / nullif(s_tackles_attempted, 0), 1) AS s_tackle_pct,
@@ -236,12 +262,10 @@ def _stats_sql(path):
                {p90('s_goals')} AS s_goals_p90, {p90('s_assists')} AS s_assists_p90,
                {p90('s_expected_goals')} AS s_xg_p90, {p90('s_key_passes')} AS s_key_passes_p90,
                {p90('s_tackles_completed + s_interceptions')} AS s_def_actions_p90
-        FROM t"""
+        FROM t LEFT JOIN ls ON ls.league_id = t.s_league_id"""
 
 
-# Moneyball performance index: per-90 output percentiles against same-gender players of the same
-# position group (600+ min this season), scaled by the level of the teams he played those minutes for
-# (score = performance x (0.4 + 0.6 x level)): a top output in a regional league is worth less than in Ligue 1.
+# Moneyball performance index: see add_stat_score. Metrics below are per-90 output for each position group.
 _p90 = lambda c: f"{c} * 90.0 / nullif(s_minutes, 0)"
 STAT_METRICS = {
     "GK": [_p90("s_expected_goals_prevented"), "(coalesce(s_saves_held, 0) + coalesce(s_saves_parried, 0) + coalesce(s_saves_tipped, 0)) / nullif(s_shots_on_target_faced, 0)",
@@ -265,17 +289,29 @@ NAT_GROUP = {"GK": "GK", "SW": "CB", "DC": "CB", "DL": "FB", "DR": "FB", "WBL": 
              "ML": "W", "MR": "W", "AML": "W", "AMR": "W", "AMC": "AM", "STC": "ST", "ST": "ST"}
 
 
+MIN_PEERS = 30  # smallest league (per position group) worth ranking players inside
+
+
 def add_stat_score():
+    """stat_score = 100 x perf x (0.4 + 0.6 x level). perf = per-90 percentile among same-position players of the
+    same league, so a title-chasing side and a mid-table side are judged against the same opponents; leagues with
+    under MIN_PEERS such players (or no known league) rank against all unplaced players instead. level = the league's
+    percentile by mean club reputation; without a league, the reputation of the teams he played for."""
     grp = "CASE split_part(natural_positions, ';', 1) " + " ".join(f"WHEN '{k}' THEN '{v}'" for k, v in NAT_GROUP.items()) + " END"
     parts = " UNION ALL ".join(
-        f"SELECT uid, ({' + '.join(f'percent_rank() OVER (PARTITION BY gender ORDER BY coalesce({m}, 0))' for m in ms)}) / {len(ms)} AS perf "
-        f"FROM p WHERE stat_group = '{g}' AND s_minutes >= 600" for g, ms in STAT_METRICS.items())
+        f"SELECT uid, ({' + '.join(f'percent_rank() OVER (PARTITION BY gender, lg ORDER BY coalesce({m}, 0))' for m in ms)}) / {len(ms)} AS perf "
+        f"FROM q WHERE stat_group = '{g}' AND s_minutes >= 600" for g, ms in STAT_METRICS.items())
     con().execute(f"""
         CREATE OR REPLACE TABLE players AS
         WITH p AS (SELECT *, {grp} AS stat_group FROM players),
+             q AS (SELECT *, CASE WHEN count(*) FILTER (WHERE s_minutes >= 600) OVER (PARTITION BY gender, stat_group, s_league_id) >= {MIN_PEERS}
+                                  THEN s_league_id END AS lg FROM p),
              s AS ({parts}),
-             r AS (SELECT s.uid, s.perf, percent_rank() OVER (PARTITION BY p.gender ORDER BY coalesce(p.s_league_rep, 0)) AS lvl
-                   FROM s JOIN p USING (uid))
+             lv AS (SELECT s_league_id, percent_rank() OVER (ORDER BY league_strength) AS lvl
+                    FROM (SELECT DISTINCT s_league_id, league_strength FROM players WHERE league_strength IS NOT NULL)),
+             r AS (SELECT s.uid, s.perf,
+                          coalesce(lv.lvl, percent_rank() OVER (PARTITION BY p.gender ORDER BY coalesce(p.s_league_rep, 0))) AS lvl
+                   FROM s JOIN p ON p.uid = s.uid LEFT JOIN lv ON lv.s_league_id = p.s_league_id)
         SELECT p.*, round(100 * r.perf * (0.4 + 0.6 * r.lvl), 1) AS stat_score
         FROM p LEFT JOIN r USING (uid)""")
 
@@ -404,6 +440,9 @@ def load(d=None):
     has_g, has_s = os.path.exists(j("club_gender.csv")), os.path.exists(j("season_stats.csv"))
     con().execute("CREATE OR REPLACE TEMP TABLE cg AS " + (f"SELECT * FROM read_csv_auto('{j('club_gender.csv')}')" if has_g
                else "SELECT NULL::BIGINT AS club_uid, NULL::VARCHAR AS gender LIMIT 0"))
+    has_l = os.path.exists(j("club_league.csv"))  # absent in data extracted by older versions: team-level scoring
+    con().execute("CREATE OR REPLACE TEMP TABLE cl AS " + (f"SELECT * FROM read_csv_auto('{j('club_league.csv')}')" if has_l
+               else "SELECT NULL::BIGINT AS club_uid, NULL::BIGINT AS league_id LIMIT 0"))
     con().execute("CREATE OR REPLACE TEMP TABLE st AS " + (_stats_sql(j("season_stats.csv")) if has_s
                else "SELECT NULL::BIGINT AS player_uid LIMIT 0"))
     con().execute("CREATE OR REPLACE TEMP TABLE nat (id INT, name VARCHAR, code VARCHAR)")
@@ -427,7 +466,7 @@ def load(d=None):
                st.* EXCLUDE (player_uid)
         FROM b LEFT JOIN cg ON cg.club_uid = b.club_uid LEFT JOIN st ON st.player_uid = b.uid
              LEFT JOIN nat n1 ON n1.id = b.nation_id LEFT JOIN nat n3 ON n3.id = b.club_nation_id""")
-    con().execute("DROP TABLE raw; DROP TABLE cg; DROP TABLE st; DROP TABLE nat")
+    con().execute("DROP TABLE raw; DROP TABLE cg; DROP TABLE st; DROP TABLE nat; DROP TABLE cl")
     if has_s:
         add_stat_score()
     add_deals()
