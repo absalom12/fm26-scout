@@ -1420,8 +1420,7 @@ const KEY_STATS = { ST: ['s_goals_p90', 's_xg_p90', 's_shots_p90'], W: ['s_dribb
   GK: ['stat_score', 's_clean_sheets', 's_expected_goals_prevented'] };
 function recoKeys(p) {
   const g = SLOT_GRP[p.target_pos] || groupOf(p), chip = (l, v, cls = '', t = l) => `<span class="ac" title="${esc(t)}">${l}<b class="${cls}">${v}</b></span>`;
-  if (MODE === 'moneyball') return [p.s_avg_rating != null ? chip('Rtg', p.s_avg_rating.toFixed(2), '', 'Average rating') : '',
-    ...(KEY_STATS[g] || []).map(k => p[k] != null ? chip(STAT_ABBR[k], Number.isInteger(p[k]) ? p[k] : p[k].toFixed(k === 'stat_score' ? 0 : 2), '', label(k)) : '')].join('');
+  if (MODE === 'moneyball') return [...(KEY_STATS[g] || []).map(k => p[k] != null ? chip(STAT_ABBR[k], Number.isInteger(p[k]) ? p[k] : p[k].toFixed(k === 'stat_score' ? 0 : 2), '', label(k)) : '')].join('');
   return [MODE === 'full' && p.ability_current != null ? chip('CA', p.ability_current, '', 'Current ability') + chip('PA', p.ability_potential ?? '–', '', 'Potential ability') : '',
     ...KEY_ATTRS[g].map(a => p['attributes_' + a] != null ? chip(ABBR[a] || a.slice(0, 3), p['attributes_' + a], tier(p['attributes_' + a]), label('attributes_' + a)) : '')].join('');
 }
