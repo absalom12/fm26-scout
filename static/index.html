@@ -1980,7 +1980,7 @@ function secKpis(x = ppx) {
   out.push(k('Avg rating', p.s_avg_rating ? p.s_avg_rating.toFixed(2) : '–', p.s_avg_rating ? ratingColor(p.s_avg_rating) : C.muted, `${p.s_apps ?? 0} apps · ${mins.toLocaleString()} min`));
   const ask = p.free_agent ? 'Free' : p.transfer_value == null ? 'Not for sale' : money(p.transfer_value);
   out.push(k('Value', ask, null, FAIR && p.deal_score != null ? `${Math.abs(Math.round(p.deal_score))}% ${p.deal_score >= 0 ? 'under' : 'over'} fair fee` : FAIR && mb && mins < 900 ? 'No fair fee under 900 min.' : 'transfer value'));
-  out.push(k('Wage', wage(p.contract_wage), null, p.contract_end ? `until ${esc(p.contract_end)}` : 'no contract'));
+  out.push(k('Wage', wage(p.contract_wage), null, p.free_agent ? 'asking, free agent' : p.contract_end ? `until ${esc(p.contract_end)}` : 'no contract'));  // a free agent's stored end date is stale
   return [...out.slice(-2), ...out.slice(0, -2)].join('');  // value and wage lead
 }
 // Full hero: the CA number large with its level word, ranks, the written report, contract bar.
