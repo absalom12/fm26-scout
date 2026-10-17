@@ -242,7 +242,7 @@ GAME_DATE = CLUB = None
 STAT_SUMS = ["starts", "substitute_appearances", "minutes", "goals", "assists", "expected_goals", "expected_assists",
              "shots", "shots_on_target", "passes_attempted", "passes_completed", "progressive_passes", "key_passes",
              "clear_cut_chances_created", "crosses_attempted", "crosses_completed", "dribbles", "tackles_attempted",
-             "tackles_completed", "interceptions", "possession_won", "pressures_completed", "aerial_challenges_attempted",
+             "tackles_completed", "interceptions", "possession_won", "possession_lost", "pressures_completed", "aerial_challenges_attempted",
              "headers_won", "clearances", "blocks", "distance_km", "yellow_cards", "red_cards", "player_of_the_match",
              "clean_sheets", "goals_allowed", "shots_on_target_faced", "saves_held", "saves_parried", "saves_tipped", "expected_goals_prevented"]
 
@@ -276,7 +276,7 @@ def _stats_sql(path):
                {p90('s_progressive_passes')} AS s_prog_passes_p90, {p90('s_clear_cut_chances_created')} AS s_ccc_p90,
                {p90('s_crosses_completed')} AS s_crosses_p90, {p90('s_tackles_completed')} AS s_tackles_p90,
                {p90('s_interceptions')} AS s_interceptions_p90, {p90('s_headers_won')} AS s_headers_won_p90,
-               {p90('s_clearances')} AS s_clearances_p90, {p90('s_possession_won')} AS s_possession_won_p90,
+               {p90('s_clearances')} AS s_clearances_p90, {p90('s_possession_won')} AS s_possession_won_p90, {p90('s_possession_lost')} AS s_possession_lost_p90,
                {p90('s_pressures_completed')} AS s_pressures_p90
         FROM t LEFT JOIN ls ON ls.league_id = t.s_league_id"""
 
