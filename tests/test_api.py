@@ -147,6 +147,7 @@ def test_similar_order_scales_terms_per_mode(scout, monkeypatch):
     ref = {"stat_group": "ST", "natural_positions": "STC", "stat_score": 80.0, "s_avg_rating": 7.0, "s_goals_p90": 0.8,
            "s_xg_p90": None, "ability_current": 140, **attrs}
     monkeypatch.setattr(scout, "_player", lambda uid, mode: ref)
+    monkeypatch.setattr(scout, "stat_strengths", lambda p: [("s_goals_p90", 0.8, 90)])  # his best position stat
     mb = scout.similar_order(1, "moneyball")
     assert "stat_score" in mb and "s_goals_p90" in mb and "s_xg_p90" not in mb and "attributes_" not in mb
     for mode in ("fair", "full"):  # his six strengths, nothing else (no CA, no average)

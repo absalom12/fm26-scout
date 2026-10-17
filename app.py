@@ -732,16 +732,53 @@ def export(q: Query):
                              headers={"Content-Disposition": "attachment; filename=fm26_players.csv"})
 
 
-# Moneyball "similar": the per-90 output that defines each position group's job.
-SIMILAR_STATS = {"ST": ["s_goals_p90", "s_xg_p90"], "W": ["s_dribbles_p90", "s_xa_p90"], "AM": ["s_key_passes_p90", "s_xa_p90"],
-                 "CM": ["s_prog_passes_p90", "s_key_passes_p90"], "DM": ["s_tackles_p90", "s_interceptions_p90"],
-                 "FB": ["s_crosses_p90", "s_tackles_p90"], "CB": ["s_headers_won_p90", "s_interceptions_p90"], "GK": []}
+# Moneyball "similar": the in-game stats that matter for each position group. A player's strengths are the ones
+# where he ranks highest among same-position peers (900+ min, same gender).
+POSITION_STATS = {
+    "ST": ["s_goals_p90", "s_xg_p90", "s_shots_p90", "s_assists_p90", "s_key_passes_p90", "s_dribbles_p90", "s_headers_won_p90", "s_pressures_p90", "s_xa_p90"],
+    "W": ["s_dribbles_p90", "s_xa_p90", "s_crosses_p90", "s_key_passes_p90", "s_goals_p90", "s_xg_p90", "s_shots_p90", "s_prog_passes_p90", "s_pressures_p90"],
+    "AM": ["s_key_passes_p90", "s_xa_p90", "s_ccc_p90", "s_dribbles_p90", "s_goals_p90", "s_xg_p90", "s_shots_p90", "s_prog_passes_p90", "s_pressures_p90"],
+    "CM": ["s_prog_passes_p90", "s_key_passes_p90", "s_possession_won_p90", "s_tackles_p90", "s_interceptions_p90", "s_xa_p90", "s_pressures_p90", "s_dribbles_p90", "s_pass_pct"],
+    "DM": ["s_tackles_p90", "s_interceptions_p90", "s_possession_won_p90", "s_prog_passes_p90", "s_pressures_p90", "s_headers_won_p90", "s_clearances_p90", "s_pass_pct"],
+    "FB": ["s_crosses_p90", "s_tackles_p90", "s_interceptions_p90", "s_xa_p90", "s_prog_passes_p90", "s_dribbles_p90", "s_key_passes_p90", "s_pressures_p90"],
+    "CB": ["s_headers_won_p90", "s_interceptions_p90", "s_clearances_p90", "s_tackles_p90", "s_prog_passes_p90", "s_possession_won_p90", "s_pass_pct", "s_header_pct"],
+    "GK": [],
+}
+STRENGTHS_N = 5
+
+
+def stat_strengths(p):
+    """The reference's STRENGTHS_N best position stats: [(column, value, percentile vs peers)], best first."""
+    cols = [c for c in POSITION_STATS.get(p.get("stat_group"), []) if c in COLS and p.get(c) is not None and p[c] > 0]
+    if not cols:
+        return []
+    row = con().execute(f"SELECT {', '.join(f'avg(({c} < ?)::INT)' for c in cols)} FROM players "
+                        "WHERE stat_group = ? AND gender IS NOT DISTINCT FROM ? AND s_minutes >= 900",
+                        [p[c] for c in cols] + [p.get("stat_group"), p.get("gender")]).fetchone()
+    ranked = sorted(zip(cols, (p[c] for c in cols), row), key=lambda x: -(x[2] or 0))
+    return [(c, float(v), round(100 * (pc or 0))) for c, v, pc in ranked[:STRENGTHS_N]]
+
+
+def attr_strengths(p, n=6):
+    """The reference's n best visible attributes (GK: goalkeeping + mental + physical)."""
+    pool = (_ATTR_GK if (p.get("natural_positions") or "").startswith("GK") else _ATTR_TECH) + _ATTR_MENTAL + _ATTR_PHYS
+    return sorted((a for a in pool if p.get(f"attributes_{a}") is not None), key=lambda a: -p[f"attributes_{a}"])[:n]
+
+
+@app.get("/api/similar/{uid}")
+def similar(uid: int, mode: str = "full"):
+    """The criteria "Find similar players" puts on the Scout page (the list is then sorted with similar_to)."""
+    mode = _mode(mode)
+    p = _player(uid, mode)
+    if mode == "moneyball":
+        return {"stats": [{"col": c, "value": v, "pct": pc} for c, v, pc in stat_strengths(p)]}
+    return {"attributes": [{"col": f"attributes_{a}", "value": p[f"attributes_{a}"]} for a in attr_strengths(p)]}
 
 
 def similar_order(uid, mode):
     """SQL distance to a reference player, on what the mode may see (0 = himself). Full and Fair play: his strengths,
     i.e. his 6 best visible attributes (2 points apart = 1 unit), so a pacy dribbler finds pacy dribblers whatever
-    their CA. Moneyball: performance index, rating and the position's key per-90 stats. Values are the reference's
+    their CA. Moneyball: performance index and his STRENGTHS_N best position stats (rating for keepers). Values are the reference's
     own numbers, inlined as floats (no user text reaches the SQL)."""
     p = _player(uid, mode)
     terms = []
@@ -751,13 +788,13 @@ def similar_order(uid, mode):
             v = float(p[col])
             terms.append(f"abs(coalesce({col}, {v} + 1e6) - {v}) / {float(scale)}")
     if mode == "moneyball":
-        t("stat_score", 8); t("s_avg_rating", 0.3)
-        for k in SIMILAR_STATS.get(p.get("stat_group"), []):
-            if p.get(k) is not None:
-                t(k, max(abs(float(p[k])) * 0.25, 0.05))
+        t("stat_score", 8)
+        for c, v, _ in stat_strengths(p):
+            t(c, max(abs(v) * 0.25, 0.05))
+        if p.get("stat_group") == "GK":
+            t("s_avg_rating", 0.3)
     else:
-        pool = (_ATTR_GK if (p.get("natural_positions") or "").startswith("GK") else _ATTR_TECH) + _ATTR_MENTAL + _ATTR_PHYS
-        for a in sorted((a for a in pool if p.get(f"attributes_{a}") is not None), key=lambda a: -p[f"attributes_{a}"])[:6]:
+        for a in attr_strengths(p):
             t(f"attributes_{a}", 2)
     return " + ".join(terms) or "0"
 
