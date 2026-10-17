@@ -4,7 +4,8 @@ import numpy as np
 from nations import NATIONS
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from datadir import FILES, data_dir, list_saves, replace_data, resolve_save
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from urllib.parse import urlsplit
 from pydantic import BaseModel
 
@@ -718,7 +719,14 @@ def players(q: Query):
     total = con().execute(f"SELECT count(*) FROM {src} {w}", args).fetchone()[0]
     cur = con().execute(f"SELECT * FROM {src} {w} {order} LIMIT ? OFFSET ?", args + [max(q.end - q.start, 0), q.start])
     names = [d[0] for d in cur.description]
-    return {"total": total, "rows": [dict(zip(names, r)) for r in cur.fetchall()]}
+    return _json({"total": total, "rows": [dict(zip(names, r)) for r in cur.fetchall()]})
+
+
+def _json(obj):
+    """The bytes FastAPI's default response would send (jsonable_encoder, then JSONResponse), without walking every
+    one of the ~335 values per row through jsonable_encoder first: only non-JSON types (dates) go through it."""
+    return Response(json.dumps(obj, ensure_ascii=False, allow_nan=False, separators=(",", ":"), default=jsonable_encoder).encode(),
+                    media_type="application/json")
 
 
 @app.post("/api/export")

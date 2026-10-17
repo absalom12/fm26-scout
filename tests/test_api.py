@@ -154,3 +154,14 @@ def test_similar_order_scales_terms_per_mode(scout, monkeypatch):
         sql = scout.similar_order(1, mode)
         assert sql.count("attributes_") == 6 and "attributes_pace" in sql and "attributes_flair" in sql
         assert "ability_current" not in sql and "attributes_corners" not in sql
+
+
+def test_fast_json_matches_fastapi_default(scout):
+    import datetime, math
+    from fastapi.encoders import jsonable_encoder
+    from fastapi.responses import JSONResponse
+    body = {"total": 2, "rows": [{"a": 1, "b": 2.5, "c": "Zoë", "d": None, "e": True, "f": datetime.date(2026, 7, 1)},
+                                 {"a": -3, "b": 1e-7, "c": "", "d": [1, 2], "e": False, "f": datetime.datetime(2026, 1, 2, 3, 4)}]}
+    assert scout._json(body).body == JSONResponse(jsonable_encoder(body)).body
+    with pytest.raises(ValueError):  # NaN is refused exactly like the default response
+        scout._json({"x": math.nan})

@@ -22,7 +22,7 @@
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
-body { font: 14px/1.4 var(--f-body); background: var(--bg); color: var(--text); display: flex; flex-direction: column; overflow: hidden; }
+body { zoom: var(--appz, 1); font: 14px/1.4 var(--f-body); background: var(--bg); color: var(--text); display: flex; flex-direction: column; overflow: hidden; }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; background: none; border: 0; padding: 0; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
@@ -38,7 +38,7 @@ kbd { font: 600 10px var(--f-mono); color: var(--muted); border: 1px solid var(-
 .brand b { color: var(--accent); }
 .brand svg { width: 28px; height: 28px; }
 .nav { display: flex; gap: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); padding: 3px; }
-.nav button { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 7px; font: 600 15px var(--f-display); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); transition: color var(--t-fast), background var(--t-fast); }
+.nav button { display: flex; align-items: center; gap: 8px; white-space: nowrap; height: 32px; padding: 0 12px; border-radius: 7px; font: 600 15px var(--f-display); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); transition: color var(--t-fast), background var(--t-fast); }
 .nav button:hover { color: var(--text); }
 .nav button[aria-current="page"] { background: var(--raise); color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
 .search { position: relative; flex: 1; max-width: 380px; min-width: 160px; }
@@ -275,7 +275,8 @@ details[open] summary::before { content: "−"; }
 
 /* ---------- Player profile page: a first view built for the mode (Full / Fair play / Moneyball) + a tabbed side panel; one viewport, no page scroll ---------- */
 .pp { flex: 1; min-height: 0; overflow: hidden; }
-.pp-in { height: 100%; max-width: 1560px; margin: 0 auto; padding: 0 16px 12px; display: flex; flex-direction: column; }
+/* The profile is laid out for 1512 x 827 with no page scroll; other desktop screens scale that layout to fit (--ppz, set by fitZoom). */
+.pp-in { zoom: var(--ppz, 1); height: 100%; max-width: 1840px; margin: 0 auto; padding: 0 16px 12px; display: flex; flex-direction: column; }
 .pp-head { flex: none; display: flex; align-items: center; gap: 14px; padding: 9px 0 8px; border-bottom: 1px solid var(--line); box-shadow: 0 1px 0 color-mix(in srgb, var(--mode) 30%, transparent); }
 .pp-id { flex: 1; min-width: 0; }
 .pp-id h1 { margin: 0; font: 700 28px/1 var(--f-display); letter-spacing: .01em; text-transform: uppercase; outline: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -324,7 +325,7 @@ details[open] summary::before { content: "−"; }
 .pg-over.m-moneyball { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(270px, 320px); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "canvas swarm pizza" "canvas swarm simmini"; }
 .pp-card[data-pp="canvas"] { background: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 140%27 preserveAspectRatio=%27none%27 fill=%27none%27 stroke=%27rgba(255,255,255,0.10)%27 stroke-width=%270.4%27%3E%3Crect x=%274%27 y=%273%27 width=%2792%27 height=%27134%27/%3E%3Cpath d=%27M4 70h92%27/%3E%3Ccircle cx=%2750%27 cy=%2770%27 r=%2711%27/%3E%3Crect x=%2727%27 y=%273%27 width=%2746%27 height=%2720%27/%3E%3Crect x=%2727%27 y=%27117%27 width=%2746%27 height=%2720%27/%3E%3C/svg%3E") center / 100% 100% no-repeat, repeating-linear-gradient(180deg, var(--pitch) 0 9.09%, var(--pitch2) 9.09% 18.18%); border-color: #1d3d2a; }
 .pp-card[data-pp="canvas"] .phz { background: color-mix(in srgb, var(--panel) 88%, transparent); border-color: var(--line); }
-.pp-card { position: relative; min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }
+.pp-card { position: relative; min-width: 0; min-height: 0; overflow: hidden auto; display: flex; flex-direction: column; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }
 .pp-card h3 { flex: none; margin: 0 0 8px; font: 700 13px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 7px; }
 .pp-card h3 .ico { color: var(--mode); }
 .pp-card h3 small { font: 400 12px/1.25 var(--f-body); letter-spacing: 0; text-transform: none; color: var(--faint); margin-left: auto; text-align: right; min-width: 0; }  /* wraps rather than cut with … */
@@ -425,7 +426,7 @@ details[open] summary::before { content: "−"; }
 .facts-t b { display: block; font-size: 13px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; } .facts-t b::first-letter { text-transform: uppercase; }
 .mt { display: grid; font-size: 12.5px; }
 .mt-r { display: grid; grid-template-columns: minmax(0, 1.1fr) 62px minmax(80px, 1fr) 36px; align-items: center; gap: 8px; min-height: 21px; border-bottom: 1px solid #161f28; }
-.mt-r > span:first-child { color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .mt-r > span:nth-child(2), .mt-r > span:last-child { text-align: right; }
+.mt-r > span:first-child { color: var(--text2); line-height: 1.15; }  /* wraps on narrow cards rather than cut */ .mt-r > span:nth-child(2), .mt-r > span:last-child { text-align: right; }
 .mt-h { font: 600 10px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); min-height: 18px; }
 .mt-b { display: grid; grid-template-columns: 1fr 26px; align-items: center; gap: 6px; } .mt-b em { font-style: normal; color: var(--muted); }
 .mt-b > i { position: relative; display: block; height: 7px; border-radius: 4px; background: #1a242d; }
@@ -443,7 +444,7 @@ details[open] summary::before { content: "−"; }
 .sd-body { position: relative; flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
 .sd-body .sec { padding: 0; border: 0; }
 .sd-sim.wide { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 16px; height: 100%; } .sd-sim.wide > div { min-height: 0; overflow-y: auto; }
-.pg-similar .sd-body { overflow: hidden; } .sd-sim.wide > div:last-child { overflow: hidden; display: flex; flex-direction: column; } .sd-sim.wide .scat { flex: 1; min-height: 0; height: 100%; }
+.pg-similar .sd-body { overflow: hidden; } .pg-similar .sd-sim:not(.wide) { height: 100%; overflow-y: auto; }  /* Full: the 24-player list scrolls inside its card */ .sd-sim.wide > div:last-child { overflow: hidden; display: flex; flex-direction: column; } .sd-sim.wide .scat { flex: 1; min-height: 0; height: 100%; }
 .sw-lg { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -2px 0 6px; font-size: 11.5px; color: var(--text2); } .sw-lg i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
 .sw-lg .me { background: var(--good, #3ddc84); } .sw-lg .sim { border: 1.6px solid var(--gold); } .sw-lg .pe { width: 5px; height: 5px; background: var(--muted); opacity: .6; } .sw-lg .md { width: 0; height: 10px; border-radius: 0; border-left: 1px dashed var(--text2); }
 .sw-lg .cv { width: 14px; height: 8px; border-radius: 8px 8px 0 0; background: color-mix(in srgb, var(--muted) 35%, transparent); border: 1px solid var(--muted); border-bottom: 0; }
@@ -452,7 +453,7 @@ details[open] summary::before { content: "−"; }
 .hm-tr { gap: 4px; } .hm-tr .tag { font-size: 11.5px; }
 table.reg { width: 100%; border-collapse: collapse; font-size: 12.5px; } table.reg th { text-align: left; font: 600 10.5px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 3px 6px; border-bottom: 1px solid var(--line); }
 table.reg td { padding: 4px 6px; border-bottom: 1px solid var(--line); color: var(--text2); } table.reg td:first-child { color: var(--text); font-weight: 600; } table.reg td:not(:first-child) { font-family: var(--f-mono); }
-.sd-sim .sim-row { min-height: 36px; padding: 3px 6px; } .sd-sim .kchips { margin-bottom: 6px; }
+.sd-sim .sim-row { min-height: 36px; padding: 3px 6px; } .sd-sim .kchips { margin-bottom: 6px; flex-wrap: wrap; }
 .sd-pos { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; } .sd-pos .legend { display: none; }
 .sd-body .rolebar { grid-template-columns: minmax(0, 150px) 1fr 30px; font-size: 12px; } .sd-body .rolebar > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sd-body .radar-wrap { grid-template-columns: 200px 1fr; } .sd-body .radar { width: 200px; height: 200px; }
@@ -495,8 +496,8 @@ table.reg td { padding: 4px 6px; border-bottom: 1px solid var(--line); color: va
 .ast-p { break-inside: avoid; margin-bottom: 7px; }
 .ast-p h5 { display: flex; justify-content: space-between; align-items: center; margin: 0 0 2px; padding-bottom: 2px; border-bottom: 1px solid var(--line); font: 700 10.5px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .ast-p h5 b { font: 700 11px var(--f-mono); color: var(--c); }
-.ast-r { display: grid; grid-template-columns: minmax(0, 1fr) auto 34px 26px; gap: 5px; align-items: center; height: 17px; padding-left: 5px; border-left: 2px solid transparent; font-size: 11.5px; color: var(--muted); }
-.ast-r > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ast-r { display: grid; grid-template-columns: minmax(0, 1fr) auto 34px 26px; gap: 5px; align-items: center; min-height: 17px; padding-left: 5px; border-left: 2px solid transparent; font-size: 11.5px; color: var(--muted); }
+.ast-r > span { line-height: 1.1; }  /* wraps on narrow columns rather than cut */
 .ast-r b { font: 600 11.5px var(--f-mono); color: var(--text2); text-align: right; white-space: nowrap; } .ast-r b small { font-size: 10px; color: var(--faint); }
 .ast-r em { font: 500 10.5px var(--f-mono); font-style: normal; color: var(--faint); text-align: right; }
 .ast-r .pill { font-size: 10.5px; line-height: 15px; padding: 0 2px; }
@@ -550,18 +551,26 @@ table.reg td { padding: 4px 6px; border-bottom: 1px solid var(--line); color: va
 .swarm { width: 100%; height: auto; flex: 0 1 auto; min-height: 0; }
 .swarm .lb { font: 600 12.5px var(--f-body); fill: var(--text2); } .swarm .vl { font: 700 13px var(--f-mono); fill: var(--text); } .swarm .pc { font: 700 12px var(--f-mono); }
 /* Short or narrow screens: tighter; below 700px tall (or narrow) section titles become icons (the words stay for screen readers) */
-@media (max-height: 780px) {
+/* Compact profile when its zoomed height is short (classes set by fitZoom; :where keeps the specificity of a media query). */
+:where(.pp-short) {
   .pp-id h1 { font-size: 24px; } .pp-head { padding: 7px 0 6px; } .pp-body { margin-top: 8px; gap: 8px; }
   .ring { width: 54px; height: 54px; } .ring b { font-size: 15px; }
   .lds { gap: 5px; margin-top: 6px; } .ld small { font-size: 10.5px; }
   .mt-r { min-height: 19px; font-size: 12px; } .fbs { gap: 3px; } .fb { font-size: 12px; }
   .pp-card .hm-c { padding: 2px 6px; } .pp-card .hm-g + h4 { margin-top: 5px; } .phz > div { line-height: 1.2; } .phz h5 { margin-bottom: 1px; } .pp-verdict { font-size: 12px; line-height: 1.35; } .vsc { max-height: 120px; } .sg { gap: 1px; } .sg + .note { display: none; } .phz { padding: 5px 8px; gap: 1px; } .tix b { font-size: 13.5px; } .hero-n b { font-size: 64px; } .pp-card h4 { margin: 7px 0 4px; } .tot b { font-size: 13px; } .tot div, .facts-t div { padding: 3px 7px; }
 }
-@media (max-height: 700px) { .pp-card .hm-c { padding: 1px 6px; } .pp-card .hm h4 { margin-bottom: 2px; } .pp-card .hm-g { gap: 2px; } .cnv-lg { display: none; } }
-@media (max-height: 700px), (max-width: 1100px) {
+:where(.pp-vshort) { .pp-card .hm-c { padding: 1px 6px; } .pp-card .hm h4 { margin-bottom: 2px; } .pp-card .hm-g { gap: 2px; } .cnv-lg { display: none; } }
+:where(.pp-vshort) {
   .h3l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   .pp-card h3 .ico { width: 18px; height: 18px; }
   .kpi small { display: none; }
+}
+@media (min-width: 761px) and (max-width: 1100px) {  /* tablets: the profile scrolls, two card columns, wide charts span both */
+  .pp { overflow-y: auto; } .pp-in { height: auto; }
+  .pp-head { flex-wrap: wrap; } .pp-id { flex-basis: 100%; }
+  .pp-body:not([hidden]) { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; grid-auto-rows: auto; grid-template-areas: none; }
+  .pp-body > .pp-card { grid-area: auto !important; overflow: visible; }
+  .pp-body > :is([data-pp="canvas"], [data-pp="attr"], [data-pp="stats"], [data-pp="similar"], [data-pp="apx"], [data-pp="price"]) { grid-column: 1 / -1 !important; }
 }
 @media (max-width: 760px) {
   .pp { overflow-y: auto; } .pp-in { height: auto; }
@@ -594,8 +603,8 @@ dialog.pal[open] { display: flex; animation: palIn var(--t) var(--ease); }
 .drop { display: grid; justify-items: center; gap: 6px; padding: 28px 16px; border: 2px dashed var(--line2); border-radius: var(--r); color: var(--muted); text-align: center; transition: border-color var(--t), background var(--t); }
 .drop b { color: var(--text); font-size: 15px; }
 .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-.load-saves { display: grid; gap: 6px; }
-.load-saves .btn { justify-content: space-between; text-align: left; }
+.load-saves { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.load-saves .btn { justify-content: space-between; text-align: left; white-space: normal; height: auto; min-height: 36px; padding-block: 6px; overflow-wrap: anywhere; }  /* long save names wrap */
 @keyframes palIn { from { transform: translateY(-8px) scale(.98); opacity: 0; } }
 dialog::backdrop { background: rgba(3,6,9,.6); backdrop-filter: blur(2px); }
 .pal-in { display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid var(--line); }
@@ -639,8 +648,11 @@ dialog::backdrop { background: rgba(3,6,9,.6); backdrop-filter: blur(2px); }
 .slot .nm { font: 600 12px/1.1 var(--f-body); color: #fff; max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 3px #000; }
 .slot .bk { font-size: 10px; color: rgba(255,255,255,.55); max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .slot[aria-pressed="true"] .disc { box-shadow: 0 0 0 3px var(--accent), 0 0 22px var(--accent); }
-.slot.weak .disc { animation: pulse 2.2s ease-in-out infinite; }
-@keyframes pulse { 50% { box-shadow: 0 0 0 3px rgba(0,0,0,.35), 0 0 26px var(--bad); } }
+/* Weak-slot pulse: the brighter glow sits on its own layer and only its opacity moves, so the compositor runs it
+   without a repaint every frame (an animated box-shadow kept the main thread busy while My Club stayed open). */
+.slot.weak .disc { position: relative; }
+.slot.weak .disc::after { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 26px var(--bad); opacity: 0; pointer-events: none; animation: pulse 2.2s ease-in-out infinite; will-change: opacity; }
+@keyframes pulse { 50% { opacity: 1; } }
 .g-weak { --g: var(--bad); } .g-ok { --g: var(--warn); } .g-strong { --g: var(--good); } .g-none { --g: #6b7884; }
 .slot-card { margin-top: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; }
 .slot-card .chips .chip { height: 28px; min-width: 44px; padding: 0 6px; font-size: 12px; }
@@ -882,8 +894,42 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .notes { margin: 6px 0 0; padding-left: 18px; color: var(--text2); font-size: 14px; } .notes li { margin: 4px 0; }
 .show-chip { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 6px 0 12px; border-radius: var(--r-pill); background: var(--accent-soft); border: 1px solid rgba(74,163,255,.45); font-weight: 600; font-size: 13px; }
 @media (max-width: 1600px) { .nav kbd { display: none; } }
-@media (max-width: 1320px) { .top { gap: 10px; } #palBtn kbd, .nav kbd { display: none; } .nav button { white-space: nowrap; } .search { min-width: 130px; } }  /* room for the Fair prices toggle */
+@media (max-width: 1440px) { .top { gap: 10px; } #palBtn kbd, .nav kbd { display: none; } .nav button { white-space: nowrap; } .search { min-width: 130px; } }  /* room for the Fair prices toggle */
+@media (max-width: 1440px) { .top { padding: 0 12px; } .nav button { padding: 0 8px; } .seg button { padding: 0 8px; } .search { min-width: 140px; } }  /* 1280-1440 laptops: one row still */
 @media (max-width: 1240px) { .brand span { display: none; } }  /* the logo alone leaves room for the back / forward arrows */
+@media (max-width: 1180px) {  /* tablets: two rows, pages and search above, data mode and save below */
+  :root { --top: 96px; }
+  .top { flex-wrap: wrap; align-content: center; row-gap: 8px; } .top .spacer { flex-basis: 100%; height: 0; }
+  .nav button { padding: 0 12px; } .search { min-width: 0; max-width: none; }
+  #loadBtn { margin-left: auto; }
+  .bar { flex-wrap: wrap; row-gap: 8px; } .bar > * { flex: 0 1 auto; min-width: 0; } .bar > .summary { flex: 1 1 220px; white-space: normal; }
+  .lenses { flex: 1 1 100%; flex-wrap: wrap; } .lens { min-width: 0; flex: 1 1 140px; } .bar > .legend { flex: 1 1 100%; flex-wrap: wrap; margin-left: 0; }
+  .seg.views { flex-wrap: wrap; }
+}
+@media (max-width: 1100px) {  /* tablets and phones: the profile header wraps instead of running off screen */
+  .pp-head { flex-wrap: wrap; } .pp-id { flex-basis: 100%; } .pp-kpis, .pp-act { flex-wrap: wrap; } .pp-kpis { flex: 1 1 auto; }
+  .pp-id h1, .pp-id p { white-space: normal; }
+  .pp-tabs { overflow-x: auto; } .pp-tabs button { flex: none; white-space: nowrap; }
+}
+@media (max-width: 760px) {  /* phones: logo + save, pages, search, then data mode and gender */
+  .top .spacer { display: none; } #loadBtn { order: 1; } .nav { order: 2; flex: 1 1 100%; overflow-x: auto; }
+  .search { order: 3; flex: 1 1 200px; } #palBtn { order: 3; } #modes, .top > .seg, #gender { order: 4; }
+  .nav button { flex: 1 0 auto; justify-content: center; }
+  .drawer { top: 0; }
+  .cnv, .cnv:not(.mb) { grid-template-columns: minmax(0, 1fr); }
+  .cnv.mb > .cnv-s, .cnv.mb .cnv-p, .cnv.mb .cnv-p + .cnv-s { grid-column: 1; grid-row: auto; }
+  .cnv-p .lane { flex: none; height: 300px; }
+  .tag { white-space: normal; } .sd-sim.wide { grid-template-columns: minmax(0, 1fr); height: auto; }
+  /* the page scrolls: the grid keeps most of the screen, the other pages take their natural height */
+  html, body { height: auto; } body { min-height: 100%; }
+  .main { flex: none; height: 88vh; height: 88dvh; }
+  body:is([data-page="player"], [data-page="club"], [data-page="offers"]) .main { height: auto; }
+  .pp { overflow: visible; }
+  .es-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .es-rail { flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--line); padding: 6px 10px; } .es-rail p { flex-basis: 100%; margin: 0; padding: 2px 10px; }
+  .es-fields { grid-template-columns: minmax(0, 1fr); } .es-fields .fld:has(.es-pair) { grid-column: auto; }
+  .pal-item .d { white-space: normal; }
+}
 @media (max-width: 1180px) { .offers { grid-template-columns: 1fr; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js"></script>
@@ -1700,8 +1746,10 @@ async function ppAbility(p, grp) {
     .then(r => r.ok ? r.json() : null).catch(() => null);
   const age = { age: { filterType: 'number', type: 'inRange', filter: p.age - 1, filterTo: p.age + 1 } }, gt = (c, v) => ({ [c]: num('greaterThan', v) });
   const pa = p.ability_potential ?? 999;
+  // The 500 valued players of his position (~4 MB) are the same for every player of that position: fetched once, like peers().
+  const wk = 'wide|' + grp + '|' + (p.gender || '') + '|' + MODE, wide = () => { if (!peerCache.has(wk)) peerCache.set(wk, q({ transfer_value: num('greaterThan', 0) }, 500).then(d => { if (!d) peerCache.delete(wk); return d; })); return peerCache.get(wk); };
   const r = await Promise.all([q({}), q(gt('ability_current', p.ability_current)), q(gt('ability_potential', pa)), q(age), q({ ...age, ...gt('ability_current', p.ability_current) }), q({ ...age, ...gt('ability_potential', pa) }),
-    q({ ability_current: { filterType: 'number', type: 'inRange', filter: p.ability_current - 8, filterTo: p.ability_current + 8 } }, 400), q({ transfer_value: num('greaterThan', 0) }, 500)]);
+    q({ ability_current: { filterType: 'number', type: 'inRange', filter: p.ability_current - 8, filterTo: p.ability_current + 8 } }, 400), wide()]);
   const [n, ca, pa_, na, caA, paA] = r.slice(0, 6).map(d => d?.total ?? null);
   return { n, ca, pa: pa_, na, caA, paA, val: r[6]?.rows || [], valN: r[6]?.total ?? 0, wide: r[7]?.rows || [] };
 }
@@ -2160,6 +2208,10 @@ const dens = (xs, lo, hi, n = 48) => {
   const ys = Array.from({ length: n + 1 }, (_, i) => { const t = lo + (hi - lo) * i / n; return xs.reduce((a, x) => a + Math.exp(-(((Math.min(x, hi) - t) / bw) ** 2) / 2), 0); });
   const mx = Math.max(...ys) || 1; return ys.map((d, i) => [lo + (hi - lo) * i / n, d / mx]);
 };
+// The curve depends only on the peer pool and the metric: computed once per pool, reused by every repaint.
+const densMemo = new WeakMap();
+const densOf = (pool, k, xs, lo, hi) => { let m = densMemo.get(pool); if (!m) densMemo.set(pool, m = new Map());
+  if (!m.has(k)) m.set(k, dens(xs, lo, hi)); return m.get(k); };
 function secSwarm() {
   const { p, grp, bench, sim } = ppx, small = (p.s_minutes || 0) < 900, base = METRICS[grp] || METRICS.CM;
   const neg = grp === 'GK' ? [] : ['ST', 'W'].includes(grp) ? ['lost', 'off'] : ['lost', 'foul'];  // stats where less is better, ↓ in the label
@@ -2173,7 +2225,7 @@ function secSwarm() {
     const lo = xs[0], hi = xs[Math.floor(xs.length * .98)] || xs.at(-1), X = v => (L + clamp01((v - lo) / ((hi - lo) || 1)) * (W - L - R)).toFixed(1), y = i * rowH + rowH / 2 + 3;
     const v = fn(p), pc = small || v == null ? null : pctOf(xs, v, M[k][4]), md = xs[xs.length >> 1];
     return `<g><text class="lb" x="0" y="${y + 4}">${name}</text>
-      ${(() => { const yb = y + 9, pts = dens(xs, lo, hi).map(([t, d]) => `${X(t)},${(yb - d * 20).toFixed(1)}`);
+      ${(() => { const yb = y + 9, pts = densOf(pool, k, xs, lo, hi).map(([t, d]) => `${X(t)},${(yb - d * 20).toFixed(1)}`);
           return `<line x1="${L}" x2="${W - R}" y1="${yb}" y2="${yb}" stroke="var(--line)"/><path d="M${X(lo)},${yb} L${pts.join(' L')} L${X(hi)},${yb} Z" fill="color-mix(in srgb, var(--muted) 22%, transparent)" stroke="var(--muted)" stroke-width="1"/>`; })()}
       <line x1="${X(md)}" x2="${X(md)}" y1="${y - 11}" y2="${y + 9}" stroke="var(--text2)" stroke-dasharray="2 2"/>
       ${sims.map(r => { const x = fn(r); return x == null ? '' : `<g class="pt" data-pp-uid="${r.uid}"><title>${esc(r.name)}: ${x.toFixed(dec)}${unit} (click to open)</title><circle cx="${X(x)}" cy="${y + 9}" r="4" fill="transparent" stroke="var(--gold)" stroke-width="1.6"/></g>`; }).join('')}
@@ -2259,13 +2311,17 @@ const setPpTab = t => {
   ppTab = t; const box = $('#player');
   $$('[data-pptab]', box).forEach(b => { const on = b.dataset.pptab === t; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
   $$('[data-page]', box).forEach(d => { d.hidden = d.dataset.page !== t; });
+  const stale = $$(`[data-page="${t}"] [data-stale]`, box).map(el => el.dataset.pp); if (stale.length) ppPaint(stale);
 };
+// Cards on hidden pages are only marked stale and painted when their tab opens; a card whose HTML did not change keeps its DOM
+// (no rebuild, no replayed entrance animation) as data arrives.
 function ppPaint(which) {
   if (!ppx || !ppx.alive()) return;
   const box = $('#player'), focus = document.activeElement?.closest?.('[data-pp]')?.dataset.pp, fid = document.activeElement?.id;
-  (which || ['kpis', ...ppCards()]).forEach(k => {
-    const els = $$(`[data-pp="${k}"]`, box); if (!els.length) return;  // a card can sit on two pages (Moneyball's peer chart)
-    const html = ppCard(k); els.forEach(el => { el.innerHTML = html; });
+  new Set(which || ['kpis', ...ppCards()]).forEach(k => {
+    const els = $$(`[data-pp="${k}"]`, box).filter(el => el.closest('[data-page]')?.hidden ? (el.dataset.stale = 1, false) : true);
+    if (!els.length) return;  // a card can sit on two pages (Moneyball's peer chart)
+    const html = ppCard(k); els.forEach(el => { delete el.dataset.stale; if (el._html !== html) { el.innerHTML = html; el._html = html; } });
     if (focus === k && fid) $('#' + fid, box)?.focus();
   });
 }
@@ -2322,10 +2378,15 @@ const tipOf = el => {
   }
   return null;
 };
-document.addEventListener('mouseover', e => { if (!(e.target instanceof SVGElement)) return; const t = tipOf(e.target); tipEl.hidden = !t; if (t) tipEl.textContent = t; });
-document.addEventListener('mouseout', e => { if (e.target instanceof SVGElement) tipEl.hidden = true; });
+// Text a narrow layout cut with "…" shows whole in the same instant tooltip (unless it already has its own title).
+const cutText = el => { for (let n = el, i = 0; n instanceof HTMLElement && i < 3; n = n.parentElement, i++) {
+  if (n.title || n.dataset.tip) return null;
+  if (n.scrollWidth > n.clientWidth && getComputedStyle(n).textOverflow === 'ellipsis') return n.textContent.trim() || null; } return null; };
+document.addEventListener('mouseover', e => { const t = e.target instanceof SVGElement ? tipOf(e.target) : cutText(e.target); tipEl.hidden = !t; if (t) tipEl.textContent = t; });
+document.addEventListener('mouseout', () => { tipEl.hidden = true; });
+let APPZ = 1;  // the tip lives in the zoomed body: viewport pixels / APPZ
 document.addEventListener('mousemove', e => { if (tipEl.hidden) return; const r = e.clientX > innerWidth - 260;
-  tipEl.style.left = (r ? e.clientX - 12 - tipEl.offsetWidth : e.clientX + 12) + 'px'; tipEl.style.top = e.clientY + 14 + 'px'; });
+  tipEl.style.left = (r ? (e.clientX - 12) / APPZ - tipEl.offsetWidth : (e.clientX + 12) / APPZ) + 'px'; tipEl.style.top = (e.clientY + 14) / APPZ + 'px'; });
 // Page tabs (click, arrows), role picker, scatter points.
 $('#player').addEventListener('click', e => {
   const t = e.target.closest('[data-pptab],[data-ppgo]'); if (t) { setPpTab(t.dataset.pptab || t.dataset.ppgo); return; }
@@ -3222,7 +3283,14 @@ document.addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; $(
 document.addEventListener('dragover', e => e.preventDefault());
 document.addEventListener('drop', e => { e.preventDefault(); depth = 0; $('#overlay').hidden = true; upload(e.dataTransfer.files[0]); });
 const ping = () => fetch('/api/ping', { method: 'POST' }).catch(() => {});
-ping(); setInterval(ping, 5000);
+// Profile zoom: 1512 x 827 is the reference; 0.8x on small laptops up to 1.4x on large screens. Tablets and phones keep 1x and scroll.
+// Large screens scale the whole app the same way (--appz, at least 1x) so text is not tiny; the profile gets the rest of its factor.
+const fitZoom = () => { const f = Math.min(innerWidth / 1512, innerHeight / 827), desk = innerWidth > 1100, r = document.documentElement;
+  const z = desk ? Math.min(1.4, Math.max(.8, f)) : 1, app = desk ? Math.min(1.4, Math.max(1, f)) : 1, h = innerHeight / z;
+  APPZ = app; r.style.setProperty('--appz', app.toFixed(3)); r.style.setProperty('--ppz', (z / app).toFixed(3));
+  r.classList.toggle('pp-short', h < 800); r.classList.toggle('pp-vshort', h < 720); };
+addEventListener('resize', fitZoom); fitZoom();
+ping(); setInterval(ping, 30000);  // the server quits after 10 min without a ping (or 15 s after the tab closes)
 setFair(FAIR);
 addEventListener('pagehide', () => navigator.sendBeacon('/api/bye'));
 init();
