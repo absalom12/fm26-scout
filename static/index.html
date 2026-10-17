@@ -299,6 +299,8 @@ details[open] summary::before { content: "−"; }
 .sim-hd { min-height: 0 !important; padding-top: 0; padding-bottom: 2px; font: 600 10px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); pointer-events: none; } .sim-hd span:not(:first-child) { text-align: right; }
 .sd-sim.pa .sim-row { grid-template-columns: minmax(0, 1fr) auto 44px 44px; }
 .ast-r.ast-hd { height: 14px; font: 600 9.5px var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); } .ast-r.ast-hd b, .ast-r.ast-hd em { font: inherit; color: inherit; } .ast-r.ast-hd span:last-child { text-align: center; }
+/* Scouting report page: two cards, so the report and radar are drawn larger. */
+.pg-report [data-pp="report"] .sd-body { zoom: 1.3; } .pg-report .radar-wrap { zoom: 1.45; }
 /* Contract page: the whole page is available, so bigger type and air. */
 .pg-contract { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, .8fr); }
 .pg-contract .pp-card { padding: 16px 20px; } .pg-contract .pp-card h3 { font-size: 15px; margin-bottom: 14px; }
@@ -1115,8 +1117,8 @@ const flag = code => {
   return /^[A-Z]{2}$/i.test(code) ? [...code.toUpperCase()].map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('') : '';
 };
 const natCode = name => META.nations?.find(n => n.name === name)?.code || '';
-// Flags only (main nation, then second nations); the country name shows on hover and to screen readers.
-const natHTML = p => !p || !p.nationality ? '' : `<span class="nat">${[[p.nationality, p.nationality_code], ...(p.second_nationalities || '').split(', ').filter(Boolean).map(n => [n, natCode(n)])]
+// Flags only; the country name shows on hover and to screen readers. Second nations only on the full profile (all = true).
+const natHTML = (p, all = false) => !p || !p.nationality ? '' : `<span class="nat">${[[p.nationality, p.nationality_code], ...(all && p.second_nationalities || '').split(', ').filter(Boolean).map(n => [n, natCode(n)])]
   .map(([n, c]) => { const f = flag(c); return `<span class="flag" title="${esc(n)}">${f || esc(n)}${f ? `<span class="sr">${esc(n)}</span>` : ''}</span>`; }).join('')}</span>`;
 // Contract time left: months up to a year, then years.
 const leftTxt = m => m > 12 ? `${+(m / 12).toFixed(1)} years` : `${m} month${m === 1 ? '' : 's'}`;
@@ -1846,9 +1848,7 @@ function secKpis() {
 function secHero() {
   const { p, grp, abil } = ppx, ca = p.ability_current, pa = p.ability_potential;
   const rk = (a, n, who) => a == null || !n ? '' : `<div class="hr-rk"><span>${who}</span><i><i style="width:${pctW(1 - a / n)};background:${pctColor(100 - a / n * 100)}"></i></i><b>#${(a + 1).toLocaleString()}</b><small>of ${n.toLocaleString()}</small></div>`;
-  return `${h3i('ability', 'Scouting decision', META.game_date ? esc(META.game_date) : '')}
-    <div class="hero-n" role="img" aria-label="Current ability ${ca} of 200, ${tierOfV(ca, TIERS_CA)}, potential ${pa ?? 'unknown'}"><b style="color:${abilityColor(ca)}">${ca}</b><span style="color:${abilityColor(ca)}">${tierOfV(ca, TIERS_CA)}</span></div>
-    <p class="hero-sub">Current ability / 200 · potential <b style="color:${abilityColor(pa)}">${pa ?? '–'}</b> · ${pa > ca ? `+${pa - ca} to grow` : 'at his ceiling'}</p>
+  return `${h3i('ability', 'Where his ability ranks', META.game_date ? esc(META.game_date) : '')}
     ${abil ? `<div class="hr-rks">${rk(abil.ca, abil.n, `CA · ${plural(grp)}`)}${rk(abil.pa, abil.n, `PA · ${plural(grp)}`)}${rk(abil.caA, abil.na, `CA · age ${p.age - 1}-${p.age + 1}`)}${rk(abil.paA, abil.na, `PA · age ${p.age - 1}-${p.age + 1}`)}</div>` : '<span class="sk" style="height:70px;width:100%"></span>'}
 `;
 }
@@ -1947,8 +1947,7 @@ const ALL_STATS = {
   def: ['Defending', [cntS('Tackles won', 's_tackles_completed'), cntS('Tackles attempted', 's_tackles_attempted'), rateS('Tackle success', p => p.s_tackle_pct), cntS('Interceptions', 's_interceptions'),
     cntS('Possession won', 's_possession_won'), cntS('Pressures', 's_pressures_completed'), ['Defensive actions', () => null, p => p.s_def_actions_p90],
     cntS('Headers won', 's_headers_won'), cntS('Aerial duels', 's_aerial_challenges_attempted'), rateS('Aerial success', p => p.s_header_pct), cntS('Clearances', 's_clearances'), cntS('Blocks', 's_blocks')]],
-  wrk: ['Workload & discipline', [['Avg rating', p => p.s_avg_rating, null, false, 'r'], ['Apps', p => p.s_apps, null, false, 'x', p => `${p.s_apps ?? 0} <small>(${p.s_starts ?? 0}+${p.s_substitute_appearances ?? 0})</small>`],
-    ['Minutes', p => p.s_minutes, null, false, 'x'], cntS('Distance (km)', 's_distance_km', false, 1), cntS('Player of the match', 's_player_of_the_match'),
+  wrk: ['Workload & discipline', [['Starts · sub', p => p.s_starts, null, false, 'x', p => `${p.s_starts ?? 0} · ${p.s_substitute_appearances ?? 0}`], cntS('Distance (km)', 's_distance_km', false, 1), cntS('Player of the match', 's_player_of_the_match'),
     cntS('Yellow cards', 's_yellow_cards', true), cntS('Red cards', 's_red_cards', true)]],
   gks: ['Shot stopping', [['Saves', gkSaves, p => p.s_minutes && gkSaves(p) != null ? gkSaves(p) * 90 / p.s_minutes : null], cntS('Saves held', 's_saves_held'), cntS('Saves parried', 's_saves_parried'),
     cntS('Saves tipped', 's_saves_tipped'), cntS('Shots on target faced', 's_shots_on_target_faced'), cntS('xG prevented', 's_expected_goals_prevented', false, 1)]],
@@ -2050,13 +2049,13 @@ function sideBody(k) {
       ${list || `<p class="note">${mb && !p.s_minutes ? 'Needs league minutes to compare on numbers.' : 'No close match found.'}</p>`}
       <button class="link" data-similar="${p.uid}">Open the full list in Scout →</button></div>${MODE === 'full' || !sim.rows.length ? '' : `<div><p class="note" style="margin:0 0 6px">Each dot = a similar player · ring = him · hover for the name, click to open</p>${scatter(p, sim.rows, 520, 900)}</div>`}</div>`;
   }
-  if (k === 'price') return `${priceBar(p)}${priceBody(p)}${bench ? strip('Asking fee', pool.map(r => r.transfer_value), p.free_agent ? 0 : p.transfer_value, money, grp) + strip('Wage', pool.map(r => r.contract_wage), p.contract_wage, wage, grp) : ''}
+  if (k === 'price') return `${priceBar(p)}${FAIR ? priceBody(p) : ''}${bench ? strip('Asking fee', pool.map(r => r.transfer_value), p.free_agent ? 0 : p.transfer_value, money, grp) + strip('Wage', pool.map(r => r.contract_wage), p.contract_wage, wage, grp) : ''}
     ${!FAIR ? '<p class="note">Fair prices are off: fee and wage against his peers only.</p>' : ''}`;
   const js = s => { try { return JSON.parse(s || '[]') || []; } catch { return []; } };
   if (k === 'contract') {
     const clauses = js(p.contract_clauses).filter(c => c.kind && c.kind !== 'unknown');
-    const facts = [['Sale', saleTxt(p)], ['Squad status', (p.contract_squad_status || '–').replaceAll('_', ' ')], ['Wage', wage(p.contract_wage)], p.contract_kind && ['Contract type', p.contract_kind.replaceAll('_', ' ')],
-      ['Signed', p.contract_start || '–'], ['Ends', p.contract_end || '–']].filter(Boolean);
+    const facts = [['Sale', saleTxt(p)], ['Squad status', (p.contract_squad_status || '–').replaceAll('_', ' ')], p.contract_kind && ['Contract type', p.contract_kind.replaceAll('_', ' ')],
+      ['Signed', p.contract_start || '–']].filter(Boolean);
     return `${ppTimeline(p, true)}<div class="facts-t">${facts.map(([k_, v]) => `<div><span>${k_}</span><b>${esc(v)}</b></div>`).join('')}</div>
       <h4>Clauses</h4>${clauses.length ? `<div class="tags">${clauses.map(c => `<span class="tag">${esc(label(c.kind))}${c.value != null ? `<b>${money(c.value)}</b>` : ''}</span>`).join('')}</div>` : '<p class="note">No clause in this contract.</p>'}
       ${p.suspensions ? '<div class="tags" style="margin-top:8px"><span class="tag bad">Suspended</span></div>' : ''}`;
@@ -2064,7 +2063,7 @@ function sideBody(k) {
   // Registration chain from the save: clubs, dates and wage per spell (no fees or past-season stats in the save).
   if (k === 'club') {
     const chain = js(p.contract_chain).slice().reverse();
-    const facts = [['Club', (p.club_name || 'Free agent') + (p.club_join_date ? ` · since ${p.club_join_date}` : '')], p.on_loan && ['On loan', `from ${p.loan_parent_club_name || '?'}${p.loan_end ? ' until ' + p.loan_end : ''}`],
+    const facts = [p.club_join_date && ['Joined the club', p.club_join_date], p.on_loan && ['On loan', `from ${p.loan_parent_club_name || '?'}${p.loan_end ? ' until ' + p.loan_end : ''}`],
       p.home_grown_club_names && ['Home-grown at', p.home_grown_club_names.replaceAll(';', ', ')], p.raw_condition != null && ['Condition · sharpness', `${Math.round(p.raw_condition / 100)}% · ${Math.round((p.raw_match_sharpness ?? 0) / 100)}%`]].filter(Boolean);
     return `<div class="facts-t">${facts.map(([k_, v]) => `<div><span>${k_}</span><b>${esc(v)}</b></div>`).join('')}</div>
       <h4>Registrations</h4>${chain.length ? `<table class="reg"><thead><tr><th>Club</th><th>From</th><th>To</th><th>Wage</th></tr></thead><tbody>${chain.map(c => `<tr><td>${esc(c.club_name || '?')}</td><td>${esc(c.start || '–')}</td><td>${esc(c.end || '–')}</td><td>${c.wage ? wage(c.wage) : '–'}</td></tr>`).join('')}</tbody></table>` : '<p class="note">No registration recorded.</p>'}`;
@@ -2089,7 +2088,7 @@ function sideBody(k) {
 }
 // Profile pages per mode: [id, tab label, cards]. Overview and the stats page with the beeswarm place cards by named grid areas (CSS).
 const PP_PAGES = {
-  full: [['over', 'Overview', ['role', 'attr', 'canvas', 'sg', 'dev']], ['report', 'Scouting report', ['hero', 'report', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'season', 'stats']],
+  full: [['over', 'Overview', ['role', 'attr', 'canvas', 'sg', 'dev']], ['report', 'Scouting report', ['report', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'season', 'stats']],
     ['similar', 'Similar players', ['similar', 'apx']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'club', 'traits']]],
   fair: [['over', 'Overview', ['role', 'attr', 'canvas', 'sg', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'season', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'club', 'traits']]],
   moneyball: [['over', 'Overview', ['canvas', 'swarm', 'pizza', 'simmini']], ['stats', 'Statistics', ['season', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'club', 'traits']]],
@@ -2141,7 +2140,7 @@ async function renderProfile() {
     <header class="pp-head">
       <div class="pp-id"><div class="pp-nm"><h1 id="ppName" tabindex="-1">${esc(p.name)}</h1>
           <span class="pp-pos">${posChips(p.natural_positions)}${p.accomplished_positions ? `<span class="muted">also</span>${posChips(p.accomplished_positions)}` : ''}</span></div>
-        <p>${natHTML(p) || 'Unknown nation'} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${p.height_cm} cm` : ''}${mb ? '' : feetHTML(p)}</p></div>
+        <p>${natHTML(p, true) || 'Unknown nation'} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${p.height_cm} cm` : ''}${mb ? '' : feetHTML(p)}</p></div>
       <div class="pp-kpis" data-pp="kpis"></div>
       <div class="pp-act">
         <button class="icon-btn star star-btn" data-star="${p.uid}" data-name="${esc(p.name)}" data-club="${p.club_uid ?? ''}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist ${esc(p.name)}" title="Shortlist (s)">★</button>
@@ -2268,7 +2267,7 @@ async function renderSeason(p, grp, root, alive) {
     return;
   }
   // Apps, minutes and rating live in the hero dial; the stat line keeps the counting stats only.
-  const line = [['Apps', p.s_apps], ['Minutes', p.s_minutes?.toLocaleString()],
+  const line = [
     ...(grp === 'GK' ? [['Clean sheets', p.s_clean_sheets], ['Conceded', p.s_goals_allowed]] : [['Goals', p.s_goals], ['Assists', p.s_assists]]), ['PoM', p.s_player_of_the_match]]
     .map(([l, x, c]) => `<div class="stat">${l}<b style="${c ? 'color:' + c : ''}">${x ?? '–'}</b></div>`).join('');
   const keys = METRICS[grp] || METRICS.CM;
