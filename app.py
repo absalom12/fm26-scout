@@ -185,7 +185,7 @@ def infer_formation(matches, last=5):
 
 
 def club_leagues(tables):
-    """club_uid -> league (competition) id, from (competition_id, club_count, club_uids) classification tables.
+    """club_uid -> league id, from (table_key, club_count, club_uids) classification tables.
     The caller passes only competitions with promotion or relegation (real leagues, not cups or playoffs). A club can
     still sit in several (a league plus a regional group), so its league is the biggest domestic-sized one (8-24 clubs).
     Clubs in no such table (the large majority: only simulated leagues have tables) get no league."""
@@ -193,7 +193,7 @@ def club_leagues(tables):
     for comp, n, clubs in tables:
         if 8 <= n <= 24:
             for c in clubs:
-                if c not in best or n > best[c][0]:
+                if c is not None and (c not in best or n > best[c][0]):
                     best[c] = (n, comp)
     return {c: comp for c, (n, comp) in best.items()}
 
@@ -210,8 +210,14 @@ def extract(save_path, out_dir, players=True):
         E.write_csv(E.flat_rows(overall, S), E.column_names(S), os.path.join(out_dir, "season_stats.csv"))
         tables = list(s.league_tables())
         rules = {r.competition_id: r for r in s.competition_rules()}
-        leagues = club_leagues((t.competition_id, t.club_count, [r.club_uid for r in t.rows]) for t in tables
-                               if (r := rules.get(t.competition_id)) and (r.promotion_places or r.relegation_places))
+        # competition_id is NOT unique to a league (one id covers the Australian league and a Croatian one, regional
+        # groups of one league, one-club tables...), so a league is the table itself, keyed by its position.
+        nation = {c.uid: c.nation_id for c in s.clubs()}
+        # a domestic league has clubs from one nation; continental tournaments that promote/relegate (women's
+        # champions league) span several
+        leagues = club_leagues((i, t.club_count, [r.club_uid for r in t.rows]) for i, t in enumerate(tables)
+                               if (r := rules.get(t.competition_id)) and (r.promotion_places or r.relegation_places)
+                               and len({nation.get(r.club_uid) for r in t.rows} - {None}) <= 1)
         groups = [[r.team_id for r in t.rows] for t in tables]
         groups += [[f.home_team_id, f.away_team_id] for f in s.fixtures()]
         lab = club_genders(list(s.clubs()), groups)
