@@ -299,7 +299,7 @@ details[open] summary::before { content: "−"; }
 .pp-card[data-pp="radar"] .radar-wrap { grid-template-columns: minmax(0, 180px) 1fr; gap: 40px; padding-left: 34px; } .pp-card[data-pp="radar"] .radar { width: 100%; height: auto; max-height: 100%; }
 .scat .ax.t { font: 600 10.5px var(--f-body); fill: var(--text2); }
 .sim-hd { min-height: 0 !important; padding-top: 0; padding-bottom: 2px; font: 600 10px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); pointer-events: none; } .sim-hd span:not(:first-child) { text-align: right; }
-.sd-sim.pa .sim-row { grid-template-columns: minmax(0, 1fr) auto 44px 44px; }
+.sd-sim.pa .sim-row { grid-template-columns: minmax(0, 1fr) auto 44px 44px; } .sd-sim.av .sim-row { grid-template-columns: minmax(0, 1fr) auto 48px 70px; } .sd-sim.av.pa .sim-row { grid-template-columns: minmax(0, 1fr) auto 48px 44px 44px; }
 .ast-r.ast-hd { height: 14px; font: 600 9.5px var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); } .ast-r.ast-hd b, .ast-r.ast-hd em { font: inherit; color: inherit; } .ast-r.ast-hd span:last-child { text-align: center; }
 /* Contract page: the whole page is available, so bigger type and air. */
 .pg-contract { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, .8fr); }
@@ -2221,12 +2221,12 @@ function secSwarm() {
   return `${head}${lg}<svg class="swarm" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Per-90 stats of ${p.name} among ${pool.length} ${plural(grp)}: ` + keys.map(k => `${M[k][0]} ${M[k][1](p)?.toFixed(M[k][2] ?? 2) ?? 'none'}${!small && bench.pcs[k] != null ? `, percentile ${bench.pcs[k]}` : ''}`).join('; '))}">${rowsSvg}</svg>`;
 }
 // One similar player: flag, name, age and club, fee, and the number he was matched on.
-const simRow = (r, pa) => { const [t, , v, c] = simMetric(r);
+const simRow = (r, pa, ak = []) => { const [t, , v, c] = simMetric(r), av = ak.length ? mean(ak.map(k => r[k])) : null;
   return `<button class="sim-row" data-profile="${r.uid}"><span><b>${natHTML(r)} ${esc(r.name)}</b><small>${r.age} yrs · ${esc(r.club_name || 'Free agent')}</small></span>
-    <span class="mono" style="font-size:12px">${feeHTML(r)}</span><span class="mono" style="color:${c};font-weight:700" title="${t}"><span class="sr">${t} </span>${v}</span>${pa ? `<span class="mono" style="color:${abilityColor(r.ability_potential)};font-weight:700" title="Potential ability"><span class="sr">Potential ability </span>${r.ability_potential ?? '–'}</span>` : ''}</button>`; };
+    <span class="mono" style="font-size:12px">${feeHTML(r)}</span>${ak.length ? `<span class="mono" style="color:${av == null ? C.muted : sev(av)};font-weight:700" title="Average of the matched attributes"><span class="sr">Average of the matched attributes </span>${av == null ? '–' : av.toFixed(1)}</span>` : ''}<span class="mono" style="color:${c};font-weight:700" title="${t}"><span class="sr">${t} </span>${v}</span>${pa ? `<span class="mono" style="color:${abilityColor(r.ability_potential)};font-weight:700" title="Potential ability"><span class="sr">Potential ability </span>${r.ability_potential ?? '–'}</span>` : ''}</button>`; };
 // Column names over a similar-players list (CA and PA in Full).
 const SIM_SHORT = { 'Current ability': 'CA', Performance: 'Performance', 'Best role': 'Best role' };
-const simHead = (p, pa) => `<div class="sim-row sim-hd" aria-hidden="true"><span>Player</span><span>Value</span><span>${SIM_SHORT[simMetric(p)[0]]}</span>${pa ? '<span>PA</span>' : ''}</div>`;
+const simHead = (p, pa, ak = []) => `<div class="sim-row sim-hd" aria-hidden="true"><span>Player</span><span>Value</span>${ak.length ? `<span title="Average of ${esc(ak.map(k => label(k)).join(', '))}">Avg</span>` : ''}<span>${SIM_SHORT[simMetric(p)[0]]}</span>${pa ? '<span>PA</span>' : ''}</div>`;
 // Cards of the non-overview pages.
 function sideBody(k) {
   const { p, grp, bench, sim } = ppx, mb = MODE === 'moneyball', pool = bench?.pool || [];
@@ -2234,8 +2234,9 @@ function sideBody(k) {
     if (!sim) return '<span class="sk" style="height:200px;width:100%"></span>';
     const chips = [...(sim.crit?.attributes || []).map(x => `<span class="ac" title="${esc(label(x.col))}">${ABBR[x.col.slice(11)] || esc(label(x.col))}<b class="${tier(x.value)}">${x.value}</b></span>`),
       ...(sim.crit?.stats || []).map(x => `<span class="ac st" title="${esc(label(x.col))}: better than ${x.pct}% of peers">${esc(label(x.col))}<b style="color:${pctColor(x.pct)}">${x.value}</b></span>`)];
-    const pa = simMetric(p)[0] === 'Current ability' && !hid('ability_potential'), list = sim.rows.length ? simHead(p, pa) + sim.rows.map(r => simRow(r, pa)).join('') : '';
-    return `<div class="sd-sim${MODE !== 'full' ? ' wide' : ''}${pa ? ' pa' : ''}"><div>${chips.length ? `<div class="kchips" aria-label="Compared on">${chips.join('')}</div>` : ''}
+    // ak = the attributes the match was made on (Full / Fair play); their average is a column of the list.
+    const ak = (sim.crit?.attributes || []).map(x => x.col), pa = simMetric(p)[0] === 'Current ability' && !hid('ability_potential'), list = sim.rows.length ? simHead(p, pa, ak) + sim.rows.map(r => simRow(r, pa, ak)).join('') : '';
+    return `<div class="sd-sim${MODE !== 'full' ? ' wide' : ''}${pa ? ' pa' : ''}${ak.length ? ' av' : ''}"><div>${chips.length ? `<div class="kchips" aria-label="Compared on">${chips.join('')}</div>` : ''}
       ${list || `<p class="note">${mb && !p.s_minutes ? 'Needs league minutes to compare on numbers.' : 'No close match found.'}</p>`}
       <button class="link" data-similar="${p.uid}">Open the full list in Scout →</button></div>${MODE === 'full' || !sim.rows.length ? '' : `<div><p class="note" style="margin:0 0 6px">Each dot = a similar player · ring = him · hover for the name, click to open</p>${scatter(p, sim.rows, 520, 900)}</div>`}</div>`;
   }
