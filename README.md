@@ -41,7 +41,11 @@ Get up and running in less than two minutes without touching Python or the comma
 
 Because the binary is not code-signed with a commercial developer certificate, your operating system will show a one-time security prompt on first launch:
 
-- **macOS:** If blocked, open **System Settings → Privacy & Security**, scroll down to the bottom, click **Open Anyway** next to `FM26-Scout`, and confirm. *(Required only once)*
+- **macOS:** the dialog only offers *Move to Trash* or *Done*. Click **Done** (not Trash), then open **System Settings → Privacy & Security**, scroll to the bottom, click **Open Anyway** next to `FM26-Scout`, and confirm with your password. *(Required only once)*
+  Faster alternative, in Terminal (adjust the path if the app is elsewhere):
+  ```bash
+  xattr -dr com.apple.quarantine /Applications/FM26-Scout.app
+  ```
 - **Windows:** If SmartScreen displays *"Windows protected your PC"*, click **More info** → **Run anyway**.
 
 ---
