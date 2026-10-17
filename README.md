@@ -37,10 +37,12 @@ Get up and running in less than two minutes without touching Python or the comma
 
 ---
 
-### 🛡️ Security prompts on first launch
+### 🛡️ Is it safe to open?
 
-- **macOS:** no warning. The app is signed with an Apple Developer ID certificate and notarized by Apple, so it opens with a double-click.
-- **Windows:** expect one warning. The `.exe` is not code-signed, because a Windows signing certificate is a paid yearly service and this is a free hobby project. If SmartScreen displays *"Windows protected your PC"*, click **More info** → **Run anyway**. It is a one-time prompt, and the app works normally afterwards. The source code and the CI that builds the binaries are public, so you can check what you run or build it yourself (see below).
+- **Mac:** yes, and nothing to do. The app is made by a registered Apple developer and checked by Apple, so it opens like any other app.
+- **Windows:** yes, but Windows will show a blue **"Windows protected your PC"** screen the first time. That is normal for small free apps from independent developers: Microsoft's seal of approval costs a yearly fee, which I'm not paying for a free project. To continue, click **More info**, then **Run anyway**. You only do this once.
+
+The app runs only on your computer and never sends your save file anywhere. The code is public, so anyone can check it.
 
 ---
 
