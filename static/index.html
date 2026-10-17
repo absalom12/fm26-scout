@@ -273,62 +273,106 @@ details[open] summary::before { content: "−"; }
 .attrs .row { display: flex; justify-content: space-between; font-size: 13px; padding: 1px 0; }
 .attrs .row span:first-child { color: var(--text2); }
 
-/* ---------- Player profile page: six answer tiles over one stage, fits one viewport (no page scroll) ---------- */
+/* ---------- Player profile page: a first view built for the mode (Full / Fair play / Moneyball) + a tabbed side panel; one viewport, no page scroll ---------- */
 .pp { flex: 1; min-height: 0; overflow: hidden; }
-.pp-in { height: 100%; max-width: 1480px; margin: 0 auto; padding: 0 20px 14px; display: flex; flex-direction: column; }
-.pp-head { flex: none; display: flex; align-items: center; gap: 16px; padding: 10px 0 8px; border-bottom: 1px solid var(--line); box-shadow: 0 1px 0 color-mix(in srgb, var(--mode) 30%, transparent); }
+.pp-in { height: 100%; max-width: 1560px; margin: 0 auto; padding: 0 16px 12px; display: flex; flex-direction: column; }
+.pp-head { flex: none; display: flex; align-items: center; gap: 14px; padding: 9px 0 8px; border-bottom: 1px solid var(--line); box-shadow: 0 1px 0 color-mix(in srgb, var(--mode) 30%, transparent); }
 .pp-id { flex: 1; min-width: 0; }
-.pp-id h1 { margin: 0; font: 700 30px/1 var(--f-display); letter-spacing: .01em; text-transform: uppercase; outline: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pp-id p { margin: 5px 0 0; color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pp-id h1 { margin: 0; font: 700 28px/1 var(--f-display); letter-spacing: .01em; text-transform: uppercase; outline: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pp-id p { margin: 4px 0 0; color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pp-id .pp-pos { margin-left: 8px; } .pp-id .pp-pos .muted { font-size: 12px; margin: 0 5px 0 2px; }
+.pp-quick { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; max-width: 46%; }
+.pp-quick .tag { font-size: 11.5px; padding: 2px 8px; } .pp-quick .tag::first-letter { text-transform: uppercase; }
 .pp-act { display: flex; gap: 8px; align-items: center; flex: none; }
-.pp-rail { flex: none; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin: 10px 0; }
-.pp-tile { position: relative; display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 134px; padding: 10px 12px 12px; text-align: left; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); color: var(--text); transition: border-color var(--t-fast), background var(--t-fast); }
-.pp-tile:hover { border-color: var(--line2); background: var(--raise); }
-.pp-tile[aria-selected="true"] { border-color: color-mix(in srgb, var(--mode) 55%, transparent); background: radial-gradient(120% 100% at 30% 0%, color-mix(in srgb, var(--mode) 13%, transparent), transparent 70%), var(--panel); }
-.pp-tile[aria-selected="true"]::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--mode); }
-.pp-tile:focus-visible, .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.t-q { display: flex; align-items: center; gap: 6px; font: 700 12px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
-.t-ql { overflow: hidden; text-overflow: ellipsis; }
-.pp-tile[aria-selected="true"] .t-q { color: var(--mode); }
+.pp-body { flex: 1; min-height: 0; display: grid; gap: 10px; margin-top: 10px; }
+.m-full { grid-template-columns: minmax(240px, 290px) minmax(0, 1fr) minmax(290px, 360px); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "ability attr dev" "ability report side"; }
+.m-fair { grid-template-columns: minmax(0, 1.25fr) minmax(300px, 360px) minmax(270px, 330px); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "attr role prof" "side role prof"; }
+.m-moneyball { grid-template-columns: minmax(250px, 300px) minmax(0, 1fr) minmax(0, 1.1fr); grid-template-rows: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-areas: "perf pizza table" "perf side table"; }
+.pp-card { position: relative; min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }
+.pp-card h3 { flex: none; margin: 0 0 8px; font: 700 13px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 7px; }
+.pp-card h3 .ico { color: var(--mode); }
+.pp-card h3 small { font: 400 12px var(--f-body); letter-spacing: 0; text-transform: none; color: var(--faint); margin-left: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pp-card h4 { margin: 10px 0 5px; font: 700 12px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.pp-card .note { margin: 6px 0 0; }
 .ico { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.t-b { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
-.t-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* rings */
 .ring { position: relative; display: block; flex: none; width: 64px; height: 64px; }
 .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .ring circle { fill: none; stroke-width: 6; stroke-linecap: round; } .ring .trk { stroke: #1a242d; }
 .ring .arc { transform-origin: 32px 32px; animation: dial .8s var(--ease) both; }
 .ring b { position: absolute; inset: 0; display: grid; place-items: center; font: 700 18px var(--f-mono); }
-.t-kv { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.t-pos { display: flex; flex-wrap: wrap; gap: 2px; }
-.tkv { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; }
-.tkv > span { overflow: hidden; text-overflow: ellipsis; }
-.tkv b { font: 700 13px var(--f-mono); color: var(--text); }
-.t-bars { display: flex; flex-direction: column; gap: 6px; }
-.tbar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(30px, 56px) 26px; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
-.tbar > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tbar > i { display: block; height: 6px; border-radius: 3px; background: #1a242d; overflow: hidden; }
-.tbar > i > i { display: block; height: 100%; border-radius: 3px; transform-origin: left; animation: grow .6s var(--ease) both; }
-.tbar b { font: 700 12px var(--f-mono); text-align: right; }
-.t-pitch { display: block; flex: none; width: 56px; aspect-ratio: 68 / 92; border-radius: 6px; overflow: hidden; background: repeating-linear-gradient(180deg, var(--pitch) 0 9.09%, var(--pitch2) 9.09% 18.18%); box-shadow: inset 0 0 0 1px #1d3d2a; }
-.t-pitch svg { display: block; width: 100%; height: 100%; }
-.t-big { font: 700 22px/1.1 var(--f-mono); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.t-big .tag { font-size: 13px; }
-.t-fee { gap: 8px; justify-content: space-between; } .t-fee .deal { padding: 1px 6px; font-size: 11px; } .t-fee .deal em { display: none; }
-.t-rule { position: relative; display: block; height: 8px; border-radius: 4px; background: #1a242d; margin: 2px 0; }
-.t-rule i { position: absolute; top: 0; bottom: 0; display: block; }
-.t-rule .band { border-radius: 4px; background: color-mix(in srgb, var(--accent) 30%, transparent); }
-.t-rule .fair { width: 2px; margin-left: -1px; top: -3px; bottom: -3px; background: var(--accent); }
-.t-rule .ask { width: 10px; height: 10px; top: -1px; margin-left: -5px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px var(--panel); }
-.t-tags { display: flex; flex-wrap: wrap; gap: 4px; } .t-tags .tag { font-size: 11px; padding: 2px 7px; }
-.t-sim { display: flex; flex-direction: column; gap: 4px; }
-.t-sim > span { display: flex; justify-content: space-between; gap: 6px; font-size: 12.5px; color: var(--text2); white-space: nowrap; }
-.t-sim > span > span { overflow: hidden; text-overflow: ellipsis; } .t-sim b { font: 700 12px var(--f-mono); }
-.t-empty { font-size: 12px; line-height: 1.35; color: var(--muted); }
-/* Contract time bar (tile and stage) */
-.tl { display: block; }
+.ab-rings { display: flex; align-items: center; justify-content: space-around; gap: 8px; }
+.pp-rg { display: grid; justify-items: center; gap: 3px; } .pp-rg > small { font: 700 11px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--text2); }
+.ab-gap { display: grid; justify-items: center; } .ab-gap b { font: 700 20px var(--f-mono); } .ab-gap span { font-size: 11px; color: var(--muted); }
+/* gauges and factor bars */
+.lds { display: grid; gap: 8px; margin-top: 10px; }
+.ld-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--text2); }
+.ld-h b { font: 700 15px var(--f-mono); }
+.ld-tr { position: relative; height: 8px; margin: 3px 0 2px; border-radius: 4px; background: #1a242d; }
+.ld-tr i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 4px; }
+.ld-tr .gh { opacity: .28; } .ld-tr .fl { transform-origin: left; animation: grow .6s var(--ease) both; }
+.ld-tr .md { width: 2px; margin-left: -1px; top: -3px; bottom: -3px; border-radius: 1px; background: var(--text); }
+.ld small { display: block; font-size: 11px; color: var(--muted); }
+.fbs { display: grid; gap: 4px; }
+.fb { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(50px, 1fr) 30px; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text2); }
+.fb > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .fb small { color: var(--faint); font-size: 11px; }
+.fb > i { position: relative; display: block; height: 7px; border-radius: 4px; background: #1a242d; }
+.fb > i > i { position: absolute; inset: 0 auto 0 0; display: block; border-radius: 4px; transform-origin: left; animation: grow .6s var(--ease) both; }
+.fb > i > em { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--text2); z-index: 1; }
+.fb b { font: 700 12.5px var(--f-mono); text-align: right; }
+/* Full */
+.vsc { width: 100%; height: auto; max-height: 160px; flex: 0 1 auto; min-height: 0; }
+.vsc .ax { font: 500 9.5px var(--f-mono); fill: var(--muted); }
+.vread { margin: 4px 0 0; font-size: 12.5px; line-height: 1.4; color: var(--text2); }
+.dv-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; } .dv-head small { font-size: 11.5px; color: var(--muted); }
+.pp-rep { flex: 1; min-height: 0; overflow-y: auto; columns: 2 300px; column-gap: 22px; font-size: 13px; line-height: 1.45; color: var(--text2); }
+.pp-rep p { margin: 0 0 7px; break-inside: avoid; } .pp-rep b { color: var(--text); font-weight: 700; }
+.pp-card .hm { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; }
+.pp-card .hm-c span { font-size: 11px; }
+.pp-card .hm-g { grid-template-columns: 1fr 1fr; gap: 3px; } .pp-card .hm-c { padding: 3px 6px; } .pp-card .hm-c b { font-size: 13px; } .pp-card .hm h4 { margin: 0 0 4px; } .pp-card .hm-g + h4 { margin-top: 8px; }
+/* Fair play */
+.rl-chip { cursor: pointer; } .rl-chip[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--mode); color: var(--text); } .rl-chip:focus-visible { outline: 2px solid var(--accent); }
+.rl-pick select { width: 100%; height: 34px; padding: 0 10px; border: 1px solid var(--line2); border-radius: var(--r-sm); background: var(--bg); color: var(--text); font: 600 13px var(--f-body); }
+.rl-pick select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.rl-top { display: flex; align-items: center; gap: 12px; margin: 10px 0; }
+.rl-top > div { display: grid; gap: 2px; min-width: 0; font-size: 12.5px; color: var(--muted); } .rl-top > div > b { font: 700 16px var(--f-display); letter-spacing: .03em; text-transform: uppercase; color: var(--text); }
+.pf-top { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 12px; align-items: center; margin-bottom: 8px; }
+.pf-pitch .pitch { width: 74px; }
+/* Moneyball */
+.tot { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-top: 8px; }
+.tot div, .facts-t div { min-width: 0; padding: 4px 8px; border-radius: var(--r-sm); background: var(--bg); }
+.tot span, .facts-t span { display: block; font: 600 10px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tot b { font: 700 14px var(--f-mono); }
+.facts-t { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+.facts-t b { display: block; font-size: 13px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; } .facts-t b::first-letter { text-transform: uppercase; }
+.mt { display: grid; font-size: 12.5px; }
+.mt-r { display: grid; grid-template-columns: minmax(0, 1.1fr) 62px minmax(80px, 1fr) 36px; align-items: center; gap: 8px; min-height: 21px; border-bottom: 1px solid #161f28; }
+.mt-r > span:first-child { color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .mt-r > span:nth-child(2), .mt-r > span:last-child { text-align: right; }
+.mt-h { font: 600 10px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); min-height: 18px; }
+.mt-b { display: grid; grid-template-columns: 1fr 26px; align-items: center; gap: 6px; } .mt-b em { font-style: normal; color: var(--muted); }
+.mt-b > i { position: relative; display: block; height: 7px; border-radius: 4px; background: #1a242d; }
+.mt-b > i::before { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--line2); }
+.mt-b > i > i { position: absolute; inset: 0 auto 0 0; display: block; border-radius: 4px; transform-origin: left; animation: grow .6s var(--ease) both; }
+.mt-b b { font: 700 12px var(--f-mono); text-align: right; }
+.pizza { flex: 1; min-height: 0; width: 100%; overflow: visible; }
+.pizza .w { transform-origin: 200px 132px; animation: radar .5s var(--ease) both; }
+.pizza .pv { font: 700 12px var(--f-mono); } .pizza .pl { font: 600 11px var(--f-body); fill: var(--text2); }
+/* Side panel */
+.sd-tabs { flex: none; display: flex; flex-wrap: wrap; gap: 2px; padding: 2px; margin-bottom: 8px; border-radius: var(--r-pill); background: var(--bg); align-self: flex-start; }
+.sd-tabs button { height: 26px; padding: 0 11px; border-radius: var(--r-pill); font: 600 12px var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.sd-tabs button:hover { color: var(--text); } .sd-tabs button[aria-selected="true"] { background: var(--raise); color: var(--text); }
+.sd-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sd-body { position: relative; flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
+.sd-body .sec { padding: 0; border: 0; }
+.sd-sim.wide { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.sd-sim .sim-row { min-height: 36px; padding: 3px 6px; } .sd-sim .kchips { margin-bottom: 6px; }
+.sd-pos { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; } .sd-pos .legend { display: none; }
+.sd-body .rolebar { grid-template-columns: minmax(0, 150px) 1fr 30px; font-size: 12px; } .sd-body .rolebar > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sd-body .radar-wrap { grid-template-columns: 200px 1fr; } .sd-body .radar { width: 200px; height: 200px; }
+/* contract time bar */
+.tl { display: block; margin: 2px 0; }
 .tl-tr { position: relative; display: block; height: 8px; border-radius: 4px; background: #1a242d; }
-.tl.big .tl-tr { height: 14px; border-radius: 7px; margin: 24px 0 26px; }
+.tl.big .tl-tr { height: 12px; border-radius: 6px; margin: 22px 0 22px; }
 .tl-tr i { position: absolute; top: 0; bottom: 0; display: block; }
 .tl-tr .done { left: 0; background: var(--line2); border-radius: 4px 0 0 4px; }
 .tl-tr .left { border-radius: 0 4px 4px 0; transform-origin: left; animation: grow .6s var(--ease) both; }
@@ -339,109 +383,41 @@ details[open] summary::before { content: "−"; }
 .tl-tr .yr em { top: calc(100% + 6px); bottom: auto; color: var(--muted); font-family: var(--f-mono); letter-spacing: 0; }
 .tl-tr .loan em { color: var(--warn); bottom: auto; top: calc(100% + 6px); }
 .tl:not(.big) em { display: none; }
-.tl-lg { display: flex; justify-content: space-between; gap: 6px; margin-top: 5px; font: 500 11px var(--f-mono); color: var(--muted); white-space: nowrap; }
+.tl-lg { display: flex; justify-content: space-between; gap: 6px; margin-top: 4px; font: 500 11px var(--f-mono); color: var(--muted); white-space: nowrap; }
 .tl-lg b { font: 700 12px var(--f-mono); }
-.tl.big .tl-lg { font-size: 12px; } .tl.big .tl-lg b { font-size: 15px; }
-/* Stage: the selected tile's deep module, sized to what is left of the viewport */
-.pp-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.st-grid { flex: 1; min-height: 0; display: grid; gap: 10px; }
-.pp-card { min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }
-.pp-card h3 { flex: none; margin: 0 0 10px; font: 700 13px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; }
-.pp-card h3 small { font: 400 12px var(--f-body); letter-spacing: 0; text-transform: none; color: var(--faint); margin-left: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.pp-card h4 { margin: 12px 0 6px; font: 700 12px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
-.pp-card .note { margin: 8px 0 0; }
-.pp-card.fill { flex: 1; }
-.pp-card .statline { margin-bottom: 8px; }
-.pp-card .pct { padding: 2px 0; }
-.lv { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
-.gd { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1.15fr); } .gd.mb { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-.wh { grid-template-columns: minmax(180px, .7fr) minmax(0, 1fr) minmax(0, 1.25fr); }
-.co { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
-.co.nf { grid-template-columns: minmax(0, .6fr) minmax(0, 1.4fr); }
-.co .strip:first-of-type { margin-top: 10px; }
-.sg { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto minmax(0, 1fr); } .sg .wide { grid-column: 1 / -1; }
-.si { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
-.seg-row { flex: none; display: flex; justify-content: flex-end; margin-top: 8px; }
-.seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--r-pill); background: var(--bg); margin-left: 8px; flex: none; }
-.seg button { height: 26px; padding: 0 12px; border-radius: var(--r-pill); font: 600 12px var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.seg button:hover { color: var(--text); } .seg button[aria-pressed="true"] { background: var(--raise); color: var(--text); }
-.lds { flex: 1; min-height: 0; display: grid; gap: 16px; align-content: start; }
-.ld-h { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--text2); }
-.ld-h b { font: 700 18px var(--f-mono); }
-.ld-tr { position: relative; height: 10px; margin: 4px 0 3px; border-radius: 5px; background: #1a242d; }
-.ld-tr i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 5px; }
-.ld-tr .gh { opacity: .28; } .ld-tr .fl { transform-origin: left; animation: grow .6s var(--ease) both; }
-.ld-tr .md { width: 2px; margin-left: -1px; top: -4px; bottom: -4px; border-radius: 1px; background: var(--text); }
-.ld small { display: block; font-size: 12px; color: var(--muted); }
-.ld + .ld { margin-top: 0; } .pp-card > .ld { margin-bottom: 10px; }
-.vd h3 { margin-top: 6px; }
-.gd .radar-wrap { flex: 1; min-height: 0; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; justify-items: center; gap: 14px; }
-.gd .radar { width: auto; height: 100%; max-width: calc(100% - 110px); max-height: 250px; min-height: 0; }
-.gd .axes-list { width: 100%; grid-template-columns: 1fr 1fr; gap: 3px 22px; }
-.pizza { flex: 1; min-height: 0; width: 100%; overflow: visible; }
-.pizza .w { transform-origin: 200px 132px; animation: radar .5s var(--ease) both; }
-.pizza .pv { font: 700 12px var(--f-mono); } .pizza .pl { font: 600 11px var(--f-body); fill: var(--text2); }
-.wh .pc .pitch { flex: 1 1 0; min-height: 0; width: auto; max-width: 100%; align-self: center; }
-.wh .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 8px; }
-.wh .legend .tag { font-size: 11px; padding: 2px 7px; }
-.wh .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
-.wh .rolebar { grid-template-columns: minmax(0, 170px) 1fr 34px; padding: 1px 0; }
-.wh .rolebar > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.strip { margin: 4px 0 20px; }
+/* peer strips, scatter, misc */
+.strip { margin: 10px 0 14px; }
 .st-h { display: flex; align-items: baseline; gap: 10px; font-size: 13px; }
-.st-h span { color: var(--text2); font-weight: 600; } .st-h b { font: 700 18px var(--f-mono); } .st-h em { margin-left: auto; font-style: normal; font-size: 12px; color: var(--muted); }
-.st-tr { position: relative; height: 34px; margin-top: 4px; border-bottom: 1px solid var(--line2); }
-.st-tr i { position: absolute; bottom: 0; width: 1px; height: 14px; background: var(--muted); opacity: .35; }
-.st-tr .md { width: 2px; height: 28px; margin-left: -1px; background: var(--text2); opacity: 1; }
-.st-tr .me { width: 14px; height: 14px; margin-left: -7px; bottom: -7px; border-radius: 50%; background: var(--mode); opacity: 1; box-shadow: 0 0 0 3px var(--panel), 0 0 12px var(--mode); }
-.st-ax { display: flex; justify-content: space-between; margin-top: 10px; font: 500 11px var(--f-mono); color: var(--muted); }
-.facts-t { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.facts-t div { min-width: 0; padding: 6px 10px; border-radius: var(--r-sm); background: var(--bg); }
-.facts-t span { display: block; font: 600 10px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.facts-t b { display: block; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.facts-t b::first-letter { text-transform: uppercase; }
+.st-h span { color: var(--text2); font-weight: 600; } .st-h b { font: 700 16px var(--f-mono); } .st-h em { margin-left: auto; font-style: normal; font-size: 12px; color: var(--muted); }
+.st-tr { position: relative; height: 30px; margin-top: 4px; border-bottom: 1px solid var(--line2); }
+.st-tr i { position: absolute; bottom: 0; width: 1px; height: 12px; background: var(--muted); opacity: .35; }
+.st-tr .md { width: 2px; height: 24px; margin-left: -1px; background: var(--text2); opacity: 1; }
+.st-tr .me { width: 12px; height: 12px; margin-left: -6px; bottom: -6px; border-radius: 50%; background: var(--mode); opacity: 1; box-shadow: 0 0 0 3px var(--panel), 0 0 12px var(--mode); }
+.st-ax { display: flex; justify-content: space-between; margin-top: 8px; font: 500 11px var(--f-mono); color: var(--muted); }
 .chain { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; } .chain i { font-style: normal; color: var(--faint); }
-.scat { flex: 1; min-height: 0; width: 100%; }
+.scat { width: 100%; height: auto; }
 .scat text { font: 600 11px var(--f-body); fill: var(--text2); } .scat .ax { font: 500 10px var(--f-mono); fill: var(--muted); }
 .scat .pt[data-pp-uid] { cursor: pointer; } .scat .pt[data-pp-uid]:hover circle { stroke: var(--text); stroke-width: 2; }
 .scat .me text { fill: var(--mode); font-weight: 700; }
-.si .kchips { margin-bottom: 6px; }
-.sim-list { flex: 1; min-height: 0; overflow: hidden; }
-.si .sim-row { min-height: 38px; padding: 3px 8px; }
-.pp-all { flex: 1; min-height: 0; overflow-y: auto; padding-right: 6px; }
-.pp-all .facts { margin: 0; grid-template-columns: repeat(4, minmax(0, auto) minmax(56px, 1fr)); gap: 3px 14px; font-size: 12.5px; }
-.pp-stage .hm { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px 16px; }
-.pp-stage .hm-g { grid-template-columns: 1fr 1fr; }
-/* Short screens: tighter tiles; below ~700px tall (or narrow) the tile questions become icons (the words stay for screen readers and in the tooltip) */
+.pp-all .facts { margin: 0; grid-template-columns: repeat(2, minmax(0, auto) minmax(56px, 1fr)); gap: 3px 14px; font-size: 12.5px; }
+.m-moneyball .pp-all .facts, .m-fair .pp-all .facts { grid-template-columns: repeat(3, minmax(0, auto) minmax(56px, 1fr)); }
+/* Short or narrow screens: tighter; below 700px tall (or narrow) section titles become icons (the words stay for screen readers) */
 @media (max-height: 780px) {
-  .pp-head { padding: 8px 0 7px; } .pp-id h1 { font-size: 26px; } .pp-rail { margin: 8px 0; }
-  .pp-tile { min-height: 116px; padding: 8px 10px 10px; gap: 6px; }
+  .pp-id h1 { font-size: 24px; } .pp-head { padding: 7px 0 6px; } .pp-body { margin-top: 8px; gap: 8px; }
   .ring { width: 54px; height: 54px; } .ring b { font-size: 15px; }
-  .lds { gap: 9px; } .strip { margin-bottom: 12px; } .tl.big .tl-tr { margin: 22px 0 22px; }
-  .si .sim-row:nth-child(n+7) { display: none; }
-  .pp-tile { min-height: 0; }
-  .pp-card { padding: 10px 14px; } .pp-card h3 { margin-bottom: 8px; }
-  .lds { gap: 8px; } .ld-h b { font-size: 15px; } .ld-tr { height: 8px; margin: 3px 0 2px; } .ld small { font-size: 11px; }
-  .pp-card .pct { padding: 1px 0; } .pp-card .statline { gap: 4px; } .pp-card .stat { padding: 3px 8px; } .pp-card .stat b { font-size: 14px; }
-  .pp-card .dials .dial svg { width: 62px; height: 62px; } .pp-card .dials .dial > b { height: 62px; font-size: 17px; }
-  .sg .pp-card > .ld { margin-bottom: 4px; } .pp-card h4 { margin: 8px 0 4px; }
+  .lds { gap: 5px; margin-top: 6px; } .ld small { font-size: 10.5px; }
+  .pp-rep { font-size: 12.5px; line-height: 1.4; } .pp-rep p { margin-bottom: 5px; }
+  .mt-r { min-height: 19px; font-size: 12px; } .fbs { gap: 3px; } .fb { font-size: 12px; }
+  .vsc { max-height: 120px; } .pp-card h4 { margin: 7px 0 4px; } .tot b { font-size: 13px; } .tot div, .facts-t div { padding: 3px 7px; }
 }
 @media (max-height: 700px), (max-width: 1100px) {
-  .t-ql { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-  .t-q .ico { width: 18px; height: 18px; }
-  .pp-tile { min-height: 100px; }
-}
-@media (max-height: 700px) {
-  .pp-card { padding: 8px 12px; } .seg-row { margin-top: 6px; }
-  .lds { grid-template-columns: 1fr 1fr; column-gap: 24px; }
-  .pp-card .pct { font-size: 12px; padding: 0; } .pp-card .statline { margin-bottom: 4px; }
-  .facts-t { gap: 4px; } .facts-t div { padding: 3px 8px; }
-  .pp-stage .hm-c { padding: 3px 6px; } .pp-stage .hm h4 { margin-bottom: 3px; }
+  .h3l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .pp-card h3 .ico { width: 18px; height: 18px; }
+  .pp-quick { display: none; }
 }
 @media (max-width: 760px) {
   .pp { overflow-y: auto; } .pp-in { height: auto; }
-  .pp-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .st-grid { grid-template-columns: minmax(0, 1fr) !important; } .pp-card { overflow: visible; }
+  .pp-body { display: flex; flex-direction: column; } .pp-card { overflow: visible; }
 }
 .hm { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px 22px; }
 .hm h4 { margin: 0 0 6px; font: 700 12px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
@@ -1455,11 +1431,12 @@ function pitchMap(p) {
     <div class="legend" aria-hidden="true">${FAMIL.map(([, n, c]) => `<span class="tag"><i style="background:${c}"></i>${n}</span>`).join('')}</div>`;
 }
 const PERS_SHORT = { adaptability: 'Adapt', ambition: 'Amb', loyalty: 'Loyal', pressure: 'Press', professionalism: 'Prof', sportsmanship: 'Sport', temperament: 'Temp', controversy: 'Contr' };
-function heatMap(p) {
-  const groups = [groupOf(p) === 'GK' ? ['Goalkeeping', ATTR.goalkeeping] : ['Technical', ATTR.technical], ['Mental', ATTR.mental], ['Physical', ATTR.physical],
-    ...(MODE === 'full' ? [['Hidden', ATTR.hidden], ['Personality', PERS, 'personality_']] : [])];
-  return `<div class="hm">${groups.map(([t, keys, pre = 'attributes_']) => `<div><h4>${t}</h4><div class="hm-g">${keys.filter(k => p[pre + k] != null).map(k => { const c = pre + k, v = p[c];
-    return `<div class="hm-c ${tier(v, BAD.has(c))}" title="${esc(label(c))} ${v}"><span aria-hidden="true">${pre === 'attributes_' ? ABBR[k] : PERS_SHORT[k]}</span><span class="sr">${esc(label(c))}</span><b>${v}</b></div>`; }).join('')}</div></div>`).join('')}</div>`;
+function heatMap(p, pers = true) {
+  // Columns of groups; in Full the hidden attributes sit under Physical so the map stays three columns wide.
+  const H = MODE === 'full', cols = [[groupOf(p) === 'GK' ? ['Goalkeeping', ATTR.goalkeeping] : ['Technical', ATTR.technical]], [['Mental', ATTR.mental]],
+    [['Physical', ATTR.physical], ...(H ? [['Hidden', ATTR.hidden]] : [])], ...(H && pers ? [[['Personality', PERS, 'personality_']]] : [])];
+  return `<div class="hm">${cols.map(col => `<div>${col.map(([t, keys, pre = 'attributes_']) => `<h4>${t}</h4><div class="hm-g">${keys.filter(k => p[pre + k] != null).map(k => { const c = pre + k, v = p[c];
+    return `<div class="hm-c ${tier(v, BAD.has(c))}" title="${esc(label(c))} ${v}"><span aria-hidden="true">${pre === 'attributes_' ? ABBR[k] : PERS_SHORT[k]}</span><span class="sr">${esc(label(c))}</span><b>${v}</b></div>`; }).join('')}</div>`).join('')}</div>`).join('')}</div>`;
 }
 // Asking fee against the fair fee and the spread of the per-lens fair fees (fair prices on only).
 function priceBar(p) {
@@ -1472,8 +1449,8 @@ function priceBar(p) {
     <div class="pbar-tr" aria-hidden="true"><i class="band" style="left:${at(lo)};width:calc(${at(hi - lo)} + 2px)"></i><i class="fair" style="left:${at(p.fair_fee)}"></i>${col ? `<i class="ask" style="left:${at(ask)};--c:${col}"></i>` : ''}</div>
     <div class="pbar-lg" aria-hidden="true"><span>Fair range <b>${money(lo)}–${money(hi)}</b></span><span>Asking <b${col ? ` style="color:${col}"` : ''}>${ask == null ? 'Not for sale' : p.free_agent ? 'Free' : money(ask)}</b></span></div></div>`;
 }
-// ---- Six answers: a rail of six tiles (one per scouting question) that are also the tabs of one stage below. No page scroll. ----
-let ppx = null, ppTab = 'good', ppView = 'overview';  // ppx = { p, grp, alive, bench, sim } for the player on screen
+// ---- Player page helpers (charts and peer maths) ----
+let ppx = null, ppSide = 'similar', ppRole = null;  // ppx = { p, grp, alive, bench, sim } for the player on screen
 const PP_ICON = {
   level: '<path d="M4 20V11M10 20V5M16 20v-6M21 20H3"/>',
   good: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
@@ -1483,7 +1460,6 @@ const PP_ICON = {
   similar: '<circle cx="8" cy="9" r="3"/><circle cx="16.5" cy="9" r="3"/><path d="M2.5 20a5.5 5.5 0 0 1 11 0M11 20a5.5 5.5 0 0 1 11 0"/>',
 };
 const ppIcon = k => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${PP_ICON[k]}</svg>`;
-const PP_TABS = [['level', 'Is he good?'], ['good', 'Good at'], ['where', 'Where he plays'], ['cost', 'What he costs'], ['sign', 'Can I sign him?'], ['similar', 'Who else']];
 const pctOf = (xs, v, lower) => { const b = xs.filter(x => x < v).length, e = xs.filter(x => x === v).length, pc = Math.round((b + e / 2) / xs.length * 100); return lower ? 100 - pc : pc; };
 const median = xs => { const s = xs.filter(x => x != null).sort((a, b) => a - b); return s.length ? s[s.length >> 1] : null; };
 const clamp01 = x => Math.max(0, Math.min(1, x));
@@ -1563,151 +1539,6 @@ function simMetric(r) {
     : ['Best role', r.best_role_score, r.best_role_score != null ? r.best_role_score.toFixed(0) : '–', r.best_role_score != null ? scoreColor(r.best_role_score) : C.muted, 100];
 }
 
-// ---- Tile bodies (spans only) ----
-function tileBody(tab) {
-  const { p, grp, bench, sim } = ppx, mb = MODE === 'moneyball', mins = p.s_minutes || 0;
-  const perf = p.stat_score != null ? Math.round(p.stat_score) : null, perfC = perf != null ? pctColor(perf) : C.muted;
-  const rt = p.s_avg_rating ? [p.s_avg_rating.toFixed(2), ratingColor(p.s_avg_rating)] : ['–', C.muted];
-  if (tab === 'level') {
-    if (!hid('ability_current') && p.ability_current != null) return `<span class="t-row">${ring(p.ability_current / 200, abilityColor(p.ability_current), p.ability_current, `Current ability ${p.ability_current}, potential ${p.ability_potential ?? 'unknown'} of 200`, p.ability_potential != null && [p.ability_potential / 200, abilityColor(p.ability_potential)])}
-      <span class="t-kv">${tkv('Potential', p.ability_potential ?? '–', p.ability_potential != null ? abilityColor(p.ability_potential) : null)}${tkv('Performance', perf ?? '–', perfC)}${tkv('Avg rating', rt[0], rt[1])}</span></span>`;
-    if (perf == null && mb) return `<span class="t-empty">No league minutes this season, so no performance to rate.</span>`;
-    return `<span class="t-row">${ring(perf != null ? perf / 100 : 0, perfC, perf ?? '–', `Performance index ${perf ?? 'unknown'} of 100`)}
-      <span class="t-kv">${tkv('Minutes', mins.toLocaleString())}${!mb && p.best_role_score != null ? tkv(isGKRole(p, grp) ? 'GK role fit' : 'Best role', p.best_role_score.toFixed(0), scoreColor(p.best_role_score)) : tkv('Player of match', p.s_player_of_the_match ?? 0)}${tkv('Avg rating', rt[0], rt[1])}</span></span>`;
-  }
-  if (tab === 'good') {
-    if (!mb) {
-      const pool = grp === 'GK' ? [...ATTR.goalkeeping, ...ATTR.mental, ...ATTR.physical] : [...ATTR.technical, ...ATTR.mental, ...ATTR.physical].filter(k => !['long_throws', 'penalty_taking'].includes(k));
-      const top = pool.map(k => [k, p['attributes_' + k]]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 3);
-      return `<span class="t-bars">${top.map(([k, v]) => tbar(label(k), v, v / 20, scoreColor(v * 5), `${label(k)} ${v} of 20`)).join('')}</span>`;
-    }
-    if (!mins) return `<span class="t-empty">No league minutes this season.</span>`;
-    if (mins < 900) return `<span class="t-bars">${tbar('Minutes', mins, mins / 900, C.warn, `${mins} of the 900 minutes needed for percentiles`)}</span><span class="t-empty">${900 - mins} min until he can be benchmarked.</span>`;
-    if (!bench) return '<span class="sk" style="height:46px;width:100%"></span>';
-    const best = Object.entries(bench.pcs).filter(([k]) => k !== 'rating').sort((a, b) => b[1] - a[1]).slice(0, 3);
-    return best.length ? `<span class="t-bars">${best.map(([k, pc]) => tbar(M[k][0], pc, pc / 100, pctColor(pc), `${M[k][0]}: better than ${pc}% of ${plural(grp)}`)).join('')}</span>` : '<span class="t-empty">Peer benchmark unavailable.</span>';
-  }
-  if (tab === 'where') {
-    const svg = pitchMap(p).split('</svg>')[0].replace('<div class="pitch">', '') + '</svg>';
-    return `<span class="t-row"><span class="t-pitch">${svg}</span><span class="t-kv"><span class="t-pos">${posChips(p.natural_positions)}</span>
-      ${!mb && p.best_role_score != null ? `${tkv(isGKRole(p, grp) ? 'Only GK role' : esc(roleTxt(p, grp)), p.best_role_score.toFixed(0), scoreColor(p.best_role_score))}` : POSITIONS.map(k => [k, p[posKey(k)]]).filter(x => x[1] >= 15).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([k, v]) => tkv(k + ' familiarity', v, famil(v)[2])).join('')}
-      ${!mb && footOf(p) ? tkv('Foot', footOf(p).replace(' foot', '')) : ''}</span></span>`;
-  }
-  if (tab === 'cost') {
-    const fee = p.free_agent ? 'Free' : p.transfer_value == null ? 'Not for sale' : money(p.transfer_value);
-    if (FAIR && p.fair_fee != null) {
-      const [lo, hi] = p.fair_fee_range || [p.fair_fee, p.fair_fee], ask = p.free_agent ? 0 : p.transfer_value, max = Math.max(hi, ask ?? 0) * 1.12 || 1;
-      const col = ask == null ? null : ask <= p.fair_fee ? C.good : ask <= hi ? C.warn : C.bad;
-      return `<span class="t-row t-fee"><span class="t-big">${fee}</span>${dealBadge(p.deal_score)}</span>
-        <span class="t-rule" aria-hidden="true"><i class="band" style="left:${pctW(lo / max)};width:${pctW((hi - lo) / max)}"></i><i class="fair" style="left:${pctW(p.fair_fee / max)}"></i>${col ? `<i class="ask" style="left:${pctW(ask / max)};--c:${col}"></i>` : ''}</span>
-        <span class="t-kv">${tkv('Fair fee', money(p.fair_fee))}${tkv('Wage', wage(p.contract_wage))}</span>`;
-    }
-    const fx = bench?.pool.map(r => r.transfer_value).filter(x => x > 0) || [], wx = bench?.pool.map(r => r.contract_wage).filter(x => x > 0) || [];
-    const fp = p.transfer_value > 0 && fx.length >= 10 ? pctOf(fx, p.transfer_value) : null, wp = p.contract_wage > 0 && wx.length >= 10 ? pctOf(wx, p.contract_wage) : null;
-    return `<span class="t-big">${fee}</span>${FAIR && MODE === 'moneyball' && mins < 900 ? '<span class="t-empty">No fair fee under 900 min.</span>' : ''}
-      <span class="t-bars">${fp != null ? tbar(`Fee vs ${plural(grp)}`, fp, fp / 100, 'var(--mode)', `Fee higher than ${fp}% of ${plural(grp)}`) : ''}${wp != null ? tbar(`Wage vs ${plural(grp)}`, wp, wp / 100, 'var(--mode)', `Wage higher than ${wp}% of ${plural(grp)}`) : tkv('Wage', wage(p.contract_wage))}</span>`;
-  }
-  if (tab === 'sign') return `${ppTimeline(p).replace(/<div/g, '<span').replace(/<\/div>/g, '</span>')}
-    <span class="t-tags"><span class="tag${p.transfer_value == null && !p.free_agent ? ' bad' : p.free_agent ? ' good' : ''}">${saleTxt(p)}</span><span class="tag">${esc((p.contract_squad_status || 'status unknown').replaceAll('_', ' '))}</span>${p.on_loan ? '<span class="tag warn">On loan</span>' : ''}</span>`;
-  if (tab === 'similar') {
-    if (!sim) return '<span class="sk" style="height:56px;width:100%"></span>';
-    return sim.rows.length ? `<span class="t-sim">${sim.rows.slice(0, 3).map(r => { const [, , v, c] = simMetric(r); return `<span><span>${esc(r.name)}</span><b style="color:${c}">${v}</b></span>`; }).join('')}</span>`
-      : `<span class="t-empty">${MODE === 'moneyball' && !p.s_minutes ? 'Needs league minutes to compare.' : 'No close match found.'}</span>`;
-  }
-  return '';
-}
-
-// ---- Stage modules ----
-function stageBody(tab) {
-  const { p, grp, bench, sim } = ppx, mb = MODE === 'moneyball', mins = p.s_minutes || 0, pool = bench?.pool || [];
-  const med = (fn, scale) => { const m = median(pool.map(fn)); return m == null ? null : m / scale; };
-  const rk = (fn, v) => { const xs = pool.map(fn).filter(x => x != null); return v == null || xs.length < 10 ? '' : ` · <b style="color:${pctColor(pctOf(xs, v))}">above ${pctOf(xs, v)}%</b> of ${plural(grp)}`; };
-  const note = bench ? `tick = median of ${pool.length} ${plural(grp)} with 900+ min in this save` : 'loading peers…';
-  if (tab === 'level') {
-    const rows = [];
-    if (!hid('ability_current') && p.ability_current != null) rows.push(ladder('Current ability', p.ability_current, p.ability_current / 200, abilityColor(p.ability_current),
-      `scale 200 · potential <b style="color:${abilityColor(p.ability_potential)}">${p.ability_potential ?? '–'}</b>${p.pa_gap > 0 ? ` (+${p.pa_gap} to grow)` : ' (at his ceiling)'}${rk(r => r.ability_current, p.ability_current)}`,
-      { ghost: p.ability_potential != null ? p.ability_potential / 200 : null, gc: abilityColor(p.ability_potential), med: med(r => r.ability_current, 200), aria: `Current ability ${p.ability_current}, potential ${p.ability_potential ?? 'unknown'}, scale 200` }));
-    rows.push(p.stat_score != null ? ladder('Performance index', Math.round(p.stat_score), p.stat_score / 100, pctColor(p.stat_score), `0-100, ranked against ${plural(p.stat_group || grp)} in his league with 600+ min · 50 = middle of the pack`, { med: .5 })
-      : ladder('Performance index', '–', 0, C.muted, 'Not enough league minutes to rate (600 needed).'));
-    if (p.s_avg_rating) rows.push(ladder('Average rating', p.s_avg_rating.toFixed(2), (p.s_avg_rating - 6) / 2, ratingColor(p.s_avg_rating), `${p.s_apps ?? 0} apps · ${mins.toLocaleString()} min · scale 6-8${mins >= 900 ? rk(r => r.s_avg_rating, p.s_avg_rating) : ''}`, { med: med(r => r.s_avg_rating && r.s_avg_rating - 6, 2) }));
-    const pv = Object.entries(bench?.pcs || {}).filter(([k]) => k !== 'rating').map(x => x[1]);
-    if (pv.length >= 3) { const a = Math.round(pv.reduce((s_, x) => s_ + x, 0) / pv.length); rows.push(ladder('Average season percentile', a, a / 100, pctColor(a), `mean of his ${pv.length} position metrics per 90 against ${plural(grp)} · see Good at`, { med: .5 })); }
-    if (!mb && p.best_role_score != null) rows.push(ladder(isGKRole(p, grp) ? 'Goalkeeper role fit' : 'Best role fit', p.best_role_score.toFixed(0), p.best_role_score / 100, scoreColor(p.best_role_score),
-      `${esc(roleTxt(p, grp))} · 0-100${rk(r => r.best_role_score, p.best_role_score)}`, { med: med(r => r.best_role_score, 100) }));
-    if (!mb && p.attr_avg != null) rows.push(ladder('Attribute average', p.attr_avg.toFixed(1), p.attr_avg / 20, scoreColor(p.attr_avg * 5), `visible attributes, scale 20${rk(r => r.attr_avg, p.attr_avg)}`, { med: med(r => r.attr_avg, 20) }));
-    const isGK = grp === 'GK';
-    const line = [['Apps', p.s_apps ?? 0], ['Minutes', mins.toLocaleString()], ...(isGK ? [['Clean sheets', p.s_clean_sheets ?? 0], ['Conceded', p.s_goals_allowed ?? 0]] : [['Goals', p.s_goals ?? 0], ['Assists', p.s_assists ?? 0]]), ['Player of match', p.s_player_of_the_match ?? 0]];
-    return `<div class="st-grid lv"><section class="pp-card"><h3>Level <small>${note}</small></h3><div class="lds">${rows.join('')}</div></section>
-      <section class="pp-card"><div class="dials">${heroDials(p)}</div><h3 style="margin-top:14px">This season</h3><div class="statline">${line.map(([l, x]) => `<div class="stat">${l}<b>${x}</b></div>`).join('')}</div>
-        ${mb ? '<p class="note">Moneyball: judged on numbers only, no attributes.</p>' : ''}${verdictSec(p, grp).replace('<section class="sec">', '<div class="vd">').replace(/<\/section>\s*$/, '</div>')}</section></div>`;
-  }
-  if (tab === 'good') {
-    const views = [['overview', 'Overview'], ...(mb ? [] : [['attrs', 'All attributes']]), ['stats', 'All season stats']];
-    const v = views.some(x => x[0] === ppView) ? ppView : 'overview';
-    const seg = `<div class="seg" role="group" aria-label="View">${views.map(([k, l]) => `<button data-ppview="${k}" aria-pressed="${k === v}">${l}</button>`).join('')}</div>`;
-    if (v === 'attrs') return `<section class="pp-card fill"><h3>Attributes <small>scale 20${MODE === 'full' ? ' · hidden and personality included' : ''}</small>${seg}</h3>${heatMap(p)}</section>`;
-    if (v === 'stats') return `<section class="pp-card fill"><h3>All season stats <small>totals, % and per 90 as the save holds them</small>${seg}</h3><div class="pp-all">${seasonAll(p, 'x').replace(/^[\s\S]*?<dl/, '<dl').replace(/<\/details>[\s\S]*$/, '') || '<p class="note">No season stats.</p>'}</div></section>`;
-    const pz = !mins ? '<p class="note">No league minutes this season, so there is nothing to benchmark yet.</p>'
-      : mins < 900 ? `${ladder('Minutes played', mins.toLocaleString(), mins / 900, C.warn, `${900 - mins} more minutes and he gets percentiles against ${plural(grp)}. Per-90 numbers on few matches swing too much to rank.`)}`
-      : !bench ? '<span class="sk" style="height:220px;width:100%"></span>'
-      : Object.keys(bench.pcs).length >= 3 ? `${pizza(grp, bench.pcs)}<p class="note">${Object.values(bench.pcs)[0] != null ? `A wedge at 85 = better than 85% of ${bench.pool.length} ${plural(grp)} with 900+ min in this save, per 90. Dashed ring = the median peer.` : ''}</p>`
-      : '<p class="note">Not enough peer data to draw a profile.</p>';
-    return `<div class="st-grid gd${mb ? ' mb' : ''}">${mb ? '' : `<section class="pp-card">${profileInner(p)}</section>`}
-      <section class="pp-card"><h3>Season percentiles <small>vs ${plural(grp)}</small></h3>${pz}</section>
-      <section class="pp-card" data-sec="season"></section></div><div class="seg-row">${seg}</div>`;
-  }
-  if (tab === 'where') {
-    const fam = POSITIONS.map(k => [k, p[posKey(k)]]).filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]);
-    const roles = roleList(p), gk = isGKRole(p, grp);
-    const famBars = fam.map(([k, v]) => { const f = famil(v); return `<div class="rolebar"><span>${k} <span class="muted" style="font-size:11px">${f[1]}</span></span><div class="tr"><i style="width:${v * 5}%;background:${f[2]}"></i></div><b class="mono" style="color:${f[2]};text-align:right">${v}</b></div>`; }).join('');
-    return `<div class="st-grid wh"><section class="pp-card pc"><h3>Position map</h3>${pitchMap(p)}</section>
-      <section class="pp-card"><h3>Familiarity <small>FM scale 1-20</small></h3>${famBars || '<p class="note">No position familiarity in this save.</p>'}
-        <div class="statline" style="margin-top:12px">${p.height_cm ? `<div class="stat">Height<b>${p.height_cm} cm</b></div>` : ''}${!mb && footOf(p) ? `<div class="stat">Foot<b>${footOf(p).replace(' foot', '')}</b></div><div class="stat">Left · right<b>${p.left_foot} · ${p.right_foot}</b></div>` : ''}</div></section>
-      <section class="pp-card"><h3>${gk ? 'Goalkeeper role' : 'Role fit'} <small>0-100</small></h3>${mb ? '<p class="note" style="margin:0">Moneyball shows where he plays, not how well each role suits him.</p>'
-        : gk ? `${roleBars(roles.filter(r => r[0] === 'sweeper_keeper'))}${ladder('Against other keepers', p.best_role_score.toFixed(0), p.best_role_score / 100, scoreColor(p.best_role_score), `The only goalkeeper role the save scores: compare it with other keepers, not with outfield roles. Tick = median keeper${rk(r => r.best_role_score, p.best_role_score)}.`, { med: med(r => r.best_role_score, 100) })}`
-        : roleBars(roles)}</section></div>`;
-  }
-  if (tab === 'cost') {
-    const fx = pool.map(r => r.transfer_value), wx = pool.map(r => r.contract_wage);
-    const strips = bench ? strip('Asking fee', fx, p.free_agent ? 0 : p.transfer_value, money, grp) + strip('Wage', wx, p.contract_wage, wage, grp) : '<span class="sk" style="height:120px;width:100%"></span>';
-    return `<div class="st-grid co${FAIR && p.fair_fee != null ? '' : ' nf'}"><section class="pp-card"><h3>Price${FAIR && p.fair_fee != null ? ' <small>dot = asking · line = fair fee · band = fair range</small>' : ''}</h3>${priceBar(p)}${priceBody(p)}
-        ${p.transfer_value == null && !p.free_agent && !FAIR ? '<p class="note">Not for sale: his club has set no asking fee.</p>' : ''}
-        ${!FAIR ? '<p class="note">Fair prices are off, so this page shows his fee and wage against his peers only.</p>' : ''}</section>
-      <section class="pp-card"><h3>Against his peers <small>each tick = one ${grp} with 900+ min · line = median · dot = him</small></h3>${strips || '<p class="note">Not enough peer fees to compare.</p>'}</section></div>`;
-  }
-  if (tab === 'sign') {
-    const js = s => { try { return JSON.parse(s || '[]') || []; } catch { return []; } };
-    const clauses = js(p.contract_clauses).filter(c => c.kind && c.kind !== 'unknown'), chain = js(p.contract_chain);
-    const traits = (p.traits || '').split(';').filter(t => t && t !== 'unknown');
-    const rep = [['World', p.reputation_world], ['Current', p.reputation_current], ['Home', p.reputation_home], ['Club', p.club_reputation]].filter(x => x[1] != null);
-    const facts = [['Sale', saleTxt(p)], ['Squad status', (p.contract_squad_status || '–').replaceAll('_', ' ')], ['Wage', wage(p.contract_wage)], p.contract_kind && ['Contract type', p.contract_kind.replaceAll('_', ' ')],
-      ['Club', (p.club_name || 'Free agent') + (p.club_join_date ? ` · since ${p.club_join_date}` : '')], p.on_loan && ['On loan', `from ${p.loan_parent_club_name || '?'}${p.loan_end ? ' until ' + p.loan_end : ''}`],
-      p.home_grown_club_names && ['Home-grown at', p.home_grown_club_names.replaceAll(';', ', ')],
-      p.raw_condition != null && ['Condition · sharpness', `${Math.round(p.raw_condition / 100)}% · ${Math.round((p.raw_match_sharpness ?? 0) / 100)}%`]].filter(Boolean);
-    return `<div class="st-grid sg"><section class="pp-card wide"><h3>Contract <small>today = his save date</small></h3>${ppTimeline(p, true)}</section>
-      <section class="pp-card"><h3>Terms</h3><div class="facts-t">${facts.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>
-        ${p.suspensions ? '<div class="tags" style="margin-top:8px"><span class="tag bad">Suspended</span></div>' : ''}</section>
-      <section class="pp-card"><h3>History &amp; clauses</h3>${chain.length > 1 ? `<div class="chain">${chain.map(c => `<span class="tag">${esc(c.club_name)}</span>`).join('<i aria-hidden="true">→</i>')}</div>` : '<p class="note" style="margin:0 0 8px">One club on record.</p>'}
-        ${clauses.length ? `<h4>Clauses</h4><div class="tags">${clauses.map(c => `<span class="tag">${esc(label(c.kind))}${c.value != null ? `<b>${money(c.value)}</b>` : ''}</span>`).join('')}</div>` : ''}
-        ${traits.length ? `<h4>Traits</h4><div class="tags">${traits.map(t => `<span class="tag">${esc(label(t))}</span>`).join('')}</div>` : ''}</section>
-      <section class="pp-card"><h3>Reputation <small>out of 10</small></h3>${rep.map(([k, v]) => ladder(k, (v / 1000).toFixed(1), v / 10000, 'var(--mode)', '')).join('')}
-</section></div>`;
-  }
-  if (tab === 'similar') {
-    if (!sim) return '<div class="st-grid si"><section class="pp-card"><span class="sk" style="height:260px;width:100%"></span></section><section class="pp-card"><span class="sk" style="height:260px;width:100%"></span></section></div>';
-    const chips = [...(sim.crit?.attributes || []).map(x => `<span class="ac" title="${esc(label(x.col))}">${ABBR[x.col.slice(11)] || esc(label(x.col))}<b class="${tier(x.value)}">${x.value}</b></span>`),
-      ...(sim.crit?.stats || []).map(x => `<span class="ac st" title="${esc(label(x.col))}: better than ${x.pct}% of peers">${esc(label(x.col))}<b style="color:${pctColor(x.pct)}">${x.value}</b></span>`)];
-    const list = sim.rows.map(r => { const [t, , v, c] = simMetric(r);
-      return `<button class="sim-row" data-profile="${r.uid}"><span><b>${natHTML(r, false)} ${esc(r.name)}</b><small>${r.age} yrs · ${esc(r.club_name || 'Free agent')}</small></span>
-        <span class="mono" style="font-size:12px">${feeHTML(r)}</span><span class="mono" style="color:${c};font-weight:700" title="${t}"><span class="sr">${t} </span>${v}</span></button>`; }).join('');
-    return `<div class="st-grid si"><section class="pp-card"><h3>Price against level <small>${simMetric(p)[0]} · fee on a log scale · him = ring</small></h3>${scatter(p, sim.rows)}</section>
-      <section class="pp-card"><h3>Closest players <small>${mb ? 'his best in-game stats' : 'his 6 best attributes'}</small></h3>${chips.length ? `<div class="kchips" aria-label="Compared on">${chips.join('')}</div>` : ''}
-        <div class="sim-list">${list || `<p class="note" style="margin:0">${mb && !p.s_minutes ? 'Needs league minutes to compare on numbers.' : 'No close match found.'}</p>`}</div>
-        <button class="link" data-similar="${p.uid}">Open the full list in Scout →</button></section></div>`;
-  }
-  return '';
-}
 // Similar players placed by fee (log x) and level (y); free agents and players not for sale sit in side gutters.
 function scatter(p, rows) {
   if ([p, ...rows].filter(r => simMetric(r)[1] != null).length < 2) return '<p class="note" style="margin:0">Not enough rated players to plot.</p>';
@@ -1730,24 +1561,243 @@ function scatter(p, rows) {
   </svg>`;
 }
 
+// ---- First view built for the mode: Full = ability, value and development; Fair play = attributes and role fit; Moneyball = in-game stats against peers.
+// Everything else sits in a tabbed side panel. One viewport, no page scroll.
+Object.assign(PP_ICON, {
+  ability: '<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/>',
+  attr: '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>',
+  dev: '<path d="M4 19l6-6 4 4 6-8"/><path d="M15 9h5v5"/>',
+  role: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/>',
+  pizza: '<path d="M12 12V3a9 9 0 0 1 9 9z"/><path d="M12 12l-6.4 6.4A9 9 0 0 1 12 3"/>',
+  table: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+});
+const h3i = (ic, t, small = '') => `<h3>${ppIcon(ic)}<span class="h3l">${t}</span>${small ? `<small>${small}</small>` : ''}</h3>`;
+const PP_SECS = { full: ['ability', 'attr', 'dev', 'report', 'side'], fair: ['attr', 'role', 'prof', 'side'], moneyball: ['perf', 'pizza', 'table', 'side'] };
+const PP_SIDE = { full: ['similar', 'map', 'price', 'contract', 'season', 'position', 'stats'], fair: ['similar', 'profile', 'price', 'contract', 'season', 'stats'], moneyball: ['similar', 'map', 'price', 'contract', 'position', 'stats'] };
+const PP_SIDE_L = { similar: 'Similar', map: 'Price map', price: 'Price', contract: 'Contract', season: 'Season', position: 'Position', stats: 'All stats', profile: 'Radar' };
+const rg = (lbl, f, color, txt, aria, ghost) => `<div class="pp-rg">${ring(f, color, txt, aria, ghost)}<small aria-hidden="true">${lbl}</small></div>`;
+const sev = (v, bad) => v == null ? C.muted : scoreColor((bad ? 21 - v : v) * 5);  // 1-20 attribute colour, inverted for "bad" attributes
+const fbar = (name, v, f, c, sub, tick) => `<div class="fb" title="${esc(name)} ${v}"><span>${name}${sub ? ` <small>${sub}</small>` : ''}</span><i>${tick != null ? `<em style="left:${pctW(tick)}"></em>` : ''}<i style="width:${pctW(f)};background:${c}"></i></i><b style="color:${c}">${v}</b></div>`;
+
+// Where his CA and PA rank in the save (same position, then same age +-1) and the fees of players with similar CA.
+async function ppAbility(p, grp) {
+  if (hid('ability_current') || p.ability_current == null) return null;
+  const q = (filters, end = 0) => api('/api/players', { start: 0, end, positions: [grp], gender: p.gender || null, mode: MODE, sort: [{ colId: 'uid', sort: 'asc' }], filters })
+    .then(r => r.ok ? r.json() : null).catch(() => null);
+  const age = { age: { filterType: 'number', type: 'inRange', filter: p.age - 1, filterTo: p.age + 1 } }, gt = (c, v) => ({ [c]: num('greaterThan', v) });
+  const pa = p.ability_potential ?? 999;
+  const r = await Promise.all([q({}), q(gt('ability_current', p.ability_current)), q(gt('ability_potential', pa)), q(age), q({ ...age, ...gt('ability_current', p.ability_current) }), q({ ...age, ...gt('ability_potential', pa) }),
+    q({ ability_current: { filterType: 'number', type: 'inRange', filter: p.ability_current - 8, filterTo: p.ability_current + 8 } }, 400)]);
+  const [n, ca, pa_, na, caA, paA] = r.slice(0, 6).map(d => d?.total ?? null);
+  return { n, ca, pa: pa_, na, caA, paA, val: r[6]?.rows || [], valN: r[6]?.total ?? 0 };
+}
+// Moneyball: a sample of the whole pool (every position, 900+ min) for "vs everyone" percentiles.
+const allCache = new Map();
+function ppAll(g) {
+  const k = MODE + '|' + (g || '');
+  if (!allCache.has(k)) allCache.set(k, api('/api/players', { start: 0, end: 600, gender: g || null, mode: MODE, sort: [{ colId: 'uid', sort: 'asc' }], filters: { s_minutes: num('greaterThan', 900) } })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status)).catch(e => { allCache.delete(k); throw e; }));
+  return allCache.get(k);
+}
+// Fee against CA for players of his position within 8 CA of him (dots), median fee (line), him (ring).
+function valScatter(p, rows) {
+  const pts = rows.filter(r => r.transfer_value > 0 && r.ability_current != null && r.uid !== p.uid);
+  if (pts.length < 10) return '';
+  const fees = pts.map(r => r.transfer_value).concat(p.transfer_value > 0 ? [p.transfer_value] : []);
+  const lo = Math.log(Math.min(...fees)), hi = Math.log(Math.max(...fees)), c0 = p.ability_current - 8, c1 = p.ability_current + 8, W = 300, H = 150, L = 42, B = 16, T = 6, R = 8;
+  const X = v => (L + (v - c0) / (c1 - c0) * (W - L - R)).toFixed(1), Y = f => (T + (1 - (Math.log(f) - lo) / (hi - lo || 1)) * (H - T - B)).toFixed(1);
+  const med = median(pts.map(r => r.transfer_value)), me = p.transfer_value > 0;
+  return `<svg class="vsc" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Fees of ${pts.length} ${plural(groupOf(p))} with CA ${c0} to ${c1}: median ${money(med)}${me ? `, his ${money(p.transfer_value)}` : ''}`)}">
+    ${[Math.exp(lo), med, Math.exp(hi)].map(f => `<text class="ax" x="${L - 5}" y="${+Y(f) + 3}" text-anchor="end">${money(f)}</text>`).join('')}
+    ${[c0, p.ability_current, c1].map(v => `<text class="ax" x="${X(v)}" y="${H - 3}" text-anchor="middle">${v === p.ability_current ? 'CA ' + v : v}</text>`).join('')}
+    <line x1="${L}" x2="${W - R}" y1="${Y(med)}" y2="${Y(med)}" stroke="var(--text2)" stroke-dasharray="3 3"/>
+    ${pts.map(r => `<circle cx="${+X(r.ability_current) + (r.uid % 7 - 3) * .5}" cy="${Y(r.transfer_value)}" r="2.6" fill="var(--muted)" opacity=".5"/>`).join('')}
+    ${me ? `<circle cx="${X(p.ability_current)}" cy="${Y(p.transfer_value)}" r="6" fill="none" stroke="var(--mode)" stroke-width="3"/>` : ''}
+  </svg>`;
+}
+const valRead = (p, grp, abil) => {
+  const fees = (abil?.val || []).filter(r => r.uid !== p.uid && r.transfer_value > 0).map(r => r.transfer_value);
+  const fp = p.transfer_value > 0 && fees.length >= 10 ? pctOf(fees, p.transfer_value) : null;
+  const word = fp == null ? null : (fp <= 35 ? 'cheap' : fp >= 65 ? 'expensive' : 'about the going rate') + ' for his ability' + (fp >= 65 && p.ability_potential - p.ability_current >= 20 ? ` (the fee also prices in +${p.ability_potential - p.ability_current} potential)` : '');
+  return { fp, n: fees.length, of: abil?.valN > (abil?.val.length || 0) ? ` (sample of ${abil.valN.toLocaleString()})` : '', med: median(fees), word };
+};
+// Development readout: the hidden attributes and personality that decide whether he grows. Fixed rules, see devOutlook.
+const DEV = [['Professionalism', 'personality_professionalism', 'how he trains'], ['Determination', 'attributes_determination', 'drive to improve'], ['Ambition', 'personality_ambition', 'wants the top'],
+  ['Consistency', 'attributes_consistency', 'shows his level'], ['Injury proneness', 'attributes_injury_proneness', 'time lost', true], ['Adaptability', 'personality_adaptability', 'settles after a move'],
+  ['Pressure', 'personality_pressure', 'copes with stress'], ['Important matches', 'attributes_important_matches', 'big games']];
+function devOutlook(p) {
+  const g = k => p[k], gap = (p.ability_potential ?? 0) - (p.ability_current ?? 0);
+  const drive = ['personality_professionalism', 'attributes_determination', 'personality_ambition'].map(g).filter(x => x != null);
+  const d = drive.length ? drive.reduce((a, b) => a + b, 0) / drive.length : null;
+  const win = p.age <= 21 ? 'wide' : p.age <= 24 ? 'open' : p.age <= 27 ? 'narrow' : 'closing';
+  const risks = [g('attributes_injury_proneness') >= 14 && 'injury-prone', g('attributes_consistency') != null && g('attributes_consistency') <= 8 && 'inconsistent',
+    g('personality_professionalism') != null && g('personality_professionalism') <= 8 && 'low professionalism'].filter(Boolean);
+  const [txt, c] = gap <= 0 ? ['At his ceiling', C.muted] : p.age >= 28 ? ['Little growth left', C.orange]
+    : d != null && d >= 15 && p.age <= 24 && !risks.length ? ['Likely to grow towards his PA', C.good] : d != null && d >= 11 ? ['Should grow, not guaranteed', C.ok] : ['Risk of falling short of his PA', C.warn];
+  return { gap, d, win, risks, txt, c };
+}
+
+// ---- Sections ----
+function secAbility() {
+  const { p, grp, abil } = ppx, ca = p.ability_current, pa = p.ability_potential;
+  const rank = (above, n, what, who) => above == null || !n ? '' : ladder(`${what} among ${who}`, `#${(above + 1).toLocaleString()}`, 1 - above / n, pctColor(100 - above / n * 100), `top ${Math.max(1, Math.ceil((above + 1) / n * 100))}% of ${n.toLocaleString()}`);
+  const v = valRead(p, grp, abil), ages = `${p.age - 1}-${p.age + 1} yr ${plural(grp)}`;
+  return `${h3i('ability', 'Ability', 'scale 200 · ranks in this save')}
+    <div class="ab-rings">${rg('Current', ca / 200, abilityColor(ca), ca, `Current ability ${ca} of 200`)}${rg('Potential', (pa ?? 0) / 200, pa != null ? abilityColor(pa) : C.muted, pa ?? '–', `Potential ability ${pa ?? 'unknown'} of 200`)}
+      <div class="ab-gap"><b style="color:${pa > ca ? C.good : C.muted}">${pa > ca ? '+' + (pa - ca) : '0'}</b><span>${pa > ca ? 'to grow' : 'at ceiling'}</span></div></div>
+    ${abil ? `<div class="lds">${rank(abil.ca, abil.n, 'CA', plural(grp))}${rank(abil.pa, abil.n, 'PA', plural(grp))}${rank(abil.caA, abil.na, 'CA', ages)}${rank(abil.paA, abil.na, 'PA', ages)}</div>
+      <h4>Price for his ability</h4>${valScatter(p, abil.val)}
+      <p class="vread">${v.fp == null ? (p.free_agent ? 'Free agent: no fee to compare.' : p.transfer_value == null ? `Not for sale, so there is no asking fee to place; dots are the ${plural(grp)} with CA ${ca - 8}-${ca + 8} (median ${money(v.med)}).${FAIR && p.fair_fee != null ? ` Fair-fee model: ${money(p.fair_fee)}.` : ''}` : 'Too few comparable fees.')
+        : `Fee ${money(p.transfer_value)} is higher than <b style="color:${v.fp >= 65 ? C.bad : v.fp <= 35 ? C.good : C.text}">${v.fp}%</b> of ${v.n} ${plural(grp)} with CA ${ca - 8}-${ca + 8}${v.of} (median ${money(v.med)}): <b>${v.word}</b>.`}</p>`
+      : '<span class="sk" style="height:300px;width:100%;margin-top:10px"></span>'}`;
+}
+function secAttr() {
+  const full = MODE === 'full';
+  return `${h3i('attr', 'Attributes', `scale 20${full ? ' · hidden included' : ''} · hover a cell for its name`)}${heatMap(ppx.p, false)}`;
+}
+function secDev() {
+  const { p } = ppx, o = devOutlook(p);
+  return `${h3i('dev', 'Will he reach his PA?')}
+    <div class="dv-head"><span class="tag" style="color:${o.c};background:color-mix(in srgb, ${o.c} 14%, transparent)">${o.txt}</span>
+      <small>PA gap ${o.gap > 0 ? '+' + o.gap : 0} · age ${p.age} (window ${o.win})${o.d != null ? ` · drive ${o.d.toFixed(1)}/20` : ''}</small></div>
+    <div class="fbs">${DEV.filter(([, k]) => p[k] != null).map(([n, k, why, bad]) => fbar(n, p[k], p[k] / 20, sev(p[k], bad), why)).join('')}</div>
+    <p class="note">Drive = average of professionalism, determination and ambition. ${o.risks.length ? 'Watch: ' + o.risks.join(', ') + '.' : 'No development red flag.'}</p>`;
+}
+// Scouting report: sentences picked by fixed thresholds from his own numbers (no outside knowledge).
+function secReport() {
+  const { p, grp, abil } = ppx, v = verdict(p, grp), o = devOutlook(p), val = valRead(p, grp, abil);
+  const top = n => Math.max(1, Math.ceil((n[0] + 1) / n[1] * 100));
+  const lvl = p.ability_current >= 160 ? 'an elite' : p.ability_current >= 130 ? 'a strong' : p.ability_current >= 100 ? 'a solid' : p.ability_current >= 70 ? 'a modest' : 'a weak';
+  const roles = roleList(p).slice(0, 2), s = [];
+  s.push(`<b>Level.</b> ${esc(p.name)} is ${lvl} ${grp} for this save (CA ${p.ability_current}${abil?.n ? `, top ${top([abil.ca, abil.n])}% of ${abil.n.toLocaleString()} ${plural(grp)}` : ''}${abil?.na ? `, #${abil.caA + 1} of ${abil.na} aged ${p.age - 1}-${p.age + 1}` : ''}).`);
+  s.push(`<b>Strengths.</b> ${v.strong.length ? v.strong.map(([k, x]) => `${label(k)} ${x}`).join(', ') + '.' : 'No attribute at 15 or more.'}${roles.length ? ` Best used as ${label('role_' + roles[0][0])} (${roles[0][1].toFixed(0)}/100)${roles[1] ? `, then ${label('role_' + roles[1][0])} (${roles[1][1].toFixed(0)})` : ''}.` : ''}`);
+  const risks = [...v.weak.map(([k, x]) => `${label(k)} ${x}`), ...v.flags.filter(f => f[0] !== 'good').map(f => f[1].toLowerCase())];
+  s.push(`<b>Risks.</b> ${risks.length ? risks.join(', ') + '.' : 'Nothing below 11 in his key attributes and no hidden red flag.'}`);
+  s.push(`<b>Development.</b> ${o.gap <= 0 ? 'He is at his potential.' : `${o.txt}: +${o.gap} to PA ${p.ability_potential}, age ${p.age}${o.d != null ? `, drive ${o.d.toFixed(1)}/20` : ''}.`}`);
+  s.push(`<b>Value.</b> ${val.fp != null ? `${money(p.transfer_value)} is ${val.word} (higher than ${val.fp}% of similar-CA ${plural(grp)}).` : p.free_agent ? 'Free agent.' : p.transfer_value == null ? 'Not for sale.' : 'Not enough comparable fees.'}${FAIR && p.deal_score != null ? ` Fair-fee model: asking is ${Math.abs(Math.round(p.deal_score))}% ${p.deal_score >= 0 ? 'under' : 'over'} his fair fee of ${money(p.fair_fee)}.` : ''} ${p.months_left != null ? `Contract until ${p.contract_end} (${p.months_left} months).` : ''}`);
+  s.push(`<b>This season.</b> ${p.stat_score != null ? `Performance index ${Math.round(p.stat_score)}/100 against ${plural(p.stat_group || grp)} in his league, average rating ${p.s_avg_rating?.toFixed(2) ?? '–'} over ${(p.s_minutes || 0).toLocaleString()} min.` : (p.s_minutes ? `Only ${p.s_minutes} league minutes: too few to judge.` : 'No league minutes this season.')}`);
+  return `${h3i('report', 'Scouting report', 'written from his data by fixed rules')}<div class="pp-rep">${s.map(x => `<p>${x}</p>`).join('')}</div>
+    <p class="note" title="Strengths = attributes at 15+, risks = key attributes for his position at 10 or less plus hidden flags (injury proneness 14+, consistency or big-match 8 or less, professionalism 8 or less). Ranks count every ${grp} in this save. Development uses PA gap, age and the average of professionalism, determination and ambition. Value compares his fee with players of his position within 8 CA.">How it is written: thresholds on his own numbers, no outside scouting. Hover for the rules.</p>`;
+}
+function secRole() {
+  const { p, grp } = ppx, gk = grp === 'GK';
+  const roles = Object.keys(META.roles).filter(r => (META.roles[r] === 'GK') === gk).map(r => [r, p['role_' + r]]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
+  if (!roles.length) return `${h3i('role', 'Role fit')}<p class="note">No role scores in this save.</p>`;
+  const role = roles.some(x => x[0] === ppRole) ? ppRole : roles[0][0], sc = p['role_' + role];
+  const vals = (META.role_attributes?.[role] || []).map(k => [k, p['attributes_' + k]]).filter(x => x[1] != null);
+  const meets = vals.filter(x => x[1] >= 15).length, gaps = vals.filter(x => x[1] <= 11).sort((a, b) => a[1] - b[1]);
+  return `${h3i('role', 'Role fit', 'pick the role you want to fill')}
+    <label class="rl-pick"><span class="sr">Role</span><select id="ppRole">${roles.map(([r, x]) => `<option value="${r}"${r === role ? ' selected' : ''}>${label('role_' + r)} (${META.roles[r]}) · ${x.toFixed(0)}</option>`).join('')}</select></label>
+    <div class="rl-top">${ring(sc / 100, scoreColor(sc), sc.toFixed(0), `${label('role_' + role)} fit ${sc.toFixed(0)} of 100`)}
+      <div><b>${label('role_' + role)}</b><span>meets <b style="color:${meets >= vals.length / 2 ? C.good : C.warn}">${meets} of ${vals.length}</b> key attributes at 15+</span>
+        <span>${gaps.length ? 'Gaps: ' + gaps.slice(0, 3).map(([k, x]) => `${label(k)} ${x}`).join(', ') : 'No key attribute under 12'}</span>
+        ${(() => { const xs = (ppx.bench?.pool || []).map(r => r['role_' + role]).filter(x => x != null); if (xs.length < 20) return ''; const pc = pctOf(xs, sc); return `<span>Fit above <b style="color:${pctColor(pc)}">${pc}%</b> of ${xs.length} ${plural(grp)} with 900+ min</span>`; })()}</div></div>
+    <div class="fbs">${vals.map(([k, x]) => fbar(label(k), x, x / 20, x >= 15 ? C.good : x >= 12 ? C.ok : C.warn, '', .75)).join('')}</div>
+    <p class="note">Key attributes of the role, heaviest first · tick = 15.${gk ? ' Sweeper Keeper is the only goalkeeper role the save scores: compare it with other keepers, not with outfield roles.' : ''}</p>
+    ${roles.length > 1 ? `<h4>His best roles</h4><div class="tags">${roles.slice(0, 6).map(([r, x]) => `<button class="tag rl-chip" data-pprole="${r}" aria-pressed="${r === role}">${label('role_' + r)}<b style="color:${scoreColor(x)}">${x.toFixed(0)}</b></button>`).join('')}</div>` : ''}`;
+}
+function secProf() {
+  const { p } = ppx, fam = POSITIONS.map(k => [k, p[posKey(k)]]).filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  return `${h3i('where', 'Profile & contract')}
+    <div class="pf-top"><div class="pf-pitch">${pitchMap(p).split('<div class="legend"')[0]}</div>
+      <div class="fbs">${fam.map(([k, v]) => { const f = famil(v); return fbar(k, v, v / 20, f[2], f[1]); }).join('') || '<p class="note">No familiarity data.</p>'}</div></div>
+    <div class="facts-t">${[['Age', `${p.age} yrs`], ['Height', p.height_cm ? p.height_cm + ' cm' : '–'], ['Foot', footOf(p).replace(' foot', '') || '–'], ['Squad status', (p.contract_squad_status || '–').replaceAll('_', ' ')],
+      ['Fee', feeHTML(p).replace(/<[^>]+>/g, '')], ['Wage', wage(p.contract_wage)]].map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>
+    <h4>Contract</h4>${ppTimeline(p)}<div class="facts-t" style="margin-top:8px">${[['Sale', saleTxt(p)], ['Contract type', (p.contract_kind || '–').replaceAll('_', ' ')], ['At the club since', p.club_join_date || '–'], ['World reputation', p.reputation_world != null ? (p.reputation_world / 1000).toFixed(1) + ' / 10' : '–']]
+      .map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>${FAIR && p.fair_fee != null ? `<h4>Fair fee</h4>${priceBar(p)}` : ''}`;
+}
+const MB_EXTRA = [['Shots on target', p => p.s_shots ? p.s_shots_on_target / p.s_shots * 100 : null, 0, '%'], ['Goals minus xG', p => p.s_minutes && p.s_goals != null && p.s_expected_goals != null ? (p.s_goals - p.s_expected_goals) * 90 / p.s_minutes : null, 2, ''],
+  ['Player of match rate', p => p.s_apps ? (p.s_player_of_the_match || 0) / p.s_apps * 100 : null, 0, '%'], ['Distance', per90('s_distance_km'), 1, ' km'], ['Yellow cards', per90('s_yellow_cards'), 2, '', true]];
+const MB_METRICS = ['rating', 'goals', 'xg', 'shots', 'assists', 'xa', 'kp', 'ccc', 'drb', 'prog', 'passpct', 'crs', 'tck', 'tckpct', 'int', 'won', 'press', 'hdr', 'hdrpct', 'clr', 'blk'];
+function secPerf() {
+  const { p, grp } = ppx, mins = p.s_minutes || 0, perf = p.stat_score;
+  const tot = [['Apps', p.s_apps], ['Starts', p.s_starts], ['Minutes', mins.toLocaleString()], ...(grp === 'GK' ? [['Clean sheets', p.s_clean_sheets], ['Conceded', p.s_goals_allowed], ['xG prevented', p.s_expected_goals_prevented?.toFixed(1)], ['Saves', (p.s_saves_held || 0) + (p.s_saves_parried || 0) + (p.s_saves_tipped || 0)]]
+    : [['Goals', p.s_goals], ['Assists', p.s_assists], ['xG', p.s_expected_goals?.toFixed(1)], ['xA', p.s_expected_assists?.toFixed(1)], ['Shots', p.s_shots], ['Key passes', p.s_key_passes], ['Dribbles', p.s_dribbles], ['Tackles won', p.s_tackles_completed]]),
+    ['Player of match', p.s_player_of_the_match], ['Yellow · red', `${p.s_yellow_cards ?? 0} · ${p.s_red_cards ?? 0}`], ['Distance', p.s_distance_km != null ? Math.round(p.s_distance_km) + ' km' : null]];
+  return `${h3i('level', 'Performance', `league ${p.s_league_rep != null ? 'reputation ' + (p.s_league_rep / 1000).toFixed(1) + '/10' : 'context n/a'}`)}
+    <div class="ab-rings">${rg('Performance', (perf ?? 0) / 100, perf != null ? pctColor(perf) : C.muted, perf != null ? Math.round(perf) : '–', `Performance index ${perf != null ? Math.round(perf) : 'unknown'} of 100`)}
+      ${rg('Avg rating', p.s_avg_rating ? (p.s_avg_rating - 5.5) / 2.5 : 0, p.s_avg_rating ? ratingColor(p.s_avg_rating) : C.muted, p.s_avg_rating ? p.s_avg_rating.toFixed(2) : '–', `Average rating ${p.s_avg_rating ?? 'none'}`)}</div>
+    <p class="note" style="margin-top:4px">${perf != null ? `Index 0-100 ranked against ${plural(p.stat_group || grp)} in his league with 600+ min.` : 'Not enough league minutes for a performance index (600 needed).'}</p>
+    <div class="tot">${tot.filter(x => x[1] != null).map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('')}</div>
+    <h4>Price &amp; contract</h4><div class="facts-t">${[['Fee', feeHTML(p).replace(/<[^>]+>/g, '')], ['Wage', wage(p.contract_wage)], ...(FAIR ? [['Fair fee', p.fair_fee != null ? money(p.fair_fee) + (p.deal_score != null ? ' · ' + pctTxt(p.deal_score) : '') : mins < 900 ? 'No fair fee under 900 min.' : '–']] : []), ['Status', (p.contract_squad_status || '–').replaceAll('_', ' ')]]
+      .map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>${ppTimeline(p)}`;
+}
+function secPizza() {
+  const { p, grp, bench } = ppx, mins = p.s_minutes || 0;
+  const body = !mins ? '<p class="note">No league minutes this season, so there is nothing to benchmark yet.</p>'
+    : mins < 900 ? ladder('Minutes played', mins.toLocaleString(), mins / 900, C.warn, `${900 - mins} more minutes and he gets percentiles. Per-90 numbers on few matches swing too much to rank.`)
+    : !bench ? '<span class="sk" style="height:220px;width:100%"></span>'
+    : Object.keys(bench.pcs).length >= 3 ? `${pizza(grp, bench.pcs)}<p class="note">Wedge = percentile per 90 against ${bench.pool.length} ${plural(grp)} with 900+ min; 85 = better than 85% of them. Dashed ring = median peer.</p>`
+    : '<p class="note">Not enough peer data.</p>';
+  return `${h3i('pizza', 'Season percentiles', `vs ${plural(grp)}`)}${body}`;
+}
+function secTable() {
+  const { p, grp, bench, all } = ppx, small = (p.s_minutes || 0) < 900;
+  const defs = [...(grp === 'GK' ? METRICS.GK : MB_METRICS).map(k => M[k]), ...MB_EXTRA.filter((d, i) => grp !== 'GK' || i >= 2)], pool = bench?.pool || [], ap = all?.rows || [];
+  const pc = (rows, fn, v, lower) => { const xs = rows.map(fn).filter(x => x != null); return small || v == null || xs.length < 20 ? null : pctOf(xs, v, lower); };
+  const rows = defs.map(([name, fn, dec = 2, unit = '', lower]) => { const v = fn(p); return [name, v, dec, unit, pc(pool, fn, v, lower), pc(ap, fn, v, lower)]; }).filter(r => r[1] != null);
+  return `${h3i('table', 'Every stat against peers', small ? `per 90 · no percentiles under 900 min (${p.s_minutes || 0})` : `per 90 · bar = vs ${pool.length} ${plural(grp)} · right = vs ${ap.length ? ap.length + ' players, all positions' : 'all positions…'}`)}
+    <div class="mt" role="table" aria-label="Season stats with percentiles"><div class="mt-r mt-h" role="row"><span role="columnheader">Stat</span><span role="columnheader">Value</span><span role="columnheader">vs ${plural(grp)}</span><span role="columnheader">vs all</span></div>
+    ${rows.map(([n, v, dec, unit, a, b]) => `<div class="mt-r" role="row"><span role="cell">${n}</span><span role="cell" class="mono">${v.toFixed(dec)}${unit}</span>
+      <span role="cell" class="mt-b">${a != null ? `<i><i style="width:${Math.max(a, 2)}%;background:${pctColor(a)}"></i></i><b style="color:${pctColor(a)}">${a}</b>` : '<em>–</em>'}</span>
+      <span role="cell" class="mono" style="color:${b != null ? pctColor(b) : C.muted}">${b ?? '–'}</span></div>`).join('')}</div>`;
+}
+// Tabbed side panel: everything not on the first view.
+function sideBody(k) {
+  const { p, grp, bench, sim } = ppx, mb = MODE === 'moneyball', pool = bench?.pool || [];
+  if (k === 'similar') {
+    if (!sim) return '<span class="sk" style="height:200px;width:100%"></span>';
+    const chips = [...(sim.crit?.attributes || []).map(x => `<span class="ac" title="${esc(label(x.col))}">${ABBR[x.col.slice(11)] || esc(label(x.col))}<b class="${tier(x.value)}">${x.value}</b></span>`),
+      ...(sim.crit?.stats || []).map(x => `<span class="ac st" title="${esc(label(x.col))}: better than ${x.pct}% of peers">${esc(label(x.col))}<b style="color:${pctColor(x.pct)}">${x.value}</b></span>`)];
+    const list = sim.rows.map(r => { const [t, , v, c] = simMetric(r);
+      return `<button class="sim-row" data-profile="${r.uid}"><span><b>${natHTML(r, false)} ${esc(r.name)}</b><small>${r.age} yrs · ${esc(r.club_name || 'Free agent')}</small></span>
+        <span class="mono" style="font-size:12px">${feeHTML(r)}</span><span class="mono" style="color:${c};font-weight:700" title="${t}"><span class="sr">${t} </span>${v}</span></button>`; }).join('');
+    return `<div class="sd-sim${MODE === 'fair' ? ' wide' : ''}"><div>${chips.length ? `<div class="kchips" aria-label="Compared on">${chips.join('')}</div>` : ''}
+      ${list || `<p class="note">${mb && !p.s_minutes ? 'Needs league minutes to compare on numbers.' : 'No close match found.'}</p>`}
+      <button class="link" data-similar="${p.uid}">Open the full list in Scout →</button></div>${MODE !== 'fair' || !sim.rows.length ? '' : `<div>${scatter(p, sim.rows)}</div>`}</div>`;
+  }
+  if (k === 'price') return `${priceBar(p)}${priceBody(p)}${bench ? strip('Asking fee', pool.map(r => r.transfer_value), p.free_agent ? 0 : p.transfer_value, money, grp) + strip('Wage', pool.map(r => r.contract_wage), p.contract_wage, wage, grp) : ''}
+    ${!FAIR ? '<p class="note">Fair prices are off: fee and wage against his peers only.</p>' : ''}`;
+  if (k === 'contract') {
+    const js = s => { try { return JSON.parse(s || '[]') || []; } catch { return []; } };
+    const clauses = js(p.contract_clauses).filter(c => c.kind && c.kind !== 'unknown'), chain = js(p.contract_chain), traits = (p.traits || '').split(';').filter(t => t && t !== 'unknown');
+    const rep = [['World', p.reputation_world], ['Current', p.reputation_current], ['Home', p.reputation_home], ['Club', p.club_reputation]].filter(x => x[1] != null);
+    const facts = [['Sale', saleTxt(p)], ['Squad status', (p.contract_squad_status || '–').replaceAll('_', ' ')], ['Wage', wage(p.contract_wage)], p.contract_kind && ['Contract type', p.contract_kind.replaceAll('_', ' ')],
+      ['Club', (p.club_name || 'Free agent') + (p.club_join_date ? ` · since ${p.club_join_date}` : '')], p.on_loan && ['On loan', `from ${p.loan_parent_club_name || '?'}${p.loan_end ? ' until ' + p.loan_end : ''}`],
+      p.home_grown_club_names && ['Home-grown at', p.home_grown_club_names.replaceAll(';', ', ')], p.raw_condition != null && ['Condition · sharpness', `${Math.round(p.raw_condition / 100)}% · ${Math.round((p.raw_match_sharpness ?? 0) / 100)}%`]].filter(Boolean);
+    return `${ppTimeline(p, true)}<div class="facts-t">${facts.map(([k_, v]) => `<div><span>${k_}</span><b>${esc(v)}</b></div>`).join('')}</div>
+      ${chain.length > 1 ? `<h4>History</h4><div class="chain">${chain.map(c => `<span class="tag">${esc(c.club_name)}</span>`).join('<i aria-hidden="true">→</i>')}</div>` : ''}
+      ${clauses.length ? `<h4>Clauses</h4><div class="tags">${clauses.map(c => `<span class="tag">${esc(label(c.kind))}${c.value != null ? `<b>${money(c.value)}</b>` : ''}</span>`).join('')}</div>` : ''}
+      ${traits.length ? `<h4>Traits</h4><div class="tags">${traits.map(t => `<span class="tag">${esc(label(t))}</span>`).join('')}</div>` : ''}
+      ${rep.length ? `<h4>Reputation <small class="muted">/10</small></h4><div class="fbs">${rep.map(([n, v]) => fbar(n, (v / 1000).toFixed(1), v / 10000, 'var(--mode)')).join('')}</div>` : ''}
+      ${p.suspensions ? '<div class="tags" style="margin-top:8px"><span class="tag bad">Suspended</span></div>' : ''}`;
+  }
+  if (k === 'map') return !sim ? '<span class="sk" style="height:200px;width:100%"></span>' : sim.rows.length ? `<p class="note" style="margin:0 0 6px">Similar players: fee (log) against ${simMetric(p)[0].toLowerCase()} · him = ring · click a dot.</p>${scatter(p, sim.rows)}` : '<p class="note">No close match found.</p>';
+  if (k === 'season') return '<div data-sec="season"></div>';
+  if (k === 'position') {
+    const fam = POSITIONS.map(x => [x, p[posKey(x)]]).filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]);
+    return `<div class="sd-pos"><div>${pitchMap(p)}</div><div><div class="fbs">${fam.map(([x, v]) => { const f = famil(v); return fbar(x, v, v / 20, f[2], f[1]); }).join('')}</div>
+      ${mb ? '' : `<h4>Role fit</h4>${roleBars(roleList(p))}`}</div></div>`;
+  }
+  if (k === 'stats') return `<div class="pp-all">${seasonAll(p, 'x').replace(/^[\s\S]*?<dl/, '<dl').replace(/<\/details>[\s\S]*$/, '') || '<p class="note">No season stats.</p>'}</div>`;
+  if (k === 'profile') return profileInner(p);
+  return '';
+}
+function secSide() {
+  const ks = PP_SIDE[MODE] || PP_SIDE.full, cur = ks.includes(ppSide) ? ppSide : ks[0];
+  return `<div class="sd-tabs" role="tablist" aria-label="More about him">${ks.map(k => `<button role="tab" id="pps-${k}" data-ppside="${k}" aria-selected="${k === cur}" tabindex="${k === cur ? 0 : -1}" aria-controls="ppSideP">${PP_SIDE_L[k]}</button>`).join('')}</div>
+    <div class="sd-body" id="ppSideP" role="tabpanel" aria-labelledby="pps-${cur}">${sideBody(cur)}</div>`;
+}
+const PP_FN = { ability: secAbility, attr: secAttr, dev: secDev, report: secReport, role: secRole, prof: secProf, perf: secPerf, pizza: secPizza, table: secTable, side: secSide };
 function ppPaint(which) {
   if (!ppx || !ppx.alive()) return;
-  const box = $('#player');
-  (which || PP_TABS.map(t => t[0])).forEach(k => { const b = $(`[data-tb="${k}"]`, box); if (b) b.innerHTML = tileBody(k); });
-  if (!which || which.includes(ppTab)) ppStage();
-}
-function ppStage() {
-  const st_ = $('#ppStage'); if (!st_ || !ppx) return;
-  const keepFocus = st_.contains(document.activeElement) && document.activeElement.dataset.ppview;
-  st_.innerHTML = stageBody(ppTab);
-  st_.setAttribute('aria-labelledby', 'ppt-' + ppTab);
-  if (ppTab === 'good') renderSeason(ppx.p, ppx.grp, st_, ppx.alive);
-  if (keepFocus) $(`[data-ppview="${keepFocus}"]`, st_)?.focus();
-}
-function ppSelect(tab, focus) {
-  ppTab = tab;
-  $$('#player .pp-tile').forEach(b => { const on = b.dataset.pptab === tab; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
-  ppStage();
+  const box = $('#player'), focus = document.activeElement?.closest?.('[data-pp]')?.dataset.pp, fid = document.activeElement?.id;
+  (which || PP_SECS[MODE]).forEach(k => {
+    const el = $(`[data-pp="${k}"]`, box); if (!el) return;
+    el.innerHTML = PP_FN[k]();
+    if (k === 'side' && $('[data-sec="season"]', el)) renderSeason(ppx.p, ppx.grp, el, ppx.alive);
+    if (focus === k && fid) $('#' + fid, box)?.focus();
+  });
 }
 function openProfile(uid) {
   if (!uid) return;
@@ -1757,49 +1807,54 @@ function openProfile(uid) {
 async function renderProfile() {
   const box = $('#player'), uid = st.pp, seq = ++ppSeq, alive = () => seq === ppSeq && st.page === 'player';
   ppPlayer = null; ppx = null;
+  const secs = PP_SECS[MODE] || PP_SECS.full;
   box.innerHTML = `<div class="pp-in"><div class="pp-head"><div class="pp-id"><span class="sk" style="height:30px;width:40%"></span><span class="sk" style="margin-top:10px;width:30%"></span></div></div>
-    <div class="pp-rail">${'<div class="pp-tile"><span class="sk" style="width:50%"></span><span class="sk" style="margin-top:12px;height:60px;width:100%"></span></div>'.repeat(6)}</div><div class="pp-stage"></div></div>`;
+    <div class="pp-body m-${MODE}">${secs.map(k => `<section class="pp-card" style="grid-area:${k}"><span class="sk" style="width:40%"></span><span class="sk" style="margin-top:12px;height:120px;width:100%"></span></section>`).join('')}</div></div>`;
   let p;
   try { const r = await api('/api/player/' + uid + mq()); if (!r.ok) throw r.status; p = await r.json(); }
   catch { if (alive()) box.innerHTML = emptyState('Player not found', 'The server could not load this player: it may be restarting, or this save does not have him. Go back or try again in a moment.'); return; }
   if (!alive()) return;
-  ppPlayer = p;
-  const grp = groupOf(p), foot = MODE === 'moneyball' ? '' : footOf(p);
-  ppx = { p, grp, alive, bench: null, sim: null };
+  ppPlayer = p; ppRole = null;
+  const grp = groupOf(p), mb = MODE === 'moneyball', foot = mb ? '' : footOf(p);
+  ppx = { p, grp, alive, bench: null, sim: null, abil: null, all: null };
+  const chip = (k, v, cls = '') => `<span class="tag${cls}">${k} <b>${v}</b></span>`;
   box.innerHTML = `<article class="pp-in" aria-labelledby="ppName">
     <header class="pp-head">
       <div class="pp-id"><h1 id="ppName" tabindex="-1">${esc(p.name)}</h1>
-        <p>${natHTML(p) || 'Unknown nation'}${p.second_nationalities ? ` <span class="muted">(+${esc(p.second_nationalities)})</span>` : ''} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.birth_date ? ` <span class="muted">(${esc(p.birth_date)})</span>` : ''}${p.height_cm ? ` · ${p.height_cm} cm` : ''}${foot ? ' · ' + foot : ''}
+        <p>${natHTML(p) || 'Unknown nation'}${p.second_nationalities ? ` <span class="muted">(+${esc(p.second_nationalities)})</span>` : ''} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${p.height_cm} cm` : ''}${foot ? ' · ' + foot : ''}
           <span class="pp-pos">${posChips(p.natural_positions)}${p.accomplished_positions ? `<span class="muted">also</span>${posChips(p.accomplished_positions)}` : ''}</span></p></div>
+      <div class="pp-quick">${chip('Fee', feeHTML(p).replace(/<[^>]+>/g, ''))}${chip('Wage', wage(p.contract_wage))}${chip('Contract', `${esc(p.contract_end || '–')}${p.months_left != null ? ` · ${p.months_left}m` : ''}`, p.months_left != null && p.months_left <= 6 ? ' warn' : '')}
+        ${mb ? chip('Minutes', (p.s_minutes || 0).toLocaleString()) : `<span class="tag">${esc((p.contract_squad_status || 'status unknown').replaceAll('_', ' '))}</span>`}</div>
       <div class="pp-act">
         <button class="icon-btn star star-btn" data-star="${p.uid}" data-name="${esc(p.name)}" data-club="${p.club_uid ?? ''}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist ${esc(p.name)}" title="Shortlist (s)">★</button>
-        <button class="btn" data-similar="${p.uid}">Find similar players</button>
-        <button class="btn primary" data-offer="${p.uid}">Make an offer →</button>
+        <button class="btn primary" data-similar="${p.uid}">Find similar players</button>
+        <button class="btn" data-offer="${p.uid}">Make an offer →</button>
       </div>
     </header>
-    <div class="pp-rail" role="tablist" aria-label="Scouting questions">${PP_TABS.map(([k, q]) => `<button class="pp-tile" role="tab" id="ppt-${k}" data-pptab="${k}" aria-controls="ppStage" aria-selected="${k === ppTab}" tabindex="${k === ppTab ? 0 : -1}" title="${q}">
-      <span class="t-q">${ppIcon(k)}<span class="t-ql">${q}</span></span><span class="t-b" data-tb="${k}"></span></button>`).join('')}</div>
-    <section class="pp-stage" id="ppStage" role="tabpanel"></section></article>`;
+    <div class="pp-body m-${MODE}">${secs.map(k => `<section class="pp-card" data-pp="${k}" style="grid-area:${k}"></section>`).join('')}</div></article>`;
   ppPaint();
   $('#ppName', box).focus({ preventScroll: true });
-  ppBench(p, grp).then(b => { if (!alive()) return; ppx.bench = b; ppPaint(['level', 'good', 'where', 'cost']); });
-  const j = r => r.ok ? r.json() : null, mb = MODE === 'moneyball';
+  ppBench(p, grp).then(b => { if (!alive()) return; ppx.bench = b; ppPaint(mb ? ['pizza', 'table', 'side'] : MODE === 'fair' ? ['role', 'side'] : ['side']); });
+  if (MODE === 'full') ppAbility(p, grp).then(a => { if (!alive()) return; ppx.abil = a; ppPaint(['ability', 'report']); });
+  if (mb) ppAll(p.gender).then(a => { if (!alive()) return; ppx.all = a; ppPaint(['table']); }).catch(() => {});
+  const j = r => r.ok ? r.json() : null;
   Promise.all([api(`/api/similar/${p.uid}${mq()}`).then(j).catch(() => null),
     api('/api/players', { start: 0, end: 9, positions: [grp], gender: p.gender || null, mode: MODE, similar_to: p.uid, filters: mb ? { s_minutes: num('greaterThanOrEqual', 600) } : {} }).then(j).catch(() => null)])
-    .then(([crit, res]) => { if (!alive()) return; ppx.sim = { crit, rows: (res?.rows || []).filter(r => r.uid !== p.uid).slice(0, 8) }; ppPaint(['similar']); });
+    .then(([crit, res]) => { if (!alive()) return; ppx.sim = { crit, rows: (res?.rows || []).filter(r => r.uid !== p.uid).slice(0, 8) }; ppPaint(['side']); });
 }
-// Tabs: click, arrow keys, Home/End; sub-views of "Good at"; scatter points open that player.
+// Side tabs (click, arrows, Home/End), role picker, scatter points.
 $('#player').addEventListener('click', e => {
-  const t = e.target.closest('[data-pptab]'); if (t) return ppSelect(t.dataset.pptab);
-  const v = e.target.closest('[data-ppview]'); if (v) { ppView = v.dataset.ppview; ppStage(); $(`#ppStage [data-ppview="${ppView}"]`)?.focus(); return; }
+  const t = e.target.closest('[data-ppside]'); if (t) { ppSide = t.dataset.ppside; ppPaint(['side']); $('#pps-' + ppSide)?.focus(); return; }
+  const rl = e.target.closest('[data-pprole]'); if (rl) { ppRole = rl.dataset.pprole; ppPaint(['role']); $(`[data-pprole="${ppRole}"]`)?.focus(); return; }
   const pt = e.target.closest('[data-pp-uid]'); if (pt) openProfile(+pt.dataset.ppUid);
 });
+$('#player').addEventListener('change', e => { if (e.target.id === 'ppRole') { ppRole = e.target.value; ppPaint(['role']); $('#ppRole')?.focus(); } });
 $('#player').addEventListener('keydown', e => {
-  if (!e.target.matches('.pp-tile')) return;
-  const ks = PP_TABS.map(t => t[0]), i = ks.indexOf(ppTab);
+  if (!e.target.matches('[data-ppside]')) return;
+  const ks = PP_SIDE[MODE] || PP_SIDE.full, i = ks.indexOf(e.target.dataset.ppside);
   const n = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: ks.length - 1 }[e.key];
   if (n == null) return;
-  e.preventDefault(); ppSelect(ks[(n + ks.length) % ks.length], true);
+  e.preventDefault(); ppSide = ks[(n + ks.length) % ks.length]; ppPaint(['side']); $('#pps-' + ppSide)?.focus();
 });
 
 function closeDrawer() {
