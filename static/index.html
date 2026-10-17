@@ -445,6 +445,8 @@ details[open] summary::before { content: "−"; }
 .pg-similar .sd-body { overflow: hidden; } .sd-sim.wide > div:last-child { overflow: hidden; display: flex; flex-direction: column; } .sd-sim.wide .scat { flex: 1; min-height: 0; height: 100%; }
 .sw-lg { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -2px 0 6px; font-size: 11.5px; color: var(--text2); } .sw-lg i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
 .sw-lg .me { background: var(--good, #3ddc84); } .sw-lg .sim { border: 1.6px solid var(--gold); } .sw-lg .pe { width: 5px; height: 5px; background: var(--muted); opacity: .6; } .sw-lg .md { width: 0; height: 10px; border-radius: 0; border-left: 1px dashed var(--text2); }
+.sw-tg { display: inline-flex; gap: 2px; padding: 2px; margin: -2px 0 6px; border-radius: var(--r-pill); background: var(--bg); } .sw-tg button { height: 22px; padding: 0 10px; border-radius: var(--r-pill); font: 600 11px var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); } .sw-tg button[aria-pressed="true"] { background: var(--raise); color: var(--text); }
+.sw-lg .cv { width: 14px; height: 8px; border-radius: 8px 8px 0 0; background: color-mix(in srgb, var(--muted) 35%, transparent); border: 1px solid var(--muted); border-bottom: 0; }
 .swarm .pt { cursor: pointer; } .swarm .pt:hover circle { stroke: var(--text); stroke-width: 2.4; }
 .cnv-p .lane { overflow: visible; }
 .hm-tr { gap: 4px; } .hm-tr .tag { font-size: 11.5px; }
@@ -2153,6 +2155,13 @@ function secCanvas() {
     <div class="cnv"><div class="cnv-s">${panel(ph[0])}${panel(ph[2])}</div><div class="cnv-p">${bigPitch(p)}</div><div class="cnv-s">${panel(ph[1])}${panel(ph[3])}</div></div>${famLegend()}`;
 }
 // Moneyball beeswarm: every peer a grey dot per metric, dashed median, similar players gold rings, him a coloured dot.
+// Peer distribution as a smoothed curve (Gaussian kernel, Silverman bandwidth), heights scaled to the row's peak.
+const dens = (xs, lo, hi, n = 48) => {
+  const m = mean(xs), sd = Math.sqrt(mean(xs.map(x => (x - m) ** 2))) || (hi - lo) / 10 || 1, bw = 1.06 * sd * xs.length ** -0.2;
+  const ys = Array.from({ length: n + 1 }, (_, i) => { const t = lo + (hi - lo) * i / n; return xs.reduce((a, x) => a + Math.exp(-(((Math.min(x, hi) - t) / bw) ** 2) / 2), 0); });
+  const mx = Math.max(...ys) || 1; return ys.map((d, i) => [lo + (hi - lo) * i / n, d / mx]);
+};
+let swView = (() => { try { return localStorage.getItem('fm26_swarm') || 'curve'; } catch { return 'curve'; } })();  // 'curve' or 'dots'
 function secSwarm() {
   const { p, grp, bench, sim } = ppx, small = (p.s_minutes || 0) < 900, base = METRICS[grp] || METRICS.CM;
   const neg = grp === 'GK' ? [] : ['ST', 'W'].includes(grp) ? ['lost', 'off'] : ['lost', 'foul'];  // stats where less is better, ↓ in the label
@@ -2160,20 +2169,23 @@ function secSwarm() {
   const head = h3i('table', `Among ${bench ? bench.pool.length : 300} ${plural(grp)}`, `per 90 · peers with 900+ min${small ? ` · his dot from 900 min (${p.s_minutes || 0})` : ''}`);
   if (!bench) return head + '<span class="sk" style="height:300px;width:100%"></span>';
   const W = 560, L = 128, R = 92, rowH = 42, H = keys.length * rowH + 6, pool = bench.pool, sims = (sim?.rows || []).slice(0, 8);
-  const rowsSvg = keys.map((k, i) => {
+  const curve = swView === 'curve', rowsSvg = keys.map((k, i) => {
     const [name, fn, dec = 2, unit = ''] = M[k], xs = pool.map(fn).filter(x => x != null).sort((a, b) => a - b);
     if (xs.length < 10) return '';
     const lo = xs[0], hi = xs[Math.floor(xs.length * .98)] || xs.at(-1), X = v => (L + clamp01((v - lo) / ((hi - lo) || 1)) * (W - L - R)).toFixed(1), y = i * rowH + rowH / 2 + 3;
     const v = fn(p), pc = small || v == null ? null : pctOf(xs, v, M[k][4]), md = xs[xs.length >> 1];
     return `<g><text class="lb" x="0" y="${y + 4}">${name}</text>
-      ${pool.map((r, j) => { const x = fn(r); return x == null ? '' : `<circle cx="${X(x)}" cy="${(y + ((j * 7919) % 13) - 6).toFixed(1)}" r="1.8" fill="var(--muted)" opacity=".4"/>`; }).join('')}
-      <line x1="${X(md)}" x2="${X(md)}" y1="${y - 11}" y2="${y + 11}" stroke="var(--text2)" stroke-dasharray="2 2"/>
-      ${sims.map(r => { const x = fn(r); return x == null ? '' : `<g class="pt" data-pp-uid="${r.uid}"><title>${esc(r.name)}: ${x.toFixed(dec)}${unit} (click to open)</title><circle cx="${X(x)}" cy="${y}" r="5" fill="transparent" stroke="var(--gold)" stroke-width="1.6"/></g>`; }).join('')}
-      ${!small && v != null ? `<circle cx="${X(v)}" cy="${y}" r="6" fill="${pc != null ? pctColor(pc) : 'var(--mode)'}" stroke="var(--panel)" stroke-width="2"/>` : ''}
+      ${curve ? (() => { const yb = y + 9, pts = dens(xs, lo, hi).map(([t, d]) => `${X(t)},${(yb - d * 20).toFixed(1)}`);
+          return `<line x1="${L}" x2="${W - R}" y1="${yb}" y2="${yb}" stroke="var(--line)"/><path d="M${X(lo)},${yb} L${pts.join(' L')} L${X(hi)},${yb} Z" fill="color-mix(in srgb, var(--muted) 22%, transparent)" stroke="var(--muted)" stroke-width="1"/>`; })()
+        : pool.map((r, j) => { const x = fn(r); return x == null ? '' : `<circle cx="${X(x)}" cy="${(y + ((j * 7919) % 13) - 6).toFixed(1)}" r="1.8" fill="var(--muted)" opacity=".4"/>`; }).join('')}
+      <line x1="${X(md)}" x2="${X(md)}" y1="${y - 11}" y2="${y + (curve ? 9 : 11)}" stroke="var(--text2)" stroke-dasharray="2 2"/>
+      ${sims.map(r => { const x = fn(r); return x == null ? '' : `<g class="pt" data-pp-uid="${r.uid}"><title>${esc(r.name)}: ${x.toFixed(dec)}${unit} (click to open)</title><circle cx="${X(x)}" cy="${curve ? y + 9 : y}" r="${curve ? 4 : 5}" fill="transparent" stroke="var(--gold)" stroke-width="1.6"/></g>`; }).join('')}
+      ${!small && v != null ? `<circle cx="${X(v)}" cy="${curve ? y + 9 : y}" r="6" fill="${pc != null ? pctColor(pc) : 'var(--mode)'}" stroke="var(--panel)" stroke-width="2"/>` : ''}
       <text class="vl" x="${W - R + 8}" y="${y + 4}">${v != null ? v.toFixed(dec) + unit : '–'}</text>
       ${pc != null ? `<rect x="${W - 34}" y="${y - 8}" width="32" height="16" rx="8" fill="color-mix(in srgb, ${pctColor(pc)} 18%, transparent)"/><text class="pc" x="${W - 18}" y="${y + 4}" text-anchor="middle" fill="${pctColor(pc)}">${pc}</text>` : `<text class="pc" x="${W - 18}" y="${y + 4}" text-anchor="middle" fill="var(--muted)">–</text>`}</g>`; }).join('');
-  const lg = `<div class="sw-lg" aria-hidden="true"><span><i class="me"></i>${esc(p.name.split(' ').slice(-1)[0])}</span><span><i class="sim"></i>${sims.length} most similar players · hover for the name</span><span><i class="pe"></i>other ${plural(grp)}</span><span><i class="md"></i>median</span>${neg.length ? '<span>↓ = fewer is better</span>' : ''}</div>`;
-  return `${head}${lg}<svg class="swarm" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Per-90 stats of ${p.name} among ${pool.length} ${plural(grp)}: ` + keys.map(k => `${M[k][0]} ${M[k][1](p)?.toFixed(M[k][2] ?? 2) ?? 'none'}${!small && bench.pcs[k] != null ? `, percentile ${bench.pcs[k]}` : ''}`).join('; '))}">${rowsSvg}</svg>`;
+  const lg = `<div class="sw-lg" aria-hidden="true"><span><i class="me"></i>${esc(p.name.split(' ').slice(-1)[0])}</span><span><i class="sim"></i>${sims.length} most similar players · hover for the name</span><span><i class="${curve ? 'cv' : 'pe'}"></i>${curve ? `how ${plural(grp)} spread` : `other ${plural(grp)}`}</span><span><i class="md"></i>median</span>${neg.length ? '<span>↓ = fewer is better</span>' : ''}</div>`;
+  const tg = `<div class="sw-tg" role="group" aria-label="Peer view">${[['curve', 'Curve'], ['dots', 'Dots']].map(([k, l]) => `<button data-swv="${k}" aria-pressed="${swView === k}">${l}</button>`).join('')}</div>`;
+  return `${head}${tg}${lg}<svg class="swarm" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Per-90 stats of ${p.name} among ${pool.length} ${plural(grp)}: ` + keys.map(k => `${M[k][0]} ${M[k][1](p)?.toFixed(M[k][2] ?? 2) ?? 'none'}${!small && bench.pcs[k] != null ? `, percentile ${bench.pcs[k]}` : ''}`).join('; '))}">${rowsSvg}</svg>`;
 }
 // One similar player: flag, name, age and club, fee, and the number he was matched on.
 const simRow = (r, pa, ak = []) => { const [t, , v, c] = simMetric(r), av = ak.length ? mean(ak.map(k => r[k])) : null;
@@ -2323,6 +2335,7 @@ document.addEventListener('mousemove', e => { if (tipEl.hidden) return; const r 
 // Page tabs (click, arrows), role picker, scatter points.
 $('#player').addEventListener('click', e => {
   const t = e.target.closest('[data-pptab],[data-ppgo]'); if (t) { setPpTab(t.dataset.pptab || t.dataset.ppgo); return; }
+  const sv = e.target.closest('[data-swv]'); if (sv) { swView = sv.dataset.swv; try { localStorage.setItem('fm26_swarm', swView); } catch {} ppPaint(['swarm']); return; }
   const rl = e.target.closest('[data-pprole]'); if (rl) { ppRole = rl.dataset.pprole; ppPaint(['role']); $(`[data-pprole="${ppRole}"]`)?.focus(); return; }
   const pt = e.target.closest('[data-pp-uid]'); if (pt) openProfile(+pt.dataset.ppUid);
 });
