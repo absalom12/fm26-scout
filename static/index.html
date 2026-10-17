@@ -395,6 +395,8 @@ dialog::backdrop { background: rgba(3,6,9,.6); backdrop-filter: blur(2px); }
 .rank .f { font: 700 13px var(--f-mono); text-align: right; }
 .rank .f small { display: block; font: 500 10px var(--f-body); color: var(--muted); }
 .slot-list { max-height: 260px; overflow-y: auto; }
+.pname { cursor: pointer; text-decoration: underline transparent; text-underline-offset: 3px; transition: text-decoration-color var(--t), color var(--t); }
+.pname:hover, .pname:focus-visible { color: var(--accent); text-decoration-color: currentColor; }
 .reco .keys { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
 .reco { display: grid; grid-template-columns: 26px minmax(150px, 1fr) auto auto auto 36px; gap: 12px; align-items: center; padding: 10px 8px; border-bottom: 1px solid var(--line); animation: slotIn .4s var(--ease) both; }
 .reco:hover { background: var(--bg2); }
@@ -628,9 +630,6 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
   <label class="fld">Value ≤ <select data-q="value_max" class="qf">
     <option value="">Any</option><option value="0">Free</option><option value="250000">£250k</option><option value="1000000">£1M</option>
     <option value="5000000">£5M</option><option value="20000000">£20M</option><option value="50000000">£50M</option></select></label>
-  <label class="fld">Wage ≤ <select data-q="wage_max" class="qf" aria-label="Max weekly wage">
-    <option value="">Any</option><option value="1000">£1k/w</option><option value="2500">£2.5k/w</option><option value="5000">£5k/w</option>
-    <option value="10000">£10k/w</option><option value="25000">£25k/w</option><option value="50000">£50k/w</option><option value="100000">£100k/w</option></select></label>
   <button id="esBtn" class="btn" aria-haspopup="dialog" title="All search criteria (e)">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Edit search <span id="esCount" class="count"></span></button>
   <button id="reset" class="link">Reset</button>
@@ -945,7 +944,7 @@ function colDef(c) {
   if (['name', 'club_name', 'natural_positions', 'best_role', 'contract_squad_status', 'nationality'].includes(c))
     Object.assign(d, { filter: 'agTextColumnFilter', filterParams: { maxNumConditions: 1 }, width: c === 'name' ? 200 : c === 'club_name' ? 170 : c === 'nationality' ? 140 : 120 });
   if (c === 'name') Object.assign(d, { pinned: 'left', cellRenderer: p => !p.data ? '<span class="sk"></span>'
-    : `<span class="cell-name">${esc(p.value)}</span>${CLUB && p.data.club_uid === CLUB.club_uid ? '<span class="ours">OURS</span>' : ''}` });
+    : `<span class="cell-name pname" data-profile="${p.data.uid}" role="link" tabindex="-1" title="Full profile">${esc(p.value)}</span>${CLUB && p.data.club_uid === CLUB.club_uid ? '<span class="ours">OURS</span>' : ''}` });
   if (c === 'nationality') d.cellRenderer = p => natHTML(p.data);
   if (c === 'natural_positions') d.cellRenderer = p => posChips(p.value);
   if (c === 'best_role') d.valueFormatter = p => p.value ? label('role_' + p.value) : '—';
@@ -1143,6 +1142,7 @@ function critList(f = F) {
   if (f.months_max != null) L.push([`≤ ${f.months_max} months left`, () => f.months_max = null]);
   if (f.squad) L.push([esc(label(f.squad)), () => f.squad = '']);
   if (f.club_country) L.push([`Plays in ${esc(f.club_country)}`, () => f.club_country = '']);
+  if (f.wage_max != null) L.push([`Wage ≤ ${wage(f.wage_max)}`, () => f.wage_max = null]);  // no toolbar control any more
   if (f.similar) L.push([`Most similar to ${esc(f.similar.name)}`, () => f.similar = null]);
   if (f.free_agent) L.push(['Free agents', () => f.free_agent = false]);
   if (f.on_loan) L.push(['On loan', () => f.on_loan = false]);
@@ -1413,7 +1413,7 @@ async function openPlayer(uid) {
   dr.innerHTML = `
     <div class="dr-head">
       <div class="dr-row">
-        <div class="dr-id"><h2 id="drName">${esc(p.name)}</h2>
+        <div class="dr-id"><h2 id="drName"><span class="pname" data-profile="${p.uid}" role="link" tabindex="0" title="Full profile">${esc(p.name)}</span></h2>
           <p>${natHTML(p) || 'Unknown nation'}${p.second_nationalities ? ` <span class="muted">(+${esc(p.second_nationalities)})</span>` : ''} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${p.height_cm} cm` : ''}${foot ? ' · ' + foot : ''}</p>
           <div>${posChips(p.natural_positions)}<button class="link" data-profile="${p.uid}" title="Full profile (Shift+click a player)" style="margin-left:6px">Full profile →</button></div></div>
         <button class="icon-btn star star-btn" data-star="${p.uid}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist" title="Shortlist (s)">★</button>
@@ -1567,7 +1567,7 @@ function dual(id, name) { const [lk, hk, mn, mx, u] = DUAL[id], lo = dget(lk), h
 const PZ = { GK: [[7, 50]], CB: [[21, 50]], FB: [[25, 14], [25, 86]], DM: [[37, 50]], CM: [[52, 50]], W: [[70, 14], [70, 86]], AM: [[68, 50]], ST: [[87, 50]] };
 const PZN = { GK: 'Goalkeeper', CB: 'Centre-back', FB: 'Full-back / wing-back', DM: 'Defensive midfielder', CM: 'Central midfielder', W: 'Winger', AM: 'Attacking midfielder', ST: 'Striker' };
 const PITCH_SVG = `<svg viewBox="0 0 105 68" preserveAspectRatio="none" fill="none" stroke="rgba(255,255,255,.18)" stroke-width=".4" aria-hidden="true"><rect x="1.5" y="1.5" width="102" height="65" rx=".8"/><path d="M52.5 1.5v65"/><circle cx="52.5" cy="34" r="9.15"/><rect x="1.5" y="13.85" width="16.5" height="40.3"/><rect x="1.5" y="24.85" width="5.5" height="18.3"/><rect x="87" y="13.85" width="16.5" height="40.3"/><rect x="98" y="24.85" width="5.5" height="18.3"/><path d="M18 27.5a8 8 0 0 1 0 13M87 27.5a8 8 0 0 0 0 13"/></svg>`;
-const ES_SECS = [['gen', 'General'], ['nat', 'Nationality'], ['money', 'Contract'], ['attr', 'Attributes'], ['stats', 'Statistics'], ['roles', 'Roles'], ['hidden', 'Hidden']];
+const ES_SECS = [['gen', 'General'], ['attr', 'Attributes'], ['hidden', 'Hidden'], ['stats', 'Statistics'], ['money', 'Contract'], ['nat', 'Nationality'], ['roles', 'Roles']];
 const esSecs = () => ES_SECS.filter(([k]) => MODE === 'moneyball' ? !['attr', 'roles', 'hidden'].includes(k) : k !== 'hidden' || MODE === 'full');
 function esCounts() {
   const m = D.min, x = D.max, has = (o, k) => o[k] != null && !hid(k), nn = (...v) => v.filter(z => z != null).length, keys = o => Object.keys(o).filter(k => !hid(k));
@@ -1595,7 +1595,7 @@ function renderES() {
   $('#esMode').innerHTML = `<span class="mode-chip">${MODES[MODE]}</span>${noAttr ? 'Attributes are off in Moneyball' : full ? '' : 'Hidden info is off in Fair play'}`;
   $('#esRail').innerHTML = esSecs().map(([k, l]) => `<button type="button" data-esgo="${k}" aria-current="false"><i aria-hidden="true">${String(n[k]).padStart(2, '0')}</i>${l}<b></b></button>`).join('')
     + `<p>Every criterion must match. The count below updates as you go.</p>`;
-  $('#esBody').innerHTML = [
+  const parts = [
     sec('gen', n.gen, 'General', 'who and where on the pitch', `<div class="es-gen">
       <div><div class="es-pitch" role="group" aria-label="Positions">${PITCH_SVG}${META.positions.filter(p => PZ[p]).map(p => PZ[p].map(([x, y], j) =>
         `<button type="button" class="pz" data-espos="${p}" aria-pressed="${D.positions.includes(p)}" style="left:${x}%;top:${y}%" title="${PZN[p]}"${j ? ' tabindex="-1" aria-hidden="true"' : ` aria-label="${p}, ${PZN[p]}"`}>${p}</button>`).join('')).join('')}</div>
@@ -1634,7 +1634,9 @@ function renderES() {
       <div class="es-sub">Personality <small>pick several, all must match</small></div>
       <div class="chips" style="margin-bottom:10px">${PCH.map(([k, x]) => `<button type="button" class="chip" data-espers="${k}" aria-pressed="${persOn(D, k)}" title="${k === 'controversy' ? 'Controversy ≤ 5' : label('personality_' + k) + ' ≥ 15'} (scale 1-20)">${x}</button>`).join('')}</div>
       <div class="es-tiles">${rangeRow('personality_professionalism', 'Professionalism ≥')}${rangeRow('personality_ambition', 'Ambition ≥')}${rangeRow('personality_pressure', 'Pressure ≥')}
-      ${rangeRow('personality_controversy', 'Controversy ≤', 20, true)}</div>`) : ''].join('');
+      ${rangeRow('personality_controversy', 'Controversy ≤', 20, true)}</div>`) : ''];
+  const ord = s => ES_SECS.findIndex(([k]) => s.includes(`data-sec="${k}"`));  // sections follow ES_SECS order
+  $('#esBody').innerHTML = parts.filter(Boolean).sort((a, b) => ord(a) - ord(b)).join('');
   $('#esSaved').innerHTML = saved.length ? '<span class="muted" style="font-size:12px;font-weight:600">Saved</span>' + saved.map((s, i) => `<span class="crit-chip"><button type="button" class="link" style="padding:0" data-esload="${i}">${esc(s.name)}</button><button type="button" data-esdel="${i}" aria-label="Delete saved search ${esc(s.name)}">×</button></span>`).join('') : '';
   esSpy(); esLive();
 }
@@ -1645,7 +1647,7 @@ function esSync() {
   $$('#esRail [data-esgo]').forEach(b => { b.querySelector('b').textContent = c[b.dataset.esgo] || ''; });
   const pos = D.positions.map(p => [p, () => { D.positions = D.positions.filter(x => x !== p); }]);
   esCrit = [...(D.age_min != null || D.age_max != null ? [[`Age ${dualTxt(D.age_min, D.age_max, '')}`, () => { D.age_min = D.age_max = null; }]] : []), ...pos,
-    ...(D.value_max != null ? [[`Value ≤ ${money(D.value_max)}`, () => { D.value_max = null; }]] : []), ...(D.wage_max != null ? [[`Wage ≤ ${wage(D.wage_max)}`, () => { D.wage_max = null; }]] : []), ...critList(D)];
+    ...(D.value_max != null ? [[`Value ≤ ${money(D.value_max)}`, () => { D.value_max = null; }]] : []), ...critList(D)];
   $('#esStrip').innerHTML = esCrit.length ? `<span class="muted">${esCrit.length} active</span>` + esCrit.map(([t], i) => `<span class="crit-chip"${was.has(t) ? ' style="animation:none"' : ''}>${t}<button type="button" data-esrm="${i}" aria-label="Remove ${esc(t.replace(/<[^>]+>/g, ''))}">×</button></span>`).join('')
     : '<span class="muted">No criteria yet: every player in the save is in play. Start with a position on the pitch.</span>';
 }
@@ -1774,7 +1776,7 @@ function renderSlotCard() {
   const card = $('#slotCard'); if (!card) return;
   if (slotSel == null) { card.innerHTML = '<p class="muted" style="margin:0;font-size:13px">Click a slot on the pitch (or a row in the ranking) to see targets for that position only.</p>'; return; }
   const s = slotOf(slotSel), pos = formation[slotSel], same = s.pos === pos;
-  const person = (who, role) => who ? `<button class="person" data-player="${who.uid}"><div class="who"><b>${esc(who.name)}</b><span>${role} · ${who.age} yrs${hid('ability_current') || who.ca == null ? '' : ` · CA ${who.ca} / PA ${who.pa}`}${who.wage != null ? ' · ' + wage(who.wage) : ''}</span></div>${fitBar(who.fit)}<b class="mono" style="color:${who.fit != null ? scoreColor(who.fit) : C.muted};width:26px;text-align:right">${who.fit != null ? who.fit.toFixed(0) : '–'}</b></button>`
+  const person = (who, role) => who ? `<button class="person" data-player="${who.uid}"><div class="who"><b><span class="pname" data-profile="${who.uid}" role="link" tabindex="0" title="Full profile">${esc(who.name)}</span></b><span>${role} · ${who.age} yrs${hid('ability_current') || who.ca == null ? '' : ` · CA ${who.ca} / PA ${who.pa}`}${who.wage != null ? ' · ' + wage(who.wage) : ''}</span></div>${fitBar(who.fit)}<b class="mono" style="color:${who.fit != null ? scoreColor(who.fit) : C.muted};width:26px;text-align:right">${who.fit != null ? who.fit.toFixed(0) : '–'}</b></button>`
     : `<p class="muted" style="font-size:13px;margin:6px 8px">No ${role.toLowerCase()} for this position.</p>`;
   card.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px"><b style="font:700 15px var(--f-display);letter-spacing:.06em;text-transform:uppercase">Slot ${slotSel + 1} · ${pos}</b>
       <span><button class="link" data-pos-edit aria-expanded="${posEdit}">${posEdit ? 'Done' : 'Change position'}</button><button class="link" data-clear-slot>Close</button></span></div>
@@ -1820,7 +1822,7 @@ function loadRecos() {
     box.innerHTML = rows.map((p, i) => `
       <div class="reco" style="animation-delay:${Math.min(i, 12) * 25}ms">
         <span class="i">${i + 1}</span>
-        <div style="min-width:0"><button class="nm" data-player="${p.uid}"><span class="flag" title="${esc(p.nationality || '')}">${flag(p.nationality_code)}</span> ${esc(p.name)}</button>
+        <div style="min-width:0"><button class="nm" data-profile="${p.uid}" title="Full profile"><span class="flag" title="${esc(p.nationality || '')}">${flag(p.nationality_code)}</span> ${esc(p.name)}</button>
           <div class="meta">${p.age} yrs · <span class="pos">${esc(p.target_pos || '')}</span> ${esc(p.club_name || 'Free agent')}</div></div>
         <div class="keys">${recoKeys(p)}</div>
         <span class="rep"><span class="up" title="${p.replaces ? `Upgrade over ${esc(p.replaces.name)}` : 'Fills an empty slot'}">${p.upgrade != null ? (p.upgrade >= 0 ? '+' : '') + p.upgrade.toFixed(0) + ' ' + fitWord() : 'new'}</span></span>
@@ -1857,7 +1859,7 @@ function renderOffers() {
 }
 function renderOfPlayer() {
   const p = of.p, el = $('#ofPlayer'); if (!el) return;
-  el.innerHTML = p ? `<div class="of-card"><div style="display:flex;justify-content:space-between;gap:8px"><div><h3>${esc(p.name)}</h3>
+  el.innerHTML = p ? `<div class="of-card"><div style="display:flex;justify-content:space-between;gap:8px"><div><h3><span class="pname" data-profile="${p.uid}" role="link" tabindex="0" title="Full profile">${esc(p.name)}</span></h3>
       <div class="muted" style="font-size:13px;margin-top:4px">${natHTML(p)} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs</div><div style="margin-top:6px">${posChips(p.natural_positions)}</div></div>
       <button class="link" data-profile="${p.uid}">Profile</button></div>
       <div class="of-grid" style="grid-template-columns:repeat(3,1fr)"><div class="kv">Game value<b>${feeHTML(p)}</b></div><div class="kv">Wage<b>${wage(p.contract_wage)}</b></div><div class="kv">Contract<b>${p.months_left != null ? p.months_left + 'm' : '–'}</b></div></div></div>` : '';
@@ -2106,7 +2108,7 @@ async function init() {
     getRowId: p => String(p.data.uid),
     overlayNoRowsTemplate: emptyState('Nobody on the teamsheet', 'No players match these filters. Loosen one or reset.', '<button class="btn" onclick="resetAll()">Reset filters</button>'),
     // Click / Enter = quick view (drawer); with Shift = full profile page (middle-click too, see auxclick).
-    onCellClicked: p => p.colDef.colId !== 'star' && p.data && (p.event?.shiftKey ? openProfile(p.data.uid) : openPlayer(p.data.uid)),
+    onCellClicked: p => p.colDef.colId !== 'star' && p.data && !p.event?.target?.closest?.('.pname') && (p.event?.shiftKey ? openProfile(p.data.uid) : openPlayer(p.data.uid)),
     onCellKeyDown: p => p.event.key === 'Enter' && p.data && (p.colDef.colId === 'star' ? toggleStar(p.data.uid, p.data.name, p.data.club_uid) : p.event.shiftKey ? openProfile(p.data.uid) : openPlayer(p.data.uid)),
     onFilterChanged: renderSummary,
     datasource: { getRows: async p => {
@@ -2163,6 +2165,8 @@ $('#palBtn').onclick = () => openPalette();
 $('#esBtn').onclick = () => META && openES();
 
 document.addEventListener('click', e => {
+  const pn = e.target.closest('.pname[data-profile]');  // a player's name, anywhere: straight to his full profile
+  if (pn) { e.stopPropagation(); return openProfile(+pn.dataset.profile); }
   const t = e.target.closest('button'); if (!t || t.closest('#es')) return;
   const d = t.dataset;
   if (t.id === 'navBack') history.back();
@@ -2294,6 +2298,7 @@ $('#palList').addEventListener('mousemove', e => { const b = e.target.closest('[
 $('#pal').addEventListener('click', e => { if (e.target === $('#pal')) $('#pal').close(); });
 
 document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches?.('.pname[data-profile]')) { e.preventDefault(); return openProfile(+e.target.dataset.profile); }
   if ($$('dialog[open]').length) return;
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openPalette(); return; }
   if (e.key === 'Escape') { closeDrawer(); return; }
