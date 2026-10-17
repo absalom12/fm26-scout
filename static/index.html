@@ -881,7 +881,7 @@ function applyColumns() {
 const clearSort = () => grid.applyColumnState({ defaultState: { sort: null } });
 
 // ---------- Pages ----------
-// Scout list of players like p, as this mode understands "like": same position group and gender, age ±3,
+// Scout list of players like p, as this mode understands "like": same position group and gender (age range untouched),
 // then the server sorts by closeness (similar_to). Every criterion stays an editable chip.
 async function findSimilar(p) {
   let s;  // his strengths, as the server ranks them for this mode (the same ones it sorts by)
