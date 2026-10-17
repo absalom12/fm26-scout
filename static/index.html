@@ -1571,9 +1571,14 @@ async function init() {
   try { const g = localStorage.getItem('fm26_gender'); if (g) setGender(g); } catch {}
   $('#positions').innerHTML = META.positions.map(p => `<button class="chip" data-pos="${p}" aria-pressed="false">${p}</button>`).join('');
 
+  const PAGE_SIZES = [50, 100, 500, 1000];
+  let PAGE_SIZE = 100;
+  try { const n = +localStorage.getItem('fm26_page_size'); if (PAGE_SIZES.includes(n)) PAGE_SIZE = n; } catch {}
   grid = agGrid.createGrid($('#grid'), {
     columnDefs: all.map(colDef), defaultColDef: { sortable: true, resizable: true, floatingFilter: true, suppressHeaderMenuButton: true },
-    rowModelType: 'infinite', cacheBlockSize: 100, maxBlocksInCache: 60, rowHeight: 40, headerHeight: 36, floatingFiltersHeight: 34,
+    rowModelType: 'infinite', cacheBlockSize: 100, maxBlocksInCache: 60, rowHeight: 40,
+    pagination: true, paginationPageSize: PAGE_SIZE, paginationPageSizeSelector: PAGE_SIZES,
+    onPaginationChanged: e => { if (e.newPageSize) try { localStorage.setItem('fm26_page_size', grid.paginationGetPageSize()); } catch {} }, headerHeight: 36, floatingFiltersHeight: 34,
     getRowId: p => String(p.data.uid),
     overlayNoRowsTemplate: emptyState('Nobody on the teamsheet', 'No players match these filters. Loosen one or reset.', '<button class="btn" onclick="resetAll()">Reset filters</button>'),
     onCellClicked: p => p.colDef.colId !== 'star' && p.data && openPlayer(p.data.uid),
