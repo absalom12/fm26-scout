@@ -1063,8 +1063,9 @@ async function renderSeason(p, grp) {
     .map(([l, x, c]) => `<div class="stat">${l}<b style="${c ? 'color:' + c : ''}">${x ?? '–'}</b></div>`).join('');
   const keys = METRICS[grp] || METRICS.CM;
   sec.innerHTML = head + `<div class="statline">${line}</div>` + keys.map(() => `<div class="pct"><span class="sk" style="width:80%"></span><span class="sk" style="width:100%"></span><span></span><span></span></div>`).join('');
-  let pool;
-  try { pool = await peers(grp, p.gender); } catch { pool = null; }
+  const small = p.s_minutes < 900;  // per-90 rates on a few matches swing wildly: no percentiles until 900 min
+  let pool = null;
+  if (!small) try { pool = await peers(grp, p.gender); } catch { pool = null; }
   if (drawerUid !== p.uid) return;
   const pcs = {};
   const rows = keys.map(k => {
@@ -1082,14 +1083,14 @@ async function renderSeason(p, grp) {
       <span class="v">${val.toFixed(dec)}${unit}</span><span class="p" style="color:${pc != null ? pctColor(pc) : C.muted}">${pc ?? '–'}</span></div>`;
   }).join('');
   sec.innerHTML = head + `<div class="statline">${line}</div>${rows}
-    <p class="note">${pool ? `Benchmarked against ${pool.length} ${grp}s. ` : 'Peer benchmark unavailable right now. '}${p.s_minutes < 900 ? `Small sample (${p.s_minutes} min): read with care.` : ''}</p>`;
+    <p class="note">${small ? `Not enough minutes to compare (${p.s_minutes} of 900).` : pool ? `Benchmarked against ${pool.length} ${grp}s.` : 'Peer benchmark unavailable right now.'}</p>`;
   if (prof) {
     const ax = keys.filter(k => k !== 'rating' && pcs[k] != null).map(k => [M[k][5], pcs[k]]);
     const best = Object.entries(pcs).filter(([k]) => k !== 'rating').sort((a, b) => b[1] - a[1]);
     prof.innerHTML = ax.length >= 3 ? `<h3>Performance profile <small>percentiles · dashed ring = 75th</small></h3>
       <div class="radar-wrap">${radar(ax, 100, 75)}<div class="axes-list">${best.slice(0, 3).map(([k, x]) => `<div><span class="muted">${M[k][0]}</span><b style="color:${pctColor(x)}">${x}</b></div>`).join('')}
       ${best.length > 3 ? `<div style="margin-top:6px"><span class="muted">Weakest: ${M[best.at(-1)[0]][0]}</span><b style="color:${pctColor(best.at(-1)[1])}">${best.at(-1)[1]}</b></div>` : ''}</div></div>`
-      : '<h3>Performance profile</h3><p class="note" style="margin:0">Not enough peer data to draw a profile.</p>';
+      : `<h3>Performance profile</h3><p class="note" style="margin:0">${small ? 'Needs 900 min this season.' : 'Not enough peer data to draw a profile.'}</p>`;
   }
 }
 
