@@ -1768,7 +1768,7 @@ function secReport() {
   const big = (x, c, w = '') => `<b style="color:${c}">${x}</b>${w ? `<span>${w}</span>` : ''}`;
   const top = abil?.n ? Math.max(1, Math.ceil((abil.ca + 1) / abil.n * 100)) : null, age = `${p.age - 1}-${p.age + 1}`;
   const roles = roleList(p).slice(0, 2), goodF = v.flags.filter(f => f[0] === 'good' && f[1] !== 'Free agent'), badF = v.flags.filter(f => f[0] !== 'good');
-  const level = blk('ability', 'Level', ca != null ? big(ca, abilityColor(ca), `${lvlWord(ca).split(' ')[1]} ${grp}`) : '',
+  const level = blk('ability', 'Level', ca != null ? big(ca, abilityColor(ca), `${tierOfV(ca, TIERS_CA)} · ${grp}`) : '',
     [top != null && chip(`top <b>${top}%</b>`, pctColor(100 - top), `CA ranks top ${top}% of ${abil.n.toLocaleString()} ${plural(grp)} in this save`),
      abil?.na && chip(`<b>#${abil.caA + 1}</b> of ${abil.na} aged ${age}`, pctColor(100 - abil.caA / abil.na * 100), `CA rank among ${plural(grp)} aged ${age}`)].filter(Boolean));
   const strong = blk('good', 'Strengths', '', [...v.strong.map(([k, x]) => chip(`${esc(label(k))} <b>${x}</b>`, attrC(x))), ...goodF.map(f => chip(esc(f[1]), C.good, 'Hidden attribute / personality flag'))],
@@ -1783,7 +1783,7 @@ function secReport() {
   const value = blk('cost', 'Value', big(p.free_agent ? 'Free' : p.transfer_value == null ? 'Not for sale' : money(p.transfer_value), p.free_agent ? C.good : 'var(--text)', val.word ? `<em style="color:${vc}">${esc(val.word)}</em>` : ''),
     [val.fp != null && chip(`fee above <b>${val.fp}%</b>`, vc, `Fee higher than ${val.fp}% of ${val.n} ${plural(grp)} within 8 CA${val.of}`),
      FAIR && p.deal_score != null && chip(`<b>${Math.abs(Math.round(p.deal_score))}%</b> ${p.deal_score >= 0 ? 'under' : 'over'} fair`, p.deal_score >= 0 ? C.good : C.bad, `Fair-fee model: fair fee ${money(p.fair_fee)}`),
-     p.months_left != null && chip(`contract <b>${p.months_left}m</b>`, p.months_left <= 6 ? C.warn : null, `Contract until ${p.contract_end}`)].filter(Boolean),
+     p.months_left != null && chip(`contract <b>${leftTxt(p.months_left)}</b>`, p.months_left <= 6 ? C.warn : null, `Contract until ${p.contract_end}`)].filter(Boolean),
     val.fp == null && !p.free_agent && p.transfer_value != null ? 'Not enough comparable fees.' : '');
   const ps = p.stat_score != null ? Math.round(p.stat_score) : null;
   const season = blk('level', 'This season', ps != null ? big(ps, pctColor(ps), `/100 performance vs ${plural(p.stat_group || grp)}`) : '',
