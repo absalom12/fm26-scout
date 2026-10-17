@@ -1092,7 +1092,7 @@ async function renderSeason(p, grp) {
     return;
   }
   // Apps, minutes and rating live in the hero dial; the stat line keeps the counting stats only.
-  const line = [
+  const line = [['Apps', p.s_apps], ['Minutes', p.s_minutes?.toLocaleString()],
     ...(grp === 'GK' ? [['Clean sheets', p.s_clean_sheets], ['Conceded', p.s_goals_allowed]] : [['Goals', p.s_goals], ['Assists', p.s_assists]]), ['PoM', p.s_player_of_the_match]]
     .map(([l, x, c]) => `<div class="stat">${l}<b style="${c ? 'color:' + c : ''}">${x ?? '–'}</b></div>`).join('');
   const keys = METRICS[grp] || METRICS.CM;
