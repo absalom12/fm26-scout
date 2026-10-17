@@ -360,7 +360,6 @@ LENS_FEATURES = {
 # Which lenses each data mode may use.
 MODES = {"full": ["ability", "attributes", "form", "stats"], "fair": ["attributes", "form", "stats"], "moneyball": ["form", "stats"]}
 MONEYBALL_MIN = 900  # minutes this season below which Moneyball gives no fair price
-WAGE_WEEKS = 156  # contract_wage is weekly; a signing is judged on fee + 3 years of wages
 MODEL_FIT = {}    # (gender, model) -> R² of ln(fee), for /api/meta
 MODEL_BAND = {}   # (gender, model) -> 25th/75th percentile of ln(real fee / fair fee): the fair range
 
@@ -386,9 +385,9 @@ def _fit_predict(X, y, train):
 
 
 def add_deals():
-    """Adds per lens and per mode: fair_fee_*, fair_package_* (fair fee + 3y of fair wage) and deal_* /
-    deal_score_* = % the actual package (fee + 3y wages) sits below the fair one. Players the game has no
-    value for (transfer_value NULL: the club won't sell) get no actual package and so no deal."""
+    """Adds per lens and per mode: fair_fee_*, fair_wage_* and deal_* / deal_score_* = % the real fee sits below
+    the fair fee (free agents: % the wage sits below the fair wage). Players the game has no value for
+    (transfer_value NULL: the club won't sell) get no deal."""
     has_stats = "s_minutes" in {r[0] for r in con().execute("DESCRIBE players").fetchall()}
     lenses = [k for k in LENS_FEATURES if k in ("ability", "attributes") or has_stats]
     ctx = CONTEXT if has_stats else [c for c in CONTEXT if "s_minutes" not in c]
@@ -437,24 +436,21 @@ def add_deals():
         np.savetxt(f, np.column_stack([out[c] for c in names]), delimiter=",", header=",".join(names), comments="",
                    fmt=["%d"] + ["%.6g"] * (len(names) - 1))  # uid first, exact
     model_cols = lenses + list(MODES)
-    deal = lambda f: f"CASE WHEN {f} > 0 AND package_cost IS NOT NULL THEN greatest(-999, round(100 * (1 - package_cost / ({f})))) END"
+    deal = lambda c: (f"CASE WHEN free_agent AND fair_wage_{c} > 0 THEN greatest(-999, round(100 * (1 - coalesce(contract_wage, 0) / fair_wage_{c}))) "
+                      f"WHEN transfer_value IS NOT NULL AND fair_fee_{c} > 0 THEN greatest(-999, round(100 * (1 - transfer_value / fair_fee_{c}))) END")
     con().execute(f"""
         CREATE OR REPLACE TABLE players AS
         WITH m AS (SELECT * REPLACE (CAST(uid AS BIGINT) AS uid) FROM read_csv_auto('{f.name}', nullstr='nan')),
              p AS (SELECT players.*,
-                          -- no game value = not for sale: no fee to pay, so no package (free agents pay wages only)
-                          CASE WHEN transfer_value IS NOT NULL OR free_agent
-                               THEN coalesce(transfer_value, 0) + {WAGE_WEEKS} * coalesce(contract_wage, 0) END AS package_cost,
-                          {", ".join(f"round(m.fee_{c}, -3) AS fair_fee_{c}, round(m.wage_{c}, -1) AS fair_wage_{c}, "
-                                     f"round(m.fee_{c}, -3) + {WAGE_WEEKS} * round(m.wage_{c}, -1) AS fair_package_{c}" for c in model_cols)}
+                          {", ".join(f"round(m.fee_{c}, -3) AS fair_fee_{c}, round(m.wage_{c}, -1) AS fair_wage_{c}" for c in model_cols)}
                    FROM players LEFT JOIN m USING (uid))
-        SELECT *, {", ".join(deal(f"fair_package_{k}") + f" AS deal_{k}" for k in lenses)},
-                  {", ".join(deal(f"fair_package_{m}") + f" AS deal_score_{m}" for m in MODES)}
+        SELECT *, {", ".join(deal(k) + f" AS deal_{k}" for k in lenses)},
+                  {", ".join(deal(m) + f" AS deal_score_{m}" for m in MODES)}
         FROM p""")
     os.unlink(f.name)
     # Moneyball prices on numbers only: under 900 min this season there are none to price on, so no fair price at all.
     if has_stats:
-        con().execute(f"""UPDATE players SET {", ".join(f"{p}_moneyball = NULL" for p in ("fair_fee", "fair_wage", "fair_package", "deal_score"))}
+        con().execute(f"""UPDATE players SET {", ".join(f"{p}_moneyball = NULL" for p in ("fair_fee", "fair_wage", "deal_score"))}
                           WHERE coalesce(s_minutes, 0) < {MONEYBALL_MIN}""")
 
 
@@ -525,13 +521,13 @@ def load(d=None):
 # Moneyball: additionally no attributes at all, only what happened on the pitch. Hidden columns are
 # stripped from every response and never used to filter or rank.
 HIDDEN_PREFIXES = ("ability_", "raw_", "personality_")
-PER_MODE = ("deal_score", "fair_package", "fair_fee", "fair_wage")  # each mode exposes its own as these names
+PER_MODE = ("deal_score", "fair_fee", "fair_wage")  # each mode exposes its own as these names
 INTERNAL = {f"{p}_{m}" for m in MODES for p in PER_MODE}
-HIDDEN_EXACT = {"pa_gap", "deal_ability", "fair_package_ability", "fair_fee_ability", "fair_wage_ability", "trait_bits", "attributes_consistency",
+HIDDEN_EXACT = {"pa_gap", "deal_ability", "fair_fee_ability", "fair_wage_ability", "trait_bits", "attributes_consistency",
                 "attributes_important_matches", "attributes_injury_proneness", "attributes_dirtiness",
                 "attributes_versatility"}
 MONEYBALL_PREFIXES = ("attributes_", "role_")
-MONEYBALL_EXACT = {"attr_avg", "best_role", "best_role_score", "deal_attributes", "fair_package_attributes", "fair_fee_attributes",
+MONEYBALL_EXACT = {"attr_avg", "best_role", "best_role_score", "deal_attributes", "fair_fee_attributes",
                    "fair_wage_attributes", "left_foot", "right_foot"}
 MODE_HIDDEN = VISIBLE = {}
 
@@ -549,7 +545,7 @@ def uses_hidden(sql, mode):
 
 def source(mode):
     """Table expression for a request: hidden columns gone, the mode's own deal blend exposed as
-    deal_score / fair_package."""
+    deal_score / fair_fee / fair_wage."""
     drop = ", ".join(sorted(MODE_HIDDEN[mode] | INTERNAL))
     return f"(SELECT * EXCLUDE ({drop}), {', '.join(f'{p}_{mode} AS {p}' for p in PER_MODE)} FROM players)"
 
@@ -603,18 +599,18 @@ PRESETS = {
     "xg_under": ("Form", "Unlucky finishers", "xG − goals ≥ 2, 900+ min", "s_minutes >= 900 AND s_expected_goals - s_goals >= 2", "s_expected_goals - s_goals DESC", "season"),
     "ball_winners": ("Form", "Ball winners", "Tackles + interceptions per 90, 900+ min", "s_minutes >= 900", "s_def_actions_p90 DESC", "season"),
     "young_breakout": ("Form", "Young breakouts", "Age ≤ 21, 900+ min, rating ≥ 7.0", "age <= 21 AND s_minutes >= 900 AND s_avg_rating >= 7.0", "s_avg_rating DESC", "season"),
-    # Deal Finder lenses: % under the fair fee + 3y wages package, weighted by quality so £5k nobodies don't win on ratio alone.
-    "deals_ability": ("Deals", "Best deals · Ability", "CA/PA vs fee + 3y wages", "deal_ability IS NOT NULL AND package_cost > 0 AND transfer_value IS NOT NULL AND (ability_current >= 90 OR ability_potential >= 130)",
+    # Deal Finder lenses: % under the fair fee, weighted by quality so £5k nobodies don't win on ratio alone.
+    "deals_ability": ("Deals", "Best deals · Ability", "CA/PA vs fee", "deal_ability IS NOT NULL AND transfer_value > 0 AND (ability_current >= 90 OR ability_potential >= 130)",
                       "deal_ability * (ability_current + ability_potential) DESC", "deals"),
-    "deals_attributes": ("Deals", "Best deals · Attributes", "Role score vs fee + 3y wages", "deal_attributes IS NOT NULL AND package_cost > 0 AND transfer_value IS NOT NULL AND best_role_score >= 55",
+    "deals_attributes": ("Deals", "Best deals · Attributes", "Role score vs fee", "deal_attributes IS NOT NULL AND transfer_value > 0 AND best_role_score >= 55",
                          "deal_attributes * best_role_score DESC", "deals"),
-    "deals_form": ("Deals", "Best deals · Form", "Season rating vs fee + 3y wages, 900+ min", "deal_form IS NOT NULL AND package_cost > 0 AND transfer_value IS NOT NULL AND stat_score >= 40",
+    "deals_form": ("Deals", "Best deals · Form", "Season rating vs fee, 900+ min", "deal_form IS NOT NULL AND transfer_value > 0 AND stat_score >= 40",
                    "deal_form * s_avg_rating DESC", "deals"),
-    "deals_stats": ("Deals", "Best deals · Performance", "Stats-only performance index vs fee + 3y wages, 900+ min", "deal_stats IS NOT NULL AND package_cost > 0 AND transfer_value IS NOT NULL AND stat_score >= 40",
+    "deals_stats": ("Deals", "Best deals · Performance", "Stats-only performance index vs fee, 900+ min", "deal_stats IS NOT NULL AND transfer_value > 0 AND stat_score >= 40",
                     "deal_stats * stat_score DESC", "deals"),
-    # fair_package is the mode's own valuation, so ln(fair_package) is a mode-neutral quality weight.
-    "deals_blend": ("Deals", "Best deals · Blend", "Every lens your data mode allows vs fee + 3y wages", "deal_score IS NOT NULL AND package_cost > 0 AND transfer_value IS NOT NULL AND fair_package >= 250000",
-                    "deal_score * ln(fair_package) DESC", "deals"),
+    # fair_fee is the mode's own valuation, so ln(fair_fee) is a mode-neutral quality weight.
+    "deals_blend": ("Deals", "Best deals · Blend", "Every lens your data mode allows vs fee", "deal_score IS NOT NULL AND transfer_value > 0 AND fair_fee >= 100000",
+                    "deal_score * ln(fair_fee) DESC", "deals"),
 }
 for r, (grp, _) in ROLES.items():
     pos = ", ".join(f"positions_{p}" for p in POS[grp])
@@ -754,7 +750,7 @@ def meta():
             "roles": {r: g for r, (g, _) in ROLES.items()},
             # Key attributes per role, heaviest first (for showing why a role score is what it is).
             "role_attributes": {r: [a for a, _ in sorted(w.items(), key=lambda kv: -kv[1])] for r, (_, w) in ROLES.items()},
-            "stat_groups": list(STAT_METRICS), "wage_weeks": WAGE_WEEKS,
+            "stat_groups": list(STAT_METRICS),
             "model_fit_r2": {f"{g}/{m}": r2 for (g, m), r2 in MODEL_FIT.items()},
             "nations": [{"name": n, "code": c, "players": k} for n, c, k in con().execute(
                 "SELECT nationality, any_value(nationality_code), count(*) FROM players WHERE nationality IS NOT NULL GROUP BY 1 ORDER BY 3 DESC").fetchall()],
@@ -938,7 +934,7 @@ class TargetQuery(BaseModel):
 
 def targets(q: TargetQuery, rep, slots, per_pos, min_rating, extra_where=""):
     """Top 20 outside players who beat the current starter at the given slots, scored by
-    upgrade x slot need, plus how far under the fair fee + wages package they are, minus a penalty
+    upgrade x slot need, plus how far under the fair fee they are, minus a penalty
     for wages above the club's structure (a well-paid player rarely takes a pay cut to move)."""
     club, mode = _club(), q.mode
     wage_ref = max(rep["xi_median_wage"], 1)
@@ -975,7 +971,7 @@ def targets(q: TargetQuery, rep, slots, per_pos, min_rating, extra_where=""):
             if row["free_agent"]:
                 bits.append("free agent")
             elif deal and deal > 0:
-                bits.append(f"{deal:.0f}% under fair fee + wages")
+                bits.append(f"{deal:.0f}% under fair fee")
             if wage > 1.5 * wage_ref:
                 bits.append(f"wage £{wage / 1000:.1f}k/w is {wage / wage_ref:.1f}× your XI median")
             row.update(target_pos=pos, target_slot_index=s["slot_index"], upgrade=up, replaces=s["starter"],
@@ -1063,8 +1059,7 @@ def offer(q: OfferQuery):
     vals = dict(zip([f"{a}_{k}" for k in lens_ids + [mode] for a in ("fee", "wage")], row))
     cur_wage = p.get("contract_wage") or 0
     wage = q.wage if q.wage is not None else cur_wage
-    lenses = [{"lens": k, "fair_fee": vals[f"fee_{k}"], "fair_wage": vals[f"wage_{k}"],
-               "fair_package": vals[f"fee_{k}"] + WAGE_WEEKS * vals[f"wage_{k}"]}
+    lenses = [{"lens": k, "fair_fee": vals[f"fee_{k}"], "fair_wage": vals[f"wage_{k}"]}
               for k in lens_ids if vals[f"fee_{k}"] is not None]
     fair_fee, fair_wage = vals[f"fee_{mode}"], vals[f"wage_{mode}"]
     value = p.get("transfer_value")  # None = the game puts no price on him: his club won't sell
@@ -1101,8 +1096,7 @@ def offer(q: OfferQuery):
         notes.append("You offer less than his current wage: players rarely accept a pay cut.")
     return {"uid": q.uid, "name": p["name"], "mode": mode, "fee": q.fee, "wage": wage, "current_wage": cur_wage,
             "transfer_value": value, "for_sale": value is not None or bool(p.get("free_agent")),
-            "package": q.fee + WAGE_WEEKS * wage, "fair_fee": fair_fee, "fair_wage": fair_wage,
-            "fair_package": fair_fee + WAGE_WEEKS * fair_wage if fair_fee is not None else None,
+            "fair_fee": fair_fee, "fair_wage": fair_wage,
             "fair_fee_range": fair_range(fair_fee, p.get("gender"), mode), "lenses": lenses,
             "ratio": round(ratio, 2) if ratio is not None else None, "verdict": verdict,
             "asking_estimate": asking, "acceptance": acceptance, "notes": notes}

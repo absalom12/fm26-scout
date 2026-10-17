@@ -198,13 +198,28 @@ body .ag-theme-quartz-dark {
 .icon-btn { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; color: var(--muted); font-size: 20px; }
 .icon-btn:hover { background: var(--raise); color: var(--text); }
 .icon-btn.star[aria-pressed="true"] { color: var(--gold); }
-.ability { margin-top: 12px; }
-.ability .nums { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--f-display); text-transform: uppercase; letter-spacing: .05em; font-size: 12px; color: var(--muted); }
-.ability .nums b { font: 700 24px var(--f-mono); margin-left: 4px; }
-.ability .track { position: relative; height: 8px; border-radius: 4px; background: #1a242d; margin-top: 6px; overflow: hidden; }
-.ability .track i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; transform-origin: left; animation: grow .7s var(--ease) both; }
-.ability .track i.pa { opacity: .28; }
 @keyframes grow { from { transform: scaleX(0); } }
+/* Hero dials: the 2-4 numbers that matter in this mode, as rings under the sticky name */
+.hero { margin: 0 -18px; padding: 16px 18px 14px; border-bottom: 1px solid var(--line); background: radial-gradient(120% 100% at 50% 0%, color-mix(in srgb, var(--mode) 10%, transparent), transparent 70%); }
+.dials { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 10px 8px; }
+.dial { position: relative; display: grid; justify-items: center; align-content: start; text-align: center; gap: 1px; min-width: 0; }
+.dial svg { width: 76px; height: 76px; transform: rotate(-90deg); }
+.dial circle { fill: none; stroke-width: 6; stroke-linecap: round; }
+.dial .trk { stroke: #1a242d; }
+.dial .arc { transform-origin: 32px 32px; animation: dial .8s var(--ease) both; }
+@keyframes dial { from { transform: rotate(-120deg); opacity: 0; } }
+.dial > b { position: absolute; top: 0; left: 0; right: 0; height: 76px; display: grid; place-items: center; font: 700 20px var(--f-mono); }
+.dial > span { margin-top: 4px; font: 700 11px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--text2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dial small { font-size: 11px; line-height: 1.3; color: var(--muted); }
+.hero .note { margin: 12px 0 0; text-align: center; }
+.ticket { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.kv-h { display: flex; justify-content: space-between; align-items: center; gap: 6px; min-height: 20px; }
+.kv-h .deal { text-transform: none; letter-spacing: 0; }
+.ticket > div { background: var(--bg); border-radius: var(--r-sm); padding: 8px 10px; min-width: 0; }
+.ticket .vf { margin-top: 6px; }
+.ticket .vf::before { content: "fair"; font: 600 10px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ticket .vf .mono { min-width: 0; text-transform: none; letter-spacing: 0; color: var(--text2); }
+.dr-body .tags.terms { margin-top: 10px; }
 .dr-body { padding: 4px 18px 28px; }
 .sec { padding: 16px 0; border-bottom: 1px solid var(--line); }
 .sec:last-child { border-bottom: 0; }
@@ -242,7 +257,7 @@ body .ag-theme-quartz-dark {
 .pct .tr::before { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--line2); }
 .pct .tr i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; transform-origin: left; animation: grow .6s var(--ease) both; }
 .pct .v { font: 500 12px var(--f-mono); text-align: right; color: var(--muted); }
-.pct .p { font: 700 12px var(--f-mono); text-align: right; }
+.pct .p { font: 700 12px var(--f-mono); text-align: center; border-radius: var(--r-pill); padding: 1px 0; background: color-mix(in srgb, currentColor 14%, transparent); }
 .note { font-size: 12px; color: var(--faint); margin-top: 8px; }
 .rolebar { display: grid; grid-template-columns: 150px 1fr 34px; align-items: center; gap: 8px; font-size: 13px; padding: 2px 0; }
 .rolebar .tr { height: 5px; border-radius: 3px; background: #1a242d; overflow: hidden; }
@@ -415,7 +430,6 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .cmp { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 10px 12px; align-items: end; }
 .cmp .vf { align-self: center; }
 .pkg { margin-top: 10px; font-size: 13px; color: var(--text2); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.r2 { font: 600 11px var(--f-mono); color: var(--faint); border: 1px dashed var(--line2); border-radius: 4px; padding: 0 5px; cursor: help; }
 .update { position: fixed; left: 16px; bottom: 16px; z-index: 50; padding: 10px 14px; border-radius: var(--r); background: var(--accent); color: #07090c; font-weight: 600; font-size: 13px; text-decoration: none; box-shadow: 0 6px 24px rgba(0,0,0,.4); }
 .nfs-banner { display: flex; gap: 10px; align-items: center; padding: 10px 12px; margin-bottom: 14px; border-radius: var(--r); background: var(--bad-soft); color: var(--text2); font-size: 13px; }
 .lens-mini span { font: 600 11px var(--f-mono); margin-left: 6px; }
@@ -498,7 +512,7 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 <!-- Deal Finder: lens switch -->
 <div class="bar sub only-deals">
   <div id="lenses" class="lenses" role="group" aria-label="Deal lens"></div>
-  <div class="legend"><span id="lensNote"></span> · Deal = % below fair package
+  <div class="legend"><span id="lensNote"></span> · Deal = % below fair fee
     <span class="deal" style="--c:var(--good)">60%+ <em>Steal</em></span>
     <span class="deal" style="--c:var(--ok)">30%+ <em>Bargain</em></span>
     <span class="deal" style="--c:var(--bad)">−% <em>Over</em></span></div>
@@ -600,11 +614,11 @@ const BAD = new Set(['attributes_injury_proneness','attributes_dirtiness','perso
 const FIXED = ['star','name','nationality','age','natural_positions','ability_current','ability_potential'];
 const VIRTUAL = ['key_attrs', 'key_stats'];
 const LENSES = [
-  { id: 'ability', preset: 'deals_ability', label: 'Ability', hint: 'CA / PA vs package', deal: 'deal_ability', fair: 'fair_package_ability', ffee: 'fair_fee_ability', fwage: 'fair_wage_ability', ctx: ['pa_gap'] },
-  { id: 'attributes', preset: 'deals_attributes', label: 'Attributes', hint: 'Role & key attributes vs package', deal: 'deal_attributes', fair: 'fair_package_attributes', ffee: 'fair_fee_attributes', fwage: 'fair_wage_attributes', ctx: ['attr_avg', 'best_role_score', 'key_attrs'] },
-  { id: 'form', preset: 'deals_form', label: 'Form', hint: 'Season output vs package', deal: 'deal_form', fair: 'fair_package_form', ffee: 'fair_fee_form', fwage: 'fair_wage_form', ctx: ['s_avg_rating', 's_minutes', 'key_stats'] },
-  { id: 'stats', preset: 'deals_stats', label: 'Performance', hint: 'Per-90 index vs package', deal: 'deal_stats', fair: 'fair_package_stats', ffee: 'fair_fee_stats', fwage: 'fair_wage_stats', ctx: ['stat_score', 's_minutes', 'key_stats'] },
-  { id: 'blend', preset: 'deals_blend', label: 'Blend', hint: 'Every lens of this mode', deal: 'deal_score', fair: 'fair_package', ffee: 'fair_fee', fwage: 'fair_wage', ctx: ['best_role_score', 'stat_score', 's_avg_rating'] },
+  { id: 'ability', preset: 'deals_ability', label: 'Ability', hint: 'CA / PA vs fee', deal: 'deal_ability', ffee: 'fair_fee_ability', fwage: 'fair_wage_ability', ctx: ['pa_gap'] },
+  { id: 'attributes', preset: 'deals_attributes', label: 'Attributes', hint: 'Role & key attributes vs fee', deal: 'deal_attributes', ffee: 'fair_fee_attributes', fwage: 'fair_wage_attributes', ctx: ['attr_avg', 'best_role_score', 'key_attrs'] },
+  { id: 'form', preset: 'deals_form', label: 'Form', hint: 'Season output vs fee', deal: 'deal_form', ffee: 'fair_fee_form', fwage: 'fair_wage_form', ctx: ['s_avg_rating', 's_minutes', 'key_stats'] },
+  { id: 'stats', preset: 'deals_stats', label: 'Performance', hint: 'Per-90 index vs fee', deal: 'deal_stats', ffee: 'fair_fee_stats', fwage: 'fair_wage_stats', ctx: ['stat_score', 's_minutes', 'key_stats'] },
+  { id: 'blend', preset: 'deals_blend', label: 'Blend', hint: 'Every lens of this mode', deal: 'deal_score', ffee: 'fair_fee', fwage: 'fair_wage', ctx: ['best_role_score', 'stat_score', 's_avg_rating'] },
 ];
 const MODES = { full: 'Full', fair: 'Fair play', moneyball: 'Moneyball' };
 const FEATURED = { full: ['wonderkids', 'hidden_gems', 'bosman', 'free_agents', 'top_rated'],
@@ -637,9 +651,8 @@ const P90_EXTRA = [['s_shots_p90', 'Shots / 90'], ['s_xa_p90', 'xA / 90'], ['s_d
 const LABELS = { ability_current: 'CA', ability_potential: 'PA', pa_gap: 'Gap', natural_positions: 'Pos', transfer_value: 'Value',
   months_left: 'Months left', best_role: 'Best role', best_role_score: 'Best role', height_cm: 'Height', nationality: 'Nation',
   club_name: 'Club', contract_squad_status: 'Squad status', contract_end: 'Contract end', deal_ability: 'Ability deal',
-  deal_attributes: 'Attr. deal', deal_form: 'Form deal', deal_stats: 'Perf. deal', deal_score: 'Blend deal', fair_package: 'Package vs fair',
-  fair_package_ability: 'Package vs fair', fair_package_attributes: 'Package vs fair', fair_package_form: 'Package vs fair', fair_package_stats: 'Package vs fair',
-  package_cost: 'Package (3y)', contract_wage: 'Wage/w', transfer_value: 'Fee', fair_fee: 'Fair fee', fair_wage: 'Fair wage',
+  deal_attributes: 'Attr. deal', deal_form: 'Form deal', deal_stats: 'Perf. deal', deal_score: 'Blend deal',
+  contract_wage: 'Wage/w', transfer_value: 'Fee', fair_fee: 'Fair fee', fair_wage: 'Fair wage',
   fair_fee_ability: 'Fair fee', fair_fee_attributes: 'Fair fee', fair_fee_form: 'Fair fee', fair_fee_stats: 'Fair fee',
   fair_wage_ability: 'Fair wage', fair_wage_attributes: 'Fair wage', fair_wage_form: 'Fair wage', fair_wage_stats: 'Fair wage', stat_score: 'Performance', key_attrs: 'Key attributes', key_stats: 'Key stats (per 90)', ...Object.fromEntries(SEASON), ...Object.fromEntries(P90_EXTRA), owner_club_reputation: 'Owner club rep.', attr_avg: 'Avg attribute' };
 const label = c => LABELS[c] || c.replace(/^(attributes|personality|role|positions)_/, '').replaceAll('_', ' ').replace(/\b\w/g, m => m.toUpperCase());
@@ -667,8 +680,6 @@ const valueVsFair = (val, fair, fmt = money) => {
 const NFS = '<span class="tag nfs" title="The game puts no price on him: his club will not sell">Not for sale</span>';
 const FREE = '<span class="tag good">Free agent</span>';
 const feeHTML = p => !p ? '' : p.free_agent ? FREE : p.transfer_value == null ? NFS : money(p.transfer_value);
-const r2 = (lensId) => { const v = META?.model_fit_r2?.[`${gender() || 'Men'}/${lensId && lensId !== 'blend' ? lensId : MODE}`]; return v != null ? v.toFixed(2) : null; };
-const r2Note = lensId => { const v = r2(lensId); return v ? `<span class="r2" title="Share of real fee variance the fair-price model explains for ${esc(gender() || 'Men')} in ${MODES[MODE]} mode">model R² ${v}</span>` : ''; };
 const wageVerdict = (w, fair) => { if (w == null || !fair) return null; const r = w / fair;
   return r <= .8 ? ['Below fair wage', C.good] : r <= 1.15 ? ['Fair wage', C.accent] : r <= 1.5 ? ['Above fair wage', C.warn] : ['Well above fair wage', C.bad]; };
 const posChips = v => (v || '').split(';').filter(Boolean).map(p => `<span class="pos">${esc(p)}</span>`).join('');
@@ -791,7 +802,6 @@ function colDef(c) {
   if (c === 'best_role_score') Object.assign(d, { width: 170, cellRenderer: p => p.value == null || !p.data ? ''
     : `<span class="role"><b style="color:${scoreColor(p.value)}">${p.value.toFixed(0)}</b><span>${esc(label('role_' + p.data.best_role))}</span></span>` });
   if (c === 'transfer_value') Object.assign(d, { width: 110, cellClass: 'mono', cellRenderer: p => feeHTML(p.data) });
-  if (c === 'package_cost') Object.assign(d, { width: 124, valueFormatter: p => p.value == null ? '' : money(p.value), cellClass: 'mono' });
   if (c.startsWith('fair_fee')) Object.assign(d, { width: 150, headerTooltip: 'Fair transfer fee from the price model. Bar = actual fee as a share of it', cellRenderer: p => p.data ? valueVsFair(p.data.free_agent ? 0 : p.data.transfer_value, p.value) : '' });
   if (c.startsWith('fair_wage')) Object.assign(d, { width: 150, headerTooltip: 'Fair weekly wage from the price model. Bar = actual wage as a share of it', cellRenderer: p => p.data ? valueVsFair(p.data.contract_wage, p.value, wage) : '' });
   if (c === 'contract_wage') Object.assign(d, { width: 100, valueFormatter: p => p.value == null ? '' : wage(p.value), cellClass: 'mono' });
@@ -802,7 +812,6 @@ function colDef(c) {
   if (c.startsWith('role_')) Object.assign(d, { width: 112, cellRenderer: p => p.value == null ? '' : `<span class="mono" style="color:${scoreColor(p.value)};font-weight:700">${p.value.toFixed(0)}</span>` });
   if (c.startsWith('s_')) Object.assign(d, { width: 80, cellClass: 'mono' });
   if (c === 's_avg_rating') d.cellRenderer = p => p.value == null ? '' : `<span class="mono" style="font-weight:700;color:${ratingColor(p.value)}">${p.value.toFixed(2)}</span>`;
-  if (c.startsWith('fair_package')) Object.assign(d, { width: 170, cellRenderer: p => p.data ? valueVsFair(p.data.package_cost, p.value) : '' });
   if (c.startsWith('deal_')) Object.assign(d, { width: 142, cellRenderer: p => p.value == null ? '' : st.page === 'deals' && lens().deal === c ? dealBadge(p.value)
     : `<span class="mini" style="color:${dealColor(p.value)}">${pctTxt(p.value)}</span>` });
   if (['free_agent', 'on_loan'].includes(c)) Object.assign(d, { filter: false, floatingFilter: false, valueFormatter: p => p.value ? 'Yes' : '' });
@@ -832,7 +841,7 @@ const refresh = () => grid && grid.purgeInfiniteCache();
 function currentCols() {
   if (st.page !== 'deals') return st.view === 'overview' ? OVERVIEW[MODE] : VIEWS[st.view];
   const L = lens(), others = LENSES.filter(x => x !== L).map(x => x.deal);
-  return ['club_name', 'transfer_value', L.ffee, 'contract_wage', L.fwage, L.deal, ...L.ctx, 'package_cost', L.fair, ...others];
+  return ['club_name', 'transfer_value', L.ffee, 'contract_wage', L.fwage, L.deal, ...L.ctx, ...others];
 }
 function applyColumns() {
   const fixed = st.page === 'deals' && st.lens === 'attributes' ? FIXED.filter(c => !c.startsWith('ability_')) : FIXED;  // judged on attributes, not CA/PA
@@ -879,7 +888,7 @@ function renderViews() {
 function renderLenses() {
   $('#lenses').innerHTML = LENSES.filter(lensOk).map(l => `<button class="lens" data-lens="${l.id}" aria-pressed="${st.lens === l.id}" ${META.presets.some(p => p.id === l.preset) ? '' : 'disabled'}><b>${l.label}</b><span>${l.hint}</span></button>`).join('');
   document.body.classList.toggle('no-deals', !dealsAvailable());
-  $('#lensNote').innerHTML = r2Note(st.lens) + ' ' + { ability: 'Fair price from CA/PA', attributes: 'Fair price from role score & attributes', form: 'Fair price from this season', stats: 'Fair price from the performance index', blend: 'Fair price from every lens' }[st.lens] + ' · fee and wage vs fair';
+  $('#lensNote').innerHTML = { ability: 'Fair price from CA/PA', attributes: 'Fair price from role score & attributes', form: 'Fair price from this season', stats: 'Fair price from the performance index', blend: 'Fair price from every lens' }[st.lens] + ' · fee and wage vs fair';
   $('#dealsMissing').innerHTML = dealsAvailable() ? '' : emptyState('Deal Finder is warming up', 'The backend has not published the deal presets yet.', '<button class="btn" onclick="location.reload()">Reload</button>');
 }
 let total = null;
@@ -971,6 +980,12 @@ function verdict(p, grp) {
   ].filter(Boolean);
   return { strong, weak, flags };
 }
+// Ring gauge for the drawer hero. f = fill 0..1; ghost = [fill, color] drawn faint behind (PA behind CA).
+function dial(name, txt, f, color, sub, aria, ghost) {
+  const arc = (x, c, o = 1) => `<circle class="arc" cx="32" cy="32" r="27" pathLength="100" stroke="${c}" opacity="${o}" stroke-dasharray="${Math.max(0, Math.min(1, x)) * 100} 100"/>`;
+  return `<div class="dial" role="img" aria-label="${esc(aria)}"><svg viewBox="0 0 64 64" aria-hidden="true"><circle class="trk" cx="32" cy="32" r="27"/>
+    ${ghost ? arc(ghost[0], ghost[1], .3) : ''}${f ? arc(f, color) : ''}</svg><b style="color:${color}" aria-hidden="true">${txt}</b><span aria-hidden="true">${esc(name)}</span><small aria-hidden="true">${sub}</small></div>`;
+}
 function closeDrawer() {
   if (!$('#drawer').classList.contains('open')) return;
   $('#drawer').classList.remove('open'); $('#drawer').setAttribute('aria-hidden', 'true'); drawerUid = null; drawerPlayer = null;
@@ -992,8 +1007,9 @@ async function openPlayer(uid) {
   const avg = keys => { const xs = keys.map(k => p['attributes_' + k]).filter(x => x != null); return xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0; };
   const axes = (isGK ? AXES_GK : AXES_OUT).map(([n, ks]) => [n, avg(ks)]);
   const roles = noAttr ? [] : Object.keys(META.roles).map(r => [r, p['role_' + r]]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 4);
-  const hasDeal = p.fair_fee != null || p.fair_package != null;
-  const pkg = p.package_cost ?? (p.free_agent ? (META.wage_weeks || 156) * (p.contract_wage || 0) : null);
+  const hasDeal = p.fair_fee != null;
+  // Deal % = fee vs fair fee (wage vs fair wage for free agents): the badge sits in the cell it compares.
+  const deal = FAIR ? dealBadge(p.deal_score) : '';
   const block = (title, keys, pre = 'attributes_') => `<div><h4>${title}</h4>${keys.map(k => `<div class="row"><span>${label(k)}</span><span class="mono ${tier(p[pre + k], BAD.has(pre + k))}">${p[pre + k] ?? '–'}</span></div>`).join('')}</div>`;
   const foot = p.left_foot != null && p.right_foot != null ? (p.left_foot > p.right_foot ? 'Left' : p.right_foot > p.left_foot ? 'Right' : 'Either') + ' foot' : '';
   const showAbility = !hid('ability_current') && p.ability_current != null;
@@ -1006,40 +1022,36 @@ async function openPlayer(uid) {
         <button class="icon-btn star star-btn" data-star="${p.uid}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist" title="Shortlist (s)">★</button>
         <button class="icon-btn" data-close aria-label="Close player detail" title="Close (Esc)">×</button>
       </div>
-      ${showAbility ? `<div class="ability">
-        <div class="nums"><span>Current<b style="color:${abilityColor(p.ability_current)}">${p.ability_current}</b></span>
-          <span>${p.pa_gap > 0 ? `+${p.pa_gap} to grow` : 'At ceiling'}</span>
-          <span>Potential<b style="color:${abilityColor(p.ability_potential)}">${p.ability_potential ?? '–'}</b></span></div>
-        <div class="track" role="img" aria-label="CA ${p.ability_current} of potential ${p.ability_potential}, scale 200"><i class="pa" style="width:${(p.ability_potential || 0) / 2}%;background:${abilityColor(p.ability_potential)}"></i><i style="width:${(p.ability_current || 0) / 2}%;background:${abilityColor(p.ability_current)}"></i></div>
-      </div>` : `<div class="ability">
-        <div class="nums"><span>Performance index<b style="color:${p.stat_score != null ? pctColor(p.stat_score) : C.muted}">${p.stat_score != null ? Math.round(p.stat_score) : '–'}</b></span>
-          <span>${p.stat_score == null ? 'Not enough minutes to rate' : `vs ${esc(p.stat_group || grp)}s, 600+ min`}</span>
-          ${p.best_role_score != null ? `<span>${esc(label('role_' + p.best_role))}<b style="color:${scoreColor(p.best_role_score)}">${p.best_role_score.toFixed(0)}</b></span>` : `<span>Rating<b style="color:${p.s_avg_rating ? ratingColor(p.s_avg_rating) : C.muted}">${p.s_avg_rating?.toFixed(2) ?? '–'}</b></span>`}</div>
-        <div class="track" role="img" aria-label="Performance index ${p.stat_score ?? 'unknown'} of 100"><i style="width:${p.stat_score || 0}%;background:${pctColor(p.stat_score || 0)}"></i></div>
-      </div>`}
     </div>
     <div class="dr-body">
-      <section class="sec"><h3>Scouting verdict</h3>
-        ${noAttr ? `<p class="note" style="margin:0 0 6px">Moneyball mode: judged on numbers only. See the percentiles below.${FAIR && (p.s_minutes ?? 0) < 900 ? ' <b>No fair fee under 900 min.</b>' : ''}</p>`
-          : v.strong.length ? `<div class="tags">${v.strong.map(([k, x]) => `<span class="tag good">${label(k)}<b>${x}</b></span>`).join('')}</div>` : '<p class="note" style="margin:0">No standout attributes (15+).</p>'}
+      <div class="hero"><div class="dials">
+        ${showAbility ? dial('Current ability', p.ability_current, p.ability_current / 200, abilityColor(p.ability_current),
+          `PA <b class="mono" style="color:${abilityColor(p.ability_potential)}">${p.ability_potential ?? '–'}</b> · ${p.pa_gap > 0 ? `+${p.pa_gap}` : 'at ceiling'}`,
+          `Current ability ${p.ability_current}, potential ${p.ability_potential ?? 'unknown'}, scale 200`, p.ability_potential != null && [p.ability_potential / 200, abilityColor(p.ability_potential)]) : ''}
+        ${dial('Performance', p.stat_score != null ? Math.round(p.stat_score) : '–', (p.stat_score ?? 0) / 100, p.stat_score != null ? pctColor(p.stat_score) : C.muted,
+          p.stat_score == null ? 'Not enough minutes to rate' : `vs ${esc(p.stat_group || grp)}s, 600+ min`, `Performance index ${p.stat_score != null ? Math.round(p.stat_score) : 'unknown'} of 100`)}
+        ${p.best_role_score != null && !noAttr ? dial('Best role', p.best_role_score.toFixed(0), p.best_role_score / 100, scoreColor(p.best_role_score), esc(label('role_' + p.best_role)),
+          `Best role ${label('role_' + p.best_role)}, score ${p.best_role_score.toFixed(0)} of 100`) : ''}
+        ${p.s_minutes ? dial('Avg rating', p.s_avg_rating ? p.s_avg_rating.toFixed(2) : '–', p.s_avg_rating ? (p.s_avg_rating - 5.5) / 2.5 : 0, p.s_avg_rating ? ratingColor(p.s_avg_rating) : C.muted,
+          `${p.s_apps ?? 0} apps · ${p.s_minutes.toLocaleString()} min`, p.s_avg_rating ? `Average rating ${p.s_avg_rating.toFixed(2)} this season` : 'No rating this season') : ''}
+      </div>${noAttr ? '<p class="note">Moneyball: judged on numbers only, no attributes.</p>' : ''}</div>
+      ${!noAttr || v.flags.length ? `<section class="sec"><h3>Scouting verdict</h3>
+        ${noAttr ? '' : v.strong.length ? `<div class="tags">${v.strong.map(([k, x]) => `<span class="tag good">${label(k)}<b>${x}</b></span>`).join('')}</div>` : '<p class="note" style="margin:0">No standout attributes (15+).</p>'}
         ${v.weak.length ? `<div class="tags" style="margin-top:6px">${v.weak.map(([k, x]) => `<span class="tag bad">${label(k)}<b>${x}</b></span>`).join('')}</div>` : ''}
         ${v.flags.length ? `<div class="tags" style="margin-top:6px">${v.flags.map(([c, t]) => `<span class="tag ${c}">${esc(t)}</span>`).join('')}</div>` : ''}
-      </section>
-      <section class="sec"><h3>Price <small>package = fee + ${META.wage_weeks || 156} weeks of wages</small></h3>
-        ${!FAIR ? `<div class="cmp"><div class="kv">Fee<b>${feeHTML(p)}</b></div><div class="kv">Wage<b>${wage(p.contract_wage)}</b></div><div class="kv">Package (3y)<b>${money(pkg)}</b></div></div>`
-        : `<div class="cmp">
-          <div class="kv">Fee<b>${feeHTML(p)}</b></div><div class="kv">Fair fee<b>${money(p.fair_fee)}</b></div>
-          ${p.fair_fee != null ? valueVsFair(p.free_agent ? 0 : p.transfer_value, p.fair_fee) : '<span></span>'}
-          <div class="kv">Wage<b>${wage(p.contract_wage)}</b></div><div class="kv">Fair wage<b>${p.fair_wage != null ? wage(p.fair_wage) : '–'}</b></div>
-          ${p.fair_wage != null ? valueVsFair(p.contract_wage, p.fair_wage, wage) : '<span></span>'}
+      </section>` : ''}
+      <section class="sec"><h3>Price</h3>
+        <div class="ticket">
+          <div class="kv"><span class="kv-h">Fee${p.free_agent ? '' : deal}</span><b>${feeHTML(p)}</b>${FAIR ? valueVsFair(p.free_agent ? 0 : p.transfer_value, p.fair_fee) : ''}</div>
+          <div class="kv"><span class="kv-h">Wage${p.free_agent ? deal : ''}</span><b>${wage(p.contract_wage)}</b>${FAIR ? valueVsFair(p.contract_wage, p.fair_wage, wage) : ''}</div>
         </div>
-        <div class="pkg">${p.transfer_value == null && !p.free_agent ? `<span class="muted">Not for sale, so it cannot be a deal. Fair package would be ${money(p.fair_package)}.</span>`
-          : `Package (3y) <b class="mono">${money(pkg)}</b> vs fair <b class="mono">${money(p.fair_package)}</b> ${dealBadge(p.deal_score)}`} ${r2Note()}</div>
-        ${hasDeal ? `<div class="lens-mini">${LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] != null).map(l => `<div>${l.label}<b class="mono">${money(p[l.ffee])}</b>${p[l.deal] != null ? `<span style="color:${dealColor(p[l.deal])}">${pctTxt(p[l.deal])}</span>` : ''}</div>`).join('')}</div>` : ''}`}
-        <dl class="facts">
-          <dt>Contract</dt><dd class="mono" style="${p.months_left != null && p.months_left <= 6 ? 'color:var(--gold)' : ''}">${esc(p.contract_end || '–')}${p.months_left != null ? ` · ${p.months_left}m` : ''}</dd>
-          <dt>Squad status</dt><dd>${esc((p.contract_squad_status || '–').replaceAll('_', ' '))}</dd>
-        </dl>
+        ${FAIR ? `${p.transfer_value == null && !p.free_agent ? '<p class="note">Not for sale, so it cannot be a deal.</p>' : ''}
+          ${noAttr && (p.s_minutes ?? 0) < 900 ? '<p class="note">No fair fee under 900 min.</p>' : ''}
+        ${hasDeal ? `<div class="lens-mini">${LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] != null).map(l => `<div>${l.label}<b class="mono">${money(p[l.ffee])}</b>${p[l.deal] != null ? `<span style="color:${dealColor(p[l.deal])}">${pctTxt(p[l.deal])}</span>` : ''}</div>`).join('')}</div>` : ''}` : ''}
+        <div class="tags terms">
+          <span class="tag${p.months_left != null && p.months_left <= 6 ? ' warn' : ''}" title="Contract end">Contract <b>${esc(p.contract_end || '–')}${p.months_left != null ? ` · ${p.months_left}m` : ''}</b></span>
+          <span class="tag" title="Squad status">${esc((p.contract_squad_status || 'Squad status unknown').replaceAll('_', ' '))}</span>
+        </div>
         <button class="btn primary" style="margin-top:12px;width:100%;justify-content:center" data-offer="${p.uid}">Make an offer →</button>
       </section>
       <section class="sec" id="profileSec">${noAttr ? '<h3>Performance profile</h3><span class="sk" style="height:200px;width:100%"></span>'
@@ -1079,7 +1091,8 @@ async function renderSeason(p, grp) {
     if (prof) prof.innerHTML = '<h3>Performance profile</h3><p class="note" style="margin:0">Needs league minutes.</p>';
     return;
   }
-  const line = [['Apps', p.s_apps], ['Minutes', p.s_minutes?.toLocaleString()], ['Rating', p.s_avg_rating?.toFixed(2), ratingColor(p.s_avg_rating)],
+  // Apps, minutes and rating live in the hero dial; the stat line keeps the counting stats only.
+  const line = [
     ...(grp === 'GK' ? [['Clean sheets', p.s_clean_sheets], ['Conceded', p.s_goals_allowed]] : [['Goals', p.s_goals], ['Assists', p.s_assists]]), ['PoM', p.s_player_of_the_match]]
     .map(([l, x, c]) => `<div class="stat">${l}<b style="${c ? 'color:' + c : ''}">${x ?? '–'}</b></div>`).join('');
   const keys = METRICS[grp] || METRICS.CM;
@@ -1091,7 +1104,7 @@ async function renderSeason(p, grp) {
   const pcs = {};
   const rows = keys.map(k => {
     const [name, fn, dec = 2, unit = '', lower] = M[k], val = fn(p);
-    if (val == null) return '';
+    if (val == null) return [-1, ''];
     let pc = null;
     if (pool && pool.length) {
       const xs = pool.map(fn).filter(x => x != null);
@@ -1099,10 +1112,10 @@ async function renderSeason(p, grp) {
       pc = Math.round((below + eq / 2) / xs.length * 100); if (lower) pc = 100 - pc;
       pcs[k] = pc;
     }
-    return `<div class="pct" title="${name}: ${val.toFixed(dec)}${unit}${pc != null ? ` · better than ${pc}% of peers` : ''}"><span class="lbl">${name}</span>
+    return [pc ?? -1, `<div class="pct" title="${name}: ${val.toFixed(dec)}${unit}${pc != null ? ` · better than ${pc}% of peers` : ''}"><span class="lbl">${name}</span>
       <div class="tr">${pc != null ? `<i style="width:${Math.max(pc, 2)}%;background:${pctColor(pc)}"></i>` : ''}</div>
-      <span class="v">${val.toFixed(dec)}${unit}</span><span class="p" style="color:${pc != null ? pctColor(pc) : C.muted}">${pc ?? '–'}</span></div>`;
-  }).join('');
+      <span class="v">${val.toFixed(dec)}${unit}</span><span class="p" style="color:${pc != null ? pctColor(pc) : C.muted}">${pc ?? '–'}</span></div>`];
+  }).sort((a, b) => b[0] - a[0]).map(r => r[1]).join('');  // strengths first; stable sort keeps metric order when there are no percentiles
   sec.innerHTML = head + `<div class="statline">${line}</div>${rows}
     <p class="note">${small ? `Not enough minutes to compare (${p.s_minutes} of 900).` : pool ? `Benchmarked against ${pool.length} ${grp}s.` : 'Peer benchmark unavailable right now.'}</p>`;
   if (prof) {
@@ -1371,7 +1384,7 @@ function loadRecos() {
         <div style="min-width:0"><div class="rep">${p.replaces ? `replaces ${esc(lastName(p.replaces.name))} <span class="up">${p.upgrade != null ? (p.upgrade >= 0 ? '+' : '') + p.upgrade.toFixed(0) : ''} ${fitWord()}</span>` : '<span class="up">fills an empty slot</span>'}</div>
           <div class="why" title="${esc(why(p))}">${esc(why(p))}</div></div>
         <div><div class="money">Fee <b class="mono">${feeHTML(p)}</b> · <b class="mono ${med && p.contract_wage > 1.5 * med ? 'wage-hi' : ''}" title="${med ? `${(p.contract_wage / med).toFixed(1)}× your XI median wage (${wage(med)})` : ''}">${wage(p.contract_wage)}</b></div>
-          <div class="money">Package <b class="mono">${money(p.package_cost)}</b>${FAIR && p.fair_package != null ? ` · Fair <b class="mono">${money(p.fair_package)}</b>` : ''}</div>${FAIR ? dealBadge(p.deal_score) : ''}</div>
+          ${FAIR && p.fair_fee != null ? `<div class="money">Fair fee <b class="mono">${money(p.fair_fee)}</b></div>` : ''}${FAIR ? dealBadge(p.deal_score) : ''}</div>
         <button class="star-btn" data-star="${p.uid}" data-name="${esc(p.name)}" data-club="${p.club_uid ?? ''}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist ${esc(p.name)}">★</button>
       </div>`).join('');
   }, 250);
@@ -1397,7 +1410,7 @@ function renderOffers() {
     </section>
     <section id="ofResult" aria-live="polite"></section>`;
   $('#ofMode').textContent = MODES[MODE];
-  $('#ofNote').innerHTML = FAIR ? `Fair price = what players with a similar ${MODE === 'full' ? '' : 'visible '}profile, age, level and contract cost in this save. ${r2Note()}`
+  $('#ofNote').innerHTML = FAIR ? `Fair price = what players with a similar ${MODE === 'full' ? '' : 'visible '}profile, age, level and contract cost in this save.`
     : 'Asking price = his game value adjusted for squad status and contract length. Acceptance compares your fee with it.';
   renderOfPlayer();
   if (of.p) evalOffer(); else $('#ofResult').innerHTML = emptyState('Who are you bidding for?', 'Search a player on the left, or press “Make an offer” in any player card. Enter a fee and get an instant verdict.');
@@ -1437,7 +1450,7 @@ function evalOffer() {
 }
 function renderVerdict(o) {
   // Fair prices off: drop every model figure; the verdict falls back to acceptance vs the asking estimate.
-  if (!FAIR) o = { ...o, verdict: 'unknown', fair_fee: null, fair_wage: null, fair_package: null, fair_fee_range: null, lenses: null, notes: o.notes?.filter(n => !/fair|value this player/i.test(n)) };
+  if (!FAIR) o = { ...o, verdict: 'unknown', fair_fee: null, fair_wage: null, fair_fee_range: null, lenses: null, notes: o.notes?.filter(n => !/fair|value this player/i.test(n)) };
   const [vt, vc] = FAIR ? VERDICT[o.verdict] || VERDICT.unknown : [null, (ACCEPT[o.acceptance] || ACCEPT.unknown)[1]], [at, ac] = ACCEPT[o.acceptance] || ['Acceptance unknown', C.muted];
   const lo = o.fair_fee_range?.[0], hi = o.fair_fee_range?.[1];
   const marks = [['Fair fee', o.fair_fee, C.good, ''], ['Your offer', o.fee, vc, 'you'], ['Asking', o.asking_estimate, C.warn, 'below'], ['Game value', o.transfer_value, C.accent, 'below']]
@@ -1454,7 +1467,7 @@ function renderVerdict(o) {
     m[5] = near(use); // still crowded: tick only, the legend carries the value
     placed[use].push(px); m[4] = use === 'bot' ? 'below' : '';
   });
-  const pkgDeal = o.fair_package ? (1 - o.package / o.fair_package) * 100 : null, wv = wageVerdict(o.wage, o.fair_wage);
+  const feeDeal = o.fair_fee ? (1 - o.fee / o.fair_fee) * 100 : null, wv = wageVerdict(o.wage, o.fair_wage);
   const quick = [['Offer fair fee', o.fair_fee], ['Offer asking price', o.asking_estimate], ['Match game value', o.transfer_value], ['Top of fair range', hi]].filter(q => q[1] != null && q[1] > 0);
   const quickW = o.fair_wage && o.wage !== Math.round(o.fair_wage) ? `<button class="btn" data-ofwage="${Math.round(o.fair_wage)}">Offer fair wage · ${wage(o.fair_wage)}</button>` : '';
   $('#ofResult').innerHTML = `
@@ -1469,17 +1482,17 @@ function renderVerdict(o) {
       ${marks.map(([l, v, c, cls, side, crowded]) => `<div class="mk ${cls === 'you' ? 'you ' : ''}${side}" style="left:${x(v)}%;--c:${c}">${crowded ? '' : `<span>${l}</span><b>${money(v)}</b>`}<i></i></div>`).join('')}
     </div>
     <div class="legend-row">${marks.map(([l, v, c]) => `<span><i style="background:${c}"></i>${l} <b class="mono">${money(v)}</b></span>`).join('')}${hi != null ? `<span><i class="band-dot"></i>Fair range <b class="mono">${money(lo)} – ${money(hi)}</b></span>` : ''}</div>
-    <div class="of-grid"${FAIR ? '' : ' style="grid-template-columns:repeat(3,1fr)"'}>
+    <div class="of-grid"${FAIR ? '' : ' style="grid-template-columns:repeat(2,1fr)"'}>
       <div class="kv">Your fee<b>${money(o.fee)}</b></div>
       ${FAIR ? `<div class="kv">Fair fee<b>${money(o.fair_fee)}</b>${hi != null ? `<span class="muted" style="text-transform:none;letter-spacing:0">range ${money(lo)} – ${money(hi)}</span>` : ''}</div>` : ''}
       <div class="kv">Wage<b>${wage(o.wage)}</b>${o.current_wage != null && o.wage !== o.current_wage ? `<span class="muted" style="text-transform:none;letter-spacing:0">now ${wage(o.current_wage)}</span>` : ''}</div>
-      ${FAIR ? `<div class="kv">Fair wage<b>${wage(o.fair_wage)}</b>${wv ? `<span class="tag" style="color:${wv[1]};background:color-mix(in srgb, ${wv[1]} 14%, transparent)">${wv[0]}</span>` : ''}</div>` : `<div class="kv">Package (3y)<b>${money(o.package)}</b></div>`}
+      ${FAIR ? `<div class="kv">Fair wage<b>${wage(o.fair_wage)}</b>${wv ? `<span class="tag" style="color:${wv[1]};background:color-mix(in srgb, ${wv[1]} 14%, transparent)">${wv[0]}</span>` : ''}</div>` : ''}
     </div>
-    ${FAIR ? `<div class="pkg">Package (3y) <b class="mono">${money(o.package)}</b> vs fair <b class="mono">${money(o.fair_package)}</b> ${pkgDeal != null ? dealBadge(pkgDeal) : ''}</div>` : ''}
+    ${FAIR && feeDeal != null ? `<div class="pkg">Your fee vs fair fee ${dealBadge(feeDeal)}</div>` : ''}
     <div class="of-quick">${quick.map(([l, v]) => `<button class="btn" data-offee="${Math.round(v)}">${l} · ${money(v)}</button>`).join('')}${quickW}</div>
     ${o.notes?.length ? `<div class="sec"><h3>Scout's notes</h3><ul class="notes">${o.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul></div>` : ''}
-    ${o.lenses?.length ? `<div class="sec"><h3>How the fair price is built</h3><table class="lens-tbl"><thead><tr><th>Lens</th><th class="r">Fair fee</th><th class="r">Fair wage</th><th class="r">Fair package</th></tr></thead><tbody>
-      ${o.lenses.map(l => `<tr><td>${esc((LENSES.find(x => x.id === l.lens) || { label: l.lens }).label)}${r2(l.lens) ? ` <span class="r2">R² ${r2(l.lens)}</span>` : ''}</td><td class="mono">${money(l.fair_fee)}</td><td class="mono">${l.fair_wage != null ? wage(l.fair_wage) : '–'}</td><td class="mono">${money(l.fair_package)}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
+    ${o.lenses?.length ? `<div class="sec"><h3>How the fair price is built</h3><table class="lens-tbl"><thead><tr><th>Lens</th><th class="r">Fair fee</th><th class="r">Fair wage</th></tr></thead><tbody>
+      ${o.lenses.map(l => `<tr><td>${esc((LENSES.find(x => x.id === l.lens) || { label: l.lens }).label)}</td><td class="mono">${money(l.fair_fee)}</td><td class="mono">${l.fair_wage != null ? wage(l.fair_wage) : '–'}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
 }
 let acT, acSeq = 0;
 function offerSearch() {
@@ -1632,7 +1645,7 @@ async function init() {
     roles: ['best_role', 'best_role_score', ...Object.keys(META.roles).map(r => 'role_' + r)],
     contract: ['club_name', 'contract_squad_status', 'transfer_value', 'contract_wage', 'contract_end', 'months_left', 'on_loan', 'free_agent'],
   };
-  const dealCols = [...LENSES.flatMap(l => [l.deal, l.fair, l.ffee, l.fwage]), 'package_cost'];
+  const dealCols = LENSES.flatMap(l => [l.deal, l.ffee, l.fwage]);
   const all = ['star', ...new Set([...FIXED.slice(1), ...Object.values(VIEWS).flat(), ...Object.values(OVERVIEW).flat(), ...dealCols, ...LENSES.flatMap(l => l.ctx)])]
     .filter(c => c === 'star' || VIRTUAL.includes(c) || cols.has(c));
   try { const g = localStorage.getItem('fm26_gender'); if (g) setGender(g); } catch {}
