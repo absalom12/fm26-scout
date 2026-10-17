@@ -1039,7 +1039,7 @@ def offer(q: OfferQuery):
     notes = []
     if fair_fee is None:
         verdict, ratio = "unknown", None
-        notes.append("Fair fee can't be computed in Moneyball under 900 minutes played this season." if mode == "moneyball"
+        notes.append("No fair fee under 900 min." if mode == "moneyball"
                      else f"Not enough data to value this player in {mode} mode.")
     else:
         ratio = q.fee / fair_fee if fair_fee else None
