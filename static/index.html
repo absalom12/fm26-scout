@@ -1022,7 +1022,7 @@ async function openPlayer(uid) {
           ${p.fair_wage != null ? valueVsFair(p.contract_wage, p.fair_wage, wage) : '<span></span>'}
         </div>
         <div class="pkg">${p.transfer_value == null && !p.free_agent ? `<span class="muted">Not for sale, so it cannot be a deal. Fair package would be ${money(p.fair_package)}.</span>`
-          : `Package (3y) <b class="mono">${money(pkg)}</b> vs fair <b class="mono">${money(p.fair_package)}</b> ${dealBadge(p.deal_score)}`} ${r2Note()}</div>
+          : `Package (3y) <b class="mono">${money(pkg)}</b> vs fair <b class="mono">${money(p.fair_package)}</b> ${noAttr && (p.s_minutes ?? 0) < 900 ? '<span class="muted" title="Under 900 min this season: the fair price ignores his stats, so it says nothing about the deal">Not rated</span>' : dealBadge(p.deal_score)}`} ${r2Note()}</div>
         ${hasDeal ? `<div class="lens-mini">${LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] != null).map(l => `<div>${l.label}<b class="mono">${money(p[l.ffee])}</b>${p[l.deal] != null ? `<span style="color:${dealColor(p[l.deal])}">${pctTxt(p[l.deal])}</span>` : ''}</div>`).join('')}</div>` : ''}
         <dl class="facts">
           <dt>Contract</dt><dd class="mono" style="${p.months_left != null && p.months_left <= 6 ? 'color:var(--gold)' : ''}">${esc(p.contract_end || '–')}${p.months_left != null ? ` · ${p.months_left}m` : ''}</dd>
