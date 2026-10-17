@@ -455,6 +455,17 @@ def add_deals():
                           WHERE coalesce(s_minutes, 0) < {MONEYBALL_MIN}""")
 
 
+# Mean of the visible attributes a manager sees on the profile (GK: goalkeeping + mental + physical; outfield:
+# technical without long throws / penalties + mental + physical). Hidden attributes never enter it.
+_ATTR_TECH = ['corners', 'crossing', 'dribbling', 'finishing', 'first_touch', 'free_kick_taking', 'heading', 'long_shots', 'marking', 'passing', 'tackling', 'technique']
+_ATTR_MENTAL = ['aggression', 'anticipation', 'bravery', 'composure', 'concentration', 'decisions', 'determination', 'flair', 'leadership', 'off_the_ball', 'positioning', 'teamwork', 'vision', 'work_rate']
+_ATTR_PHYS = ['acceleration', 'agility', 'balance', 'jumping_reach', 'natural_fitness', 'pace', 'stamina', 'strength']
+_ATTR_GK = ['aerial_reach', 'command_of_area', 'communication', 'eccentricity', 'handling', 'kicking', 'one_on_ones', 'punching', 'reflexes', 'rushing_out', 'throwing']
+_avg_sql = lambda ks: f"({' + '.join(f'b.attributes_{k}' for k in ks)}) / {len(ks)}.0"
+ATTR_AVG = (f"round(CASE WHEN natural_positions LIKE 'GK%' THEN {_avg_sql(_ATTR_GK + _ATTR_MENTAL + _ATTR_PHYS)} "
+            f"ELSE {_avg_sql(_ATTR_TECH + _ATTR_MENTAL + _ATTR_PHYS)} END, 1)")
+
+
 def load(d=None):
     global GAME_DATE
     d = str(d or data_dir())
@@ -480,6 +491,7 @@ def load(d=None):
         SELECT b.*, {name} AS best_role,
                ability_potential - ability_current AS pa_gap,
                date_diff('month', DATE '{GAME_DATE}', contract_end) AS months_left,
+               {ATTR_AVG} AS attr_avg,
                (b.club_uid IS NULL) AS free_agent,
                -- the club that owns him sets his price: a Man City youngster on loan at Wimbledon is valued as City's
                coalesce(pc.parent_rep, b.club_reputation) AS owner_club_reputation,
@@ -516,7 +528,7 @@ HIDDEN_EXACT = {"pa_gap", "deal_ability", "fair_package_ability", "fair_fee_abil
                 "attributes_important_matches", "attributes_injury_proneness", "attributes_dirtiness",
                 "attributes_versatility"}
 MONEYBALL_PREFIXES = ("attributes_", "role_")
-MONEYBALL_EXACT = {"best_role", "best_role_score", "deal_attributes", "fair_package_attributes", "fair_fee_attributes",
+MONEYBALL_EXACT = {"attr_avg", "best_role", "best_role_score", "deal_attributes", "fair_package_attributes", "fair_fee_attributes",
                    "fair_wage_attributes", "left_foot", "right_foot"}
 MODE_HIDDEN = VISIBLE = {}
 

@@ -598,7 +598,7 @@ const FIXED = ['star','name','nationality','age','natural_positions','ability_cu
 const VIRTUAL = ['key_attrs', 'key_stats'];
 const LENSES = [
   { id: 'ability', preset: 'deals_ability', label: 'Ability', hint: 'CA / PA vs package', deal: 'deal_ability', fair: 'fair_package_ability', ffee: 'fair_fee_ability', fwage: 'fair_wage_ability', ctx: ['pa_gap'] },
-  { id: 'attributes', preset: 'deals_attributes', label: 'Attributes', hint: 'Role & key attributes vs package', deal: 'deal_attributes', fair: 'fair_package_attributes', ffee: 'fair_fee_attributes', fwage: 'fair_wage_attributes', ctx: ['best_role_score', 'key_attrs'] },
+  { id: 'attributes', preset: 'deals_attributes', label: 'Attributes', hint: 'Role & key attributes vs package', deal: 'deal_attributes', fair: 'fair_package_attributes', ffee: 'fair_fee_attributes', fwage: 'fair_wage_attributes', ctx: ['attr_avg', 'best_role_score', 'key_attrs'] },
   { id: 'form', preset: 'deals_form', label: 'Form', hint: 'Season output vs package', deal: 'deal_form', fair: 'fair_package_form', ffee: 'fair_fee_form', fwage: 'fair_wage_form', ctx: ['s_avg_rating', 's_minutes', 'key_stats'] },
   { id: 'stats', preset: 'deals_stats', label: 'Performance', hint: 'Per-90 index vs package', deal: 'deal_stats', fair: 'fair_package_stats', ffee: 'fair_fee_stats', fwage: 'fair_wage_stats', ctx: ['stat_score', 's_minutes', 'key_stats'] },
   { id: 'blend', preset: 'deals_blend', label: 'Blend', hint: 'Every lens of this mode', deal: 'deal_score', fair: 'fair_package', ffee: 'fair_fee', fwage: 'fair_wage', ctx: ['best_role_score', 'stat_score', 's_avg_rating'] },
@@ -637,7 +637,7 @@ const LABELS = { ability_current: 'CA', ability_potential: 'PA', pa_gap: 'Gap', 
   fair_package_ability: 'Package vs fair', fair_package_attributes: 'Package vs fair', fair_package_form: 'Package vs fair', fair_package_stats: 'Package vs fair',
   package_cost: 'Package (3y)', contract_wage: 'Wage/w', transfer_value: 'Fee', fair_fee: 'Fair fee', fair_wage: 'Fair wage',
   fair_fee_ability: 'Fair fee', fair_fee_attributes: 'Fair fee', fair_fee_form: 'Fair fee', fair_fee_stats: 'Fair fee',
-  fair_wage_ability: 'Fair wage', fair_wage_attributes: 'Fair wage', fair_wage_form: 'Fair wage', fair_wage_stats: 'Fair wage', stat_score: 'Performance', key_attrs: 'Key attributes', key_stats: 'Key stats (per 90)', ...Object.fromEntries(SEASON), ...Object.fromEntries(P90_EXTRA), owner_club_reputation: 'Owner club rep.' };
+  fair_wage_ability: 'Fair wage', fair_wage_attributes: 'Fair wage', fair_wage_form: 'Fair wage', fair_wage_stats: 'Fair wage', stat_score: 'Performance', key_attrs: 'Key attributes', key_stats: 'Key stats (per 90)', ...Object.fromEntries(SEASON), ...Object.fromEntries(P90_EXTRA), owner_club_reputation: 'Owner club rep.', attr_avg: 'Avg attribute' };
 const label = c => LABELS[c] || c.replace(/^(attributes|personality|role|positions)_/, '').replaceAll('_', ' ').replace(/\b\w/g, m => m.toUpperCase());
 const short = c => c.startsWith('attributes_') ? ABBR[c.slice(11)] || label(c) : label(c);
 const money = v => v == null ? '–' : v >= 1e6 ? `£${(v / 1e6).toFixed(v >= 1e7 ? 0 : 1)}M` : v >= 1e3 ? `£${Math.round(v / 1e3)}k` : `£${Math.round(v)}`;
@@ -831,7 +831,8 @@ function currentCols() {
   return ['club_name', 'transfer_value', L.ffee, 'contract_wage', L.fwage, L.deal, ...L.ctx, 'package_cost', L.fair, ...others];
 }
 function applyColumns() {
-  const order = [...new Set([...FIXED, ...currentCols()])].filter(c => grid.getColumn(c) && !hid(c));
+  const fixed = st.page === 'deals' && st.lens === 'attributes' ? FIXED.filter(c => !c.startsWith('ability_')) : FIXED;  // judged on attributes, not CA/PA
+  const order = [...new Set([...fixed, ...currentCols()])].filter(c => grid.getColumn(c) && !hid(c));
   const show = new Set(order);
   grid.applyColumnState({ state: grid.getColumns().map(c => ({ colId: c.getColId(), hide: !show.has(c.getColId()) })) });
   grid.moveColumns(order, 0);
