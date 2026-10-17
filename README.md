@@ -52,7 +52,7 @@ If you want to run from source, modify code, or build executables manually:
 
 ```bash
 # Clone repository
-git clone [https://github.com/absalom12/fm26-scout.git](https://github.com/absalom12/fm26-scout.git)
+git clone https://github.com/absalom12/fm26-scout.git
 cd fm26-scout
 
 # Setup virtual environment (Python 3.12)

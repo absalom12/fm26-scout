@@ -4,7 +4,8 @@ import numpy as np
 from nations import NATIONS
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from datadir import FILES, data_dir, list_saves, replace_data, resolve_save
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from urllib.parse import urlsplit
 from pydantic import BaseModel
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -28,6 +29,22 @@ async def lifespan(_):
 
 
 app = FastAPI(lifespan=lifespan, dependencies=[Depends(need_data)])
+LOCAL_HOSTS = {"127.0.0.1", "localhost"}
+MAX_UPLOAD = 4 * 1024**3  # largest honest .fm save is a few hundred MB
+
+
+@app.middleware("http")
+async def local_only(request: Request, call_next):
+    """Refuse DNS-rebinding (foreign Host), cross-site POSTs (foreign Origin) and oversized uploads."""
+    host = request.headers.get("host", "").rsplit(":", 1)[0]
+    origin = request.headers.get("origin")
+    if host not in LOCAL_HOSTS or (origin is not None and urlsplit(origin).hostname not in LOCAL_HOSTS):
+        return JSONResponse({"detail": "forbidden"}, status_code=403)
+    if int(request.headers.get("content-length") or 0) > MAX_UPLOAD:
+        return JSONResponse({"detail": "too large"}, status_code=413)
+    return await call_next(request)
+
+
 _db = duckdb.connect()  # in-memory
 _local = threading.local()
 

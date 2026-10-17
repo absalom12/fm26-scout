@@ -17,7 +17,7 @@ def scout(tmp_path, monkeypatch):
 
 @pytest.fixture
 def client(scout):
-    return TestClient(scout.app)  # not a context manager: startup loader does not run
+    return TestClient(scout.app, base_url="http://127.0.0.1:8000")  # not a context manager: startup loader does not run
 
 
 def test_data_routes_409_when_empty(client):
@@ -112,3 +112,16 @@ def test_upload_fallback_rejects_non_fm_and_loads_fm(scout, client, monkeypatch)
     monkeypatch.setattr(scout, "load", fake_load)
     r = client.post("/api/upload", files={"file": ("My Save.FM", b"bytes")})
     assert r.status_code == 200 and r.json() == {"rows": 1, "game_date": "2031-01-01"}
+
+
+def test_rejects_foreign_host_and_origin(client):
+    assert client.get("/api/status").status_code == 200
+    assert client.get("/api/status", headers={"host": "evil.example"}).status_code == 403
+    assert client.post("/api/bye", headers={"origin": "https://evil.example"}).status_code == 403
+    assert client.post("/api/bye", headers={"origin": "http://localhost:8000"}).status_code == 200
+
+
+def test_rejects_oversized_upload(scout, client, monkeypatch):
+    monkeypatch.setattr(scout, "MAX_UPLOAD", 10)
+    r = client.post("/api/upload", files={"file": ("a.fm", b"x" * 100)})
+    assert r.status_code == 413
