@@ -85,4 +85,4 @@ A massive shoutout to [Randal S. Olson](https://x.com/randal_olson) for creating
 
 # 📄 License
 
-Distributed under the MIT License. See LICENSE for details.
+Distributed under the MIT License. See [LICENSE](https://github.com/absalom12/fm26-scout/blob/main/LICENSE.md) for details.
