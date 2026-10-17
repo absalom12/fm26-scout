@@ -638,6 +638,7 @@ class Query(BaseModel):
     nations: list[str] = []      # country names; matches first or second nationality
     mode: str = "full"           # "full" | "fair" (no CA/PA/hidden) | "moneyball" (stats only)
     fair_play: bool = False      # legacy alias for mode="fair"
+    similar_to: int | None = None  # uid: with no explicit sort, closest players to him first
 
 
 OPS = {"equals": "=", "notEqual": "<>", "greaterThan": ">", "lessThan": "<",
@@ -704,6 +705,8 @@ def build(q: Query):
     order = [f'{_col(s["colId"], mode)} {"DESC" if s["sort"] == "desc" else "ASC"} NULLS LAST' for s in q.sort]
     if not order and q.preset and not uses_hidden(PRESETS[q.preset][4], mode):
         order = [PRESETS[q.preset][4] + " NULLS LAST"]
+    if not order and q.similar_to is not None:
+        order = [similar_order(q.similar_to, mode) + " ASC"]
     return w, args, ("ORDER BY " + ", ".join(order or [DEFAULT_SORT[mode]]))
 
 
@@ -727,6 +730,38 @@ def export(q: Query):
     out.writerows(cur.fetchall())
     return StreamingResponse(iter([buf.getvalue()]), media_type="text/csv",
                              headers={"Content-Disposition": "attachment; filename=fm26_players.csv"})
+
+
+# Moneyball "similar": the per-90 output that defines each position group's job.
+SIMILAR_STATS = {"ST": ["s_goals_p90", "s_xg_p90"], "W": ["s_dribbles_p90", "s_xa_p90"], "AM": ["s_key_passes_p90", "s_xa_p90"],
+                 "CM": ["s_prog_passes_p90", "s_key_passes_p90"], "DM": ["s_tackles_p90", "s_interceptions_p90"],
+                 "FB": ["s_crosses_p90", "s_tackles_p90"], "CB": ["s_headers_won_p90", "s_interceptions_p90"], "GK": []}
+
+
+def similar_order(uid, mode):
+    """SQL distance to a reference player, on what the mode may see (0 = himself). Each term is scaled so one unit
+    is a meaningful gap: Full = CA + best role + attribute average; Fair play = best role + attribute average;
+    Moneyball = performance index, rating and the position's key per-90 stats. Values are the reference's own
+    numbers, inlined as floats (no user text reaches the SQL)."""
+    p = _player(uid, mode)
+    terms = []
+
+    def t(col, scale):
+        if p.get(col) is not None:
+            v = float(p[col])
+            terms.append(f"abs(coalesce({col}, {v} + 1e6) - {v}) / {float(scale)}")
+    if mode == "moneyball":
+        t("stat_score", 8); t("s_avg_rating", 0.3)
+        for k in SIMILAR_STATS.get(p.get("stat_group"), []):
+            if p.get(k) is not None:
+                t(k, max(abs(float(p[k])) * 0.25, 0.05))
+    else:
+        if p.get("best_role") in ROLES:
+            t(f"role_{p['best_role']}", 4)
+        t("attr_avg", 0.6)
+        if mode == "full":
+            t("ability_current", 6)
+    return " + ".join(terms) or "0"
 
 
 def _player(uid, mode):

@@ -138,3 +138,13 @@ def test_fair_range_uses_model_band(scout, monkeypatch):
     lo, hi = scout.fair_range(10_000_000, "Men", "full")
     assert lo == 6_065_000 and hi == 16_487_000  # 10M x e^-0.5 / e^0.5, rounded to £1k
     assert scout.fair_range(None, "Men", "full") is None and scout.fair_range(1, "Women", "nope") is None
+
+
+def test_similar_order_scales_terms_per_mode(scout, monkeypatch):
+    ref = {"stat_group": "ST", "stat_score": 80.0, "s_avg_rating": 7.0, "s_goals_p90": 0.8, "s_xg_p90": None,
+           "best_role": "advanced_forward", "role_advanced_forward": 70.0, "attr_avg": 12.0, "ability_current": 140}
+    monkeypatch.setattr(scout, "_player", lambda uid, mode: ref)
+    mb = scout.similar_order(1, "moneyball")
+    assert "stat_score" in mb and "s_goals_p90" in mb and "s_xg_p90" not in mb and "role_" not in mb
+    fair, full = scout.similar_order(1, "fair"), scout.similar_order(1, "full")
+    assert "role_advanced_forward" in fair and "ability_current" not in fair and "ability_current" in full

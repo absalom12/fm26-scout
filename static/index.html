@@ -771,7 +771,7 @@ try { shortlist = new Set(JSON.parse(localStorage.getItem('fm26_shortlist') || '
 const saveSL = () => { try { localStorage.setItem('fm26_shortlist', JSON.stringify([...shortlist])); } catch {} renderLists(); };
 // All search criteria live in F; the quick bar and the Edit search dialog both edit it.
 const F0 = () => ({ positions: [], age_min: null, age_max: null, value_max: null, wage_max: null, ca_min: null, pa_min: null, risks: false,
-  nations: [], months_max: null, squad: '', club_country: '', free_agent: false, on_loan: false, min: {}, max: {} });
+  nations: [], months_max: null, squad: '', club_country: '', free_agent: false, on_loan: false, similar: null, min: {}, max: {} });
 let F = F0();
 let saved = []; try { saved = JSON.parse(localStorage.getItem('fm26_searches') || '[]'); } catch {}
 const saveSearches = () => { try { localStorage.setItem('fm26_searches', JSON.stringify(saved)); } catch {} };
@@ -852,7 +852,7 @@ function query(extra = {}, f = F) {
     shortlist: !deals && st.preset === '__shortlist' ? [...shortlist] : null,
     positions: f.positions, age: [f.age_min, f.age_max], value_max: f.value_max, wage_max: f.wage_max,
     ca_min: hid('ability_current') ? null : f.ca_min, pa_min: hid('ability_potential') ? null : f.pa_min,
-    hide_hidden_risks: MODE === 'full' && f.risks, gender: gender(), nations: f.nations, mode: MODE,
+    hide_hidden_risks: MODE === 'full' && f.risks, gender: gender(), nations: f.nations, mode: MODE, similar_to: f.similar?.uid ?? null,
     ...extra, filters: { ...filters, ...(extra.filters || {}) } };
 }
 const refresh = () => grid && grid.purgeInfiniteCache();
@@ -872,6 +872,17 @@ function applyColumns() {
 const clearSort = () => grid.applyColumnState({ defaultState: { sort: null } });
 
 // ---------- Pages ----------
+// Scout list of players like p, as this mode understands "like": same position group and gender, age ±3,
+// then the server sorts by closeness (similar_to). Every criterion stays an editable chip.
+function findSimilar(p) {
+  const f = F0();
+  f.positions = [groupOf(p)]; f.age_min = Math.max(15, p.age - 3); f.age_max = p.age + 3;
+  if (MODE === 'moneyball') f.min.s_minutes = 600;  // per-90 numbers need a sample
+  f.similar = { uid: p.uid, name: p.name };
+  F = f; if (p.gender) setGender(p.gender);
+  closeDrawer(); setPage('scout'); clearSort(); renderSummary(); refresh();
+  toast(`Players most similar to ${p.name} first`);
+}
 function setPage(p) {
   if (st.page === p && p !== 'deals') { if (p === 'club') loadClub(); return; }
   st.page = p; document.body.dataset.page = p;
@@ -937,6 +948,7 @@ function critList(f = F) {
   if (f.months_max != null) L.push([`≤ ${f.months_max} months left`, () => f.months_max = null]);
   if (f.squad) L.push([esc(label(f.squad)), () => f.squad = '']);
   if (f.club_country) L.push([`Plays in ${esc(f.club_country)}`, () => f.club_country = '']);
+  if (f.similar) L.push([`Most similar to ${esc(f.similar.name)}`, () => f.similar = null]);
   if (f.free_agent) L.push(['Free agents', () => f.free_agent = false]);
   if (f.on_loan) L.push(['On loan', () => f.on_loan = false]);
   Object.entries(f.min).forEach(([c, v]) => !hid(c) && L.push([`${esc(short(c))} ≥ ${c === 'transfer_value' ? money(v) : c === 'contract_wage' ? wage(v) : v}`, () => delete f.min[c]]));
@@ -1070,7 +1082,10 @@ async function openPlayer(uid) {
           <span class="tag${p.months_left != null && p.months_left <= 6 ? ' warn' : ''}" title="Contract end">Contract <b>${esc(p.contract_end || '–')}${p.months_left != null ? ` · ${p.months_left}m` : ''}</b></span>
           <span class="tag" title="Squad status">${esc((p.contract_squad_status || 'Squad status unknown').replaceAll('_', ' '))}</span>
         </div>
-        <button class="btn primary" style="margin-top:12px;width:100%;justify-content:center" data-offer="${p.uid}">Make an offer →</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+          <button class="btn" style="justify-content:center" data-similar="${p.uid}" title="${{ full: 'Same position, age ±3, closest on CA, best role and attributes', fair: 'Same position, age ±3, closest on best role and attributes', moneyball: 'Same position, age ±3, closest on performance index, rating and key stats per 90' }[MODE]}">Find similar players</button>
+          <button class="btn primary" style="justify-content:center" data-offer="${p.uid}">Make an offer →</button>
+        </div>
       </section>
       <section class="sec" id="profileSec">${noAttr ? '<h3>Performance profile</h3><span class="sk" style="height:200px;width:100%"></span>'
         : `<h3>Profile <small>avg of attribute groups, scale 20 · dashed ring = 15</small></h3>
@@ -1749,6 +1764,7 @@ document.addEventListener('click', e => {
   else if (d.star && !t.closest('.ag-cell')) { const p = drawerPlayer && drawerPlayer.uid === +d.star ? drawerPlayer : null;
     toggleStar(+d.star, p ? p.name : d.name, p ? p.club_uid : (d.club === '' ? null : +d.club)); }
   else if (d.offer) { const p = drawerPlayer; closeDrawer(); setPage('offers'); pickOfferPlayer(p); }
+  else if (d.similar) findSimilar(drawerPlayer);
   else if (d.ofi != null) pickOfferPlayer(of.list[+d.ofi]);
   else if (d.offee) { $('#ofFee').value = money(+d.offee).replace('£', ''); evalOffer(); }
   else if (d.ofwage) { $('#ofWage').value = wage(+d.ofwage).replace(/^£|\/w$/g, ''); evalOffer(); }
