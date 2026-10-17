@@ -95,6 +95,7 @@ body[data-page="club"] .only-grid, body[data-page="offers"] .only-grid, body:not
 .crit[hidden] { display: none !important; }
 body.no-deals[data-page="deals"] #grid { display: none; }
 body:not(.no-deals) #dealsMissing { display: none; }
+body.no-fair .nav [data-page="deals"] { display: none; }
 
 /* ---------- Filter bar ---------- */
 .bar { flex-shrink: 0; display: flex; align-items: center; gap: 14px; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--bg2); min-height: 52px; }
@@ -430,6 +431,7 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .notes { margin: 6px 0 0; padding-left: 18px; color: var(--text2); font-size: 14px; } .notes li { margin: 4px 0; }
 .show-chip { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 6px 0 12px; border-radius: var(--r-pill); background: var(--accent-soft); border: 1px solid rgba(74,163,255,.45); font-weight: 600; font-size: 13px; }
 @media (max-width: 1600px) { .nav kbd { display: none; } }
+@media (max-width: 1320px) { .top { gap: 10px; } #palBtn kbd { display: none; } .search { min-width: 130px; } }  /* room for the Fair prices toggle */
 @media (max-width: 1180px) { .es-body { grid-template-columns: 1fr 1fr; } .es-grid { grid-template-columns: 1fr 1fr; } .offers { grid-template-columns: 1fr; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js"></script>
@@ -458,6 +460,7 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
     <button data-mode="fair" aria-pressed="false" class="tip" data-tip="Fair play: what a scout sees in-game. Visible attributes and stats only, with no CA/PA, hidden attributes or personality.">Fair play</button>
     <button data-mode="moneyball" aria-pressed="false" class="tip" data-tip="Moneyball: numbers only. In-game statistics and money, no attributes at all (visible or hidden).">Moneyball</button>
   </div>
+  <div class="seg"><button id="fairBtn" aria-pressed="true" class="tip" data-tip="Fair prices: the model's fair fee, fair wage and deal %. Turn off to keep only real fees and wages (Deal Finder is hidden).">Fair prices</button></div>
   <div id="gender" class="seg" role="group" aria-label="Gender">
     <button data-g="" aria-pressed="true">All</button><button data-g="Men" aria-pressed="false">Men</button><button data-g="Women" aria-pressed="false">Women</button>
   </div>
@@ -620,8 +623,9 @@ const SQUAD = ['star_player','important_player','regular_starter','squad_player'
 
 // ---------- Mode ----------
 let MODE = (() => { try { const m = localStorage.getItem('fm26_mode'); if (m in MODES) return m; if (localStorage.getItem('fm26_fairplay') === '1') return 'fair'; } catch {} return 'full'; })();
+let FAIR = (() => { try { return localStorage.getItem('fm26_fair_prices') !== '0'; } catch {} return true; })();
 let HIDDEN = new Set();
-const hid = c => HIDDEN.has(c) || (c === 'key_attrs' && MODE === 'moneyball');
+const hid = c => HIDDEN.has(c) || (c === 'key_attrs' && MODE === 'moneyball') || (!FAIR && /^(fair|deal)_/.test(c));
 const presetOk = p => !p.modes || p.modes.includes(MODE);
 const lensOk = l => l.id === 'blend' || (META.modes?.[MODE]?.lenses || []).includes(l.id);
 const mq = (sep = '?') => sep + 'mode=' + MODE;
@@ -1016,13 +1020,14 @@ async function openPlayer(uid) {
     </div>
     <div class="dr-body">
       <section class="sec"><h3>Scouting verdict</h3>
-        ${noAttr ? `<p class="note" style="margin:0 0 6px">Moneyball mode: judged on numbers only. See the percentiles below.${(p.s_minutes ?? 0) < 900 ? ' <b>No fair fee under 900 min.</b>' : ''}</p>`
+        ${noAttr ? `<p class="note" style="margin:0 0 6px">Moneyball mode: judged on numbers only. See the percentiles below.${FAIR && (p.s_minutes ?? 0) < 900 ? ' <b>No fair fee under 900 min.</b>' : ''}</p>`
           : v.strong.length ? `<div class="tags">${v.strong.map(([k, x]) => `<span class="tag good">${label(k)}<b>${x}</b></span>`).join('')}</div>` : '<p class="note" style="margin:0">No standout attributes (15+).</p>'}
         ${v.weak.length ? `<div class="tags" style="margin-top:6px">${v.weak.map(([k, x]) => `<span class="tag bad">${label(k)}<b>${x}</b></span>`).join('')}</div>` : ''}
         ${v.flags.length ? `<div class="tags" style="margin-top:6px">${v.flags.map(([c, t]) => `<span class="tag ${c}">${esc(t)}</span>`).join('')}</div>` : ''}
       </section>
       <section class="sec"><h3>Price <small>package = fee + ${META.wage_weeks || 156} weeks of wages</small></h3>
-        <div class="cmp">
+        ${!FAIR ? `<div class="cmp"><div class="kv">Fee<b>${feeHTML(p)}</b></div><div class="kv">Wage<b>${wage(p.contract_wage)}</b></div><div class="kv">Package (3y)<b>${money(pkg)}</b></div></div>`
+        : `<div class="cmp">
           <div class="kv">Fee<b>${feeHTML(p)}</b></div><div class="kv">Fair fee<b>${money(p.fair_fee)}</b></div>
           ${p.fair_fee != null ? valueVsFair(p.free_agent ? 0 : p.transfer_value, p.fair_fee) : '<span></span>'}
           <div class="kv">Wage<b>${wage(p.contract_wage)}</b></div><div class="kv">Fair wage<b>${p.fair_wage != null ? wage(p.fair_wage) : '–'}</b></div>
@@ -1030,7 +1035,7 @@ async function openPlayer(uid) {
         </div>
         <div class="pkg">${p.transfer_value == null && !p.free_agent ? `<span class="muted">Not for sale, so it cannot be a deal. Fair package would be ${money(p.fair_package)}.</span>`
           : `Package (3y) <b class="mono">${money(pkg)}</b> vs fair <b class="mono">${money(p.fair_package)}</b> ${dealBadge(p.deal_score)}`} ${r2Note()}</div>
-        ${hasDeal ? `<div class="lens-mini">${LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] != null).map(l => `<div>${l.label}<b class="mono">${money(p[l.ffee])}</b>${p[l.deal] != null ? `<span style="color:${dealColor(p[l.deal])}">${pctTxt(p[l.deal])}</span>` : ''}</div>`).join('')}</div>` : ''}
+        ${hasDeal ? `<div class="lens-mini">${LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] != null).map(l => `<div>${l.label}<b class="mono">${money(p[l.ffee])}</b>${p[l.deal] != null ? `<span style="color:${dealColor(p[l.deal])}">${pctTxt(p[l.deal])}</span>` : ''}</div>`).join('')}</div>` : ''}`}
         <dl class="facts">
           <dt>Contract</dt><dd class="mono" style="${p.months_left != null && p.months_left <= 6 ? 'color:var(--gold)' : ''}">${esc(p.contract_end || '–')}${p.months_left != null ? ` · ${p.months_left}m` : ''}</dd>
           <dt>Squad status</dt><dd>${esc((p.contract_squad_status || '–').replaceAll('_', ' '))}</dd>
@@ -1118,9 +1123,10 @@ function paletteItems() {
     { g: 'Go to', l: 'Deal Finder', d: 'Best value for money in your world', k: '2', run: () => setPage('deals') },
     { g: 'Go to', l: 'My Club', d: 'Formation, weak spots and targets', k: '3', run: () => setPage('club') },
     { g: 'Go to', l: 'Offers', d: 'Check whether a fee is fair', k: '4', run: () => setPage('offers') },
-  ];
+  ].filter(x => FAIR || x.l !== 'Deal Finder');
   Object.entries(MODES).forEach(([m, l]) => it.push({ g: 'Data mode', l: `${l} mode`, d: $(`[data-mode="${m}"]`).dataset.tip, on: MODE === m, run: () => setMode(m) }));
-  if (dealsAvailable()) LENSES.filter(lensOk).forEach(l => it.push({ g: 'Deal Finder', l: `${l.label} lens`, d: l.hint, on: st.page === 'deals' && st.lens === l.id, run: () => pickLens(l.id) }));
+  it.push({ g: 'Display', l: 'Fair prices', d: $('#fairBtn').dataset.tip, on: FAIR, run: () => setFair(!FAIR) });
+  if (FAIR && dealsAvailable()) LENSES.filter(lensOk).forEach(l => it.push({ g: 'Deal Finder', l: `${l.label} lens`, d: l.hint, on: st.page === 'deals' && st.lens === l.id, run: () => pickLens(l.id) }));
   it.push({ g: 'Lists', l: '★ My shortlist', d: `${shortlist.size} players you starred`, on: st.preset === '__shortlist', run: () => pickList('__shortlist') });
   META.presets.filter(p => p.group !== 'Deals' && presetOk(p)).forEach(p => it.push({ g: p.group, l: p.label, d: p.desc, on: st.preset === p.id, run: () => pickList(p.id) }));
   saved.forEach(s => it.push({ g: 'Saved searches', l: s.name, d: critList(s.f).map(c => c[0].replace(/<[^>]+>/g, '')).join(' · ') || 'No extra criteria', run: () => loadSearch(s) }));
@@ -1183,7 +1189,7 @@ function renderES() {
         <label class="fld">Wage ≥ /w <input class="in" data-esminm="contract_wage" type="text" inputmode="decimal" value="${D.min.contract_wage ?? ''}" placeholder="e.g. 5k"></label>
         <label class="fld">Months left ≤ ${nf('months_max', 'any')}</label>
         <label class="fld">Months left ≥ <input class="in" data-esmin="months_left" type="number" min="0" value="${D.min.months_left ?? ''}" placeholder="any"></label>
-        <label class="fld">Deal ≥ <span class="muted">% under fair</span><input class="in" data-esmin="deal_score" type="number" step="1" value="${D.min.deal_score ?? ''}" placeholder="any"></label>
+        ${FAIR ? `<label class="fld">Deal ≥ <span class="muted">% under fair</span><input class="in" data-esmin="deal_score" type="number" step="1" value="${D.min.deal_score ?? ''}" placeholder="any"></label>` : ''}
         <label class="fld">Club country <select class="in" data-esf="club_country"><option value="">Any</option>${(META.nations || []).map(n => n.name).sort().map(n => `<option ${D.club_country === n ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
         <label class="fld">Squad status <select class="in" data-esf="squad"><option value="">Any</option>${SQUAD.map(s => `<option value="${s}" ${D.squad === s ? 'selected' : ''}>${label(s)}</option>`).join('')}</select></label>
       </div>
@@ -1323,7 +1329,7 @@ function renderClub() {
 function renderScope() {
   const el = $('#recoScope'); if (!el) return;
   el.innerHTML = slotSel != null ? `<span class="show-chip">Showing: ${formation[slotSel]} (slot ${slotSel + 1})<button class="icon-btn" style="width:24px;height:24px;font-size:16px" data-clear-slot aria-label="Show all positions">×</button></span>`
-    : `<span class="muted" style="font-size:12px">${recoTab === 'needs' ? 'Top 20 deals for your weakest positions' : 'Top 20 players who slot straight into this shape'} · click a slot to focus</span>`;
+    : `<span class="muted" style="font-size:12px">${recoTab === 'needs' ? `Top 20 ${FAIR ? 'deals' : 'targets'} for your weakest positions` : 'Top 20 players who slot straight into this shape'} · click a slot to focus</span>`;
 }
 function renderSlotCard() {
   const card = $('#slotCard'); if (!card) return;
@@ -1341,6 +1347,8 @@ function selectSlot(i) {
   $$('[data-slot]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.slot === slotSel));
   renderSlotCard(); renderScope(); loadRecos();
 }
+// Fair prices off: drop the backend's "x% under fair fee + wages" clause from the reason.
+const why = p => (p.reason || '').split(' · ').filter(x => FAIR || !/fair/i.test(x)).join(' · ');
 function loadRecos() {
   clearTimeout(recoT);
   recoT = setTimeout(async () => {
@@ -1361,9 +1369,9 @@ function loadRecos() {
         <div style="min-width:0"><button class="nm" data-player="${p.uid}"><span class="flag" title="${esc(p.nationality || '')}">${flag(p.nationality_code)}</span> ${esc(p.name)}</button>
           <div class="meta">${p.age} yrs · <span class="pos">${esc(p.target_pos || '')}</span> ${esc(p.club_name || 'Free agent')} · ${esc(p.nationality || '')}${hid('ability_current') || p.ability_current == null ? (p.stat_score != null ? ` · Perf <b style="color:${pctColor(p.stat_score)}">${Math.round(p.stat_score)}</b>` : '') : ` · CA <b style="color:${abilityColor(p.ability_current)}">${p.ability_current}</b> / PA ${p.ability_potential}`}</div></div>
         <div style="min-width:0"><div class="rep">${p.replaces ? `replaces ${esc(lastName(p.replaces.name))} <span class="up">${p.upgrade != null ? (p.upgrade >= 0 ? '+' : '') + p.upgrade.toFixed(0) : ''} ${fitWord()}</span>` : '<span class="up">fills an empty slot</span>'}</div>
-          <div class="why" title="${esc(p.reason || '')}">${esc(p.reason || '')}</div></div>
+          <div class="why" title="${esc(why(p))}">${esc(why(p))}</div></div>
         <div><div class="money">Fee <b class="mono">${feeHTML(p)}</b> · <b class="mono ${med && p.contract_wage > 1.5 * med ? 'wage-hi' : ''}" title="${med ? `${(p.contract_wage / med).toFixed(1)}× your XI median wage (${wage(med)})` : ''}">${wage(p.contract_wage)}</b></div>
-          <div class="money">Package <b class="mono">${money(p.package_cost)}</b>${p.fair_package != null ? ` · Fair <b class="mono">${money(p.fair_package)}</b>` : ''}</div>${dealBadge(p.deal_score)}</div>
+          <div class="money">Package <b class="mono">${money(p.package_cost)}</b>${FAIR && p.fair_package != null ? ` · Fair <b class="mono">${money(p.fair_package)}</b>` : ''}</div>${FAIR ? dealBadge(p.deal_score) : ''}</div>
         <button class="star-btn" data-star="${p.uid}" data-name="${esc(p.name)}" data-club="${p.club_uid ?? ''}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist ${esc(p.name)}">★</button>
       </div>`).join('');
   }, 250);
@@ -1389,7 +1397,8 @@ function renderOffers() {
     </section>
     <section id="ofResult" aria-live="polite"></section>`;
   $('#ofMode').textContent = MODES[MODE];
-  $('#ofNote').innerHTML = `Fair price = what players with a similar ${MODE === 'full' ? '' : 'visible '}profile, age, level and contract cost in this save. ${r2Note()}`;
+  $('#ofNote').innerHTML = FAIR ? `Fair price = what players with a similar ${MODE === 'full' ? '' : 'visible '}profile, age, level and contract cost in this save. ${r2Note()}`
+    : 'Asking price = his game value adjusted for squad status and contract length. Acceptance compares your fee with it.';
   renderOfPlayer();
   if (of.p) evalOffer(); else $('#ofResult').innerHTML = emptyState('Who are you bidding for?', 'Search a player on the left, or press “Make an offer” in any player card. Enter a fee and get an instant verdict.');
 }
@@ -1405,7 +1414,7 @@ function pickOfferPlayer(p) {
   of.p = p; of.list = [];
   if (!$('#ofSearch')) renderOffers();
   $('#ofList').innerHTML = ''; $('#ofSearch').value = ''; $('#ofSearch').setAttribute('aria-expanded', 'false');
-  const pre = p.free_agent ? 0 : p.transfer_value ?? p.fair_fee;
+  const pre = p.free_agent ? 0 : p.transfer_value ?? (FAIR ? p.fair_fee : null);
   $('#ofFee').value = pre != null ? (pre === 0 ? '0' : money(pre).replace('£', '')) : '';
   $('#ofWage').value = ''; $('#ofWage').placeholder = p.contract_wage != null ? wage(p.contract_wage).replace(/^£|\/w$/g, '') + ' (current)' : 'current';
   renderOfPlayer(); evalOffer();
@@ -1427,7 +1436,9 @@ function evalOffer() {
   }, 300);
 }
 function renderVerdict(o) {
-  const [vt, vc] = VERDICT[o.verdict] || VERDICT.unknown, [at, ac] = ACCEPT[o.acceptance] || ['Acceptance unknown', C.muted];
+  // Fair prices off: drop every model figure; the verdict falls back to acceptance vs the asking estimate.
+  if (!FAIR) o = { ...o, verdict: 'unknown', fair_fee: null, fair_wage: null, fair_package: null, fair_fee_range: null, lenses: null, notes: o.notes?.filter(n => !/fair|value this player/i.test(n)) };
+  const [vt, vc] = FAIR ? VERDICT[o.verdict] || VERDICT.unknown : [null, (ACCEPT[o.acceptance] || ACCEPT.unknown)[1]], [at, ac] = ACCEPT[o.acceptance] || ['Acceptance unknown', C.muted];
   const lo = o.fair_fee_range?.[0], hi = o.fair_fee_range?.[1];
   const marks = [['Fair fee', o.fair_fee, C.good, ''], ['Your offer', o.fee, vc, 'you'], ['Asking', o.asking_estimate, C.warn, 'below'], ['Game value', o.transfer_value, C.accent, 'below']]
     .filter(m => m[1] != null && (m[1] > 0 || m[3] === 'you'));
@@ -1447,23 +1458,24 @@ function renderVerdict(o) {
   const quick = [['Offer fair fee', o.fair_fee], ['Offer asking price', o.asking_estimate], ['Match game value', o.transfer_value], ['Top of fair range', hi]].filter(q => q[1] != null && q[1] > 0);
   const quickW = o.fair_wage && o.wage !== Math.round(o.fair_wage) ? `<button class="btn" data-ofwage="${Math.round(o.fair_wage)}">Offer fair wage · ${wage(o.fair_wage)}</button>` : '';
   $('#ofResult').innerHTML = `
-    ${o.for_sale === false ? `<div class="nfs-banner">${NFS}<span>The game puts no price on ${esc(o.name)}: his club will not sell, whatever the fee. The verdict below only says what he would be worth.</span></div>` : ''}
-    <div class="verdict"><span class="vbadge" style="--c:${vc}">${vt}</span>
+    ${o.for_sale === false ? `<div class="nfs-banner">${NFS}<span>The game puts no price on ${esc(o.name)}: his club will not sell, whatever the fee.${FAIR ? ' The verdict below only says what he would be worth.' : ''}</span></div>` : ''}
+    <div class="verdict">${vt ? `<span class="vbadge" style="--c:${vc}">${vt}</span>` : ''}
       <div><div class="accept" style="--c:${ac}">${at}</div>
-        <div class="muted" style="font-size:13px">${o.ratio != null ? `Your fee is <b class="mono" style="color:var(--text)">${o.ratio.toFixed(2)}×</b> the fair fee` : 'No fair fee for this player in this mode'} · <span class="mode-chip">${MODES[o.mode] || esc(o.mode)}</span></div></div></div>
+        <div class="muted" style="font-size:13px">${!FAIR ? (o.asking_estimate ? `Your fee is <b class="mono" style="color:var(--text)">${(o.fee / o.asking_estimate).toFixed(2)}×</b> the asking estimate` : 'No asking estimate for this player')
+          : o.ratio != null ? `Your fee is <b class="mono" style="color:var(--text)">${o.ratio.toFixed(2)}×</b> the fair fee` : 'No fair fee for this player in this mode'} · <span class="mode-chip">${MODES[o.mode] || esc(o.mode)}</span></div></div></div>
     <div class="gauge" role="img" aria-label="${marks.map(m => `${m[0]} ${money(m[1])}`).join(', ')}${hi != null ? `, fair range ${money(lo)} to ${money(hi)}` : ''}">
       <div class="track"></div>
       ${hi != null ? `<div class="band" style="left:${x(lo)}%;width:${Math.max(1, x(hi) - x(lo))}%" title="Fair range ${money(lo)} – ${money(hi)}"></div>` : ''}
       ${marks.map(([l, v, c, cls, side, crowded]) => `<div class="mk ${cls === 'you' ? 'you ' : ''}${side}" style="left:${x(v)}%;--c:${c}">${crowded ? '' : `<span>${l}</span><b>${money(v)}</b>`}<i></i></div>`).join('')}
     </div>
     <div class="legend-row">${marks.map(([l, v, c]) => `<span><i style="background:${c}"></i>${l} <b class="mono">${money(v)}</b></span>`).join('')}${hi != null ? `<span><i class="band-dot"></i>Fair range <b class="mono">${money(lo)} – ${money(hi)}</b></span>` : ''}</div>
-    <div class="of-grid">
+    <div class="of-grid"${FAIR ? '' : ' style="grid-template-columns:repeat(3,1fr)"'}>
       <div class="kv">Your fee<b>${money(o.fee)}</b></div>
-      <div class="kv">Fair fee<b>${money(o.fair_fee)}</b>${hi != null ? `<span class="muted" style="text-transform:none;letter-spacing:0">range ${money(lo)} – ${money(hi)}</span>` : ''}</div>
+      ${FAIR ? `<div class="kv">Fair fee<b>${money(o.fair_fee)}</b>${hi != null ? `<span class="muted" style="text-transform:none;letter-spacing:0">range ${money(lo)} – ${money(hi)}</span>` : ''}</div>` : ''}
       <div class="kv">Wage<b>${wage(o.wage)}</b>${o.current_wage != null && o.wage !== o.current_wage ? `<span class="muted" style="text-transform:none;letter-spacing:0">now ${wage(o.current_wage)}</span>` : ''}</div>
-      <div class="kv">Fair wage<b>${wage(o.fair_wage)}</b>${wv ? `<span class="tag" style="color:${wv[1]};background:color-mix(in srgb, ${wv[1]} 14%, transparent)">${wv[0]}</span>` : ''}</div>
+      ${FAIR ? `<div class="kv">Fair wage<b>${wage(o.fair_wage)}</b>${wv ? `<span class="tag" style="color:${wv[1]};background:color-mix(in srgb, ${wv[1]} 14%, transparent)">${wv[0]}</span>` : ''}</div>` : `<div class="kv">Package (3y)<b>${money(o.package)}</b></div>`}
     </div>
-    <div class="pkg">Package (3y) <b class="mono">${money(o.package)}</b> vs fair <b class="mono">${money(o.fair_package)}</b> ${pkgDeal != null ? dealBadge(pkgDeal) : ''}</div>
+    ${FAIR ? `<div class="pkg">Package (3y) <b class="mono">${money(o.package)}</b> vs fair <b class="mono">${money(o.fair_package)}</b> ${pkgDeal != null ? dealBadge(pkgDeal) : ''}</div>` : ''}
     <div class="of-quick">${quick.map(([l, v]) => `<button class="btn" data-offee="${Math.round(v)}">${l} · ${money(v)}</button>`).join('')}${quickW}</div>
     ${o.notes?.length ? `<div class="sec"><h3>Scout's notes</h3><ul class="notes">${o.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul></div>` : ''}
     ${o.lenses?.length ? `<div class="sec"><h3>How the fair price is built</h3><table class="lens-tbl"><thead><tr><th>Lens</th><th class="r">Fair fee</th><th class="r">Fair wage</th><th class="r">Fair package</th></tr></thead><tbody>
@@ -1508,6 +1520,18 @@ function setMode(m, initial) {
   if (st.page === 'offers') renderOffers();
   if (drawerUid) openPlayer(drawerUid);
   toast({ full: 'Full mode: everything visible', fair: 'Fair play: no CA/PA, hidden attributes or personality', moneyball: 'Moneyball: statistics and money only' }[m], 'good');
+}
+function setFair(on) {
+  FAIR = on; document.body.classList.toggle('no-fair', !on); $('#fairBtn').setAttribute('aria-pressed', on);
+  try { localStorage.setItem('fm26_fair_prices', on ? '1' : '0'); } catch {}
+  if (!META) return;
+  const fm = grid.getFilterModel(); Object.keys(fm).forEach(k => hid(k) && delete fm[k]); grid.setFilterModel(fm);
+  renderSummary();
+  if (!on && st.page === 'deals') setPage('scout'); else if (st.page === 'scout' || st.page === 'deals') { applyColumns(); refresh(); }
+  if (st.page === 'club' && CLUB) { loadRecos(); renderScope(); }
+  if (st.page === 'offers') renderOffers();
+  if (drawerUid) openPlayer(drawerUid);
+  toast(on ? 'Fair prices on: fair fee, fair wage and deal %' : 'Fair prices off: real fees and wages only', 'good');
 }
 async function exportCSV() {
   toast('Preparing CSV…', '', 0);
@@ -1662,6 +1686,7 @@ document.addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t || t.closest('#es')) return;
   const d = t.dataset;
   if (d.page && t.closest('.nav')) setPage(d.page);
+  else if (t.id === 'fairBtn') setFair(!FAIR);
   else if (d.mode && t.closest('#modes')) { if (META && d.mode !== MODE) setMode(d.mode); }
   else if (d.g != null && t.closest('#gender')) { setGender(d.g); refresh(); if (st.page === 'club' && CLUB) loadRecos(); }
   else if (d.pos && t.closest('#positions')) { F.positions = F.positions.includes(d.pos) ? F.positions.filter(x => x !== d.pos) : [...F.positions, d.pos]; renderSummary(); refresh(); }
@@ -1760,7 +1785,7 @@ document.addEventListener('keydown', e => {
   const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName);
   if (typing || e.metaKey || e.ctrlKey || e.altKey || !META) return;
   if (e.key === '/') { e.preventDefault(); $('#search').focus(); }
-  else if (e.key === '1') setPage('scout'); else if (e.key === '2') setPage('deals'); else if (e.key === '3') setPage('club'); else if (e.key === '4') setPage('offers');
+  else if (e.key === '1') setPage('scout'); else if (e.key === '2') { if (FAIR) setPage('deals'); } else if (e.key === '3') setPage('club'); else if (e.key === '4') setPage('offers');
   else if (e.key === 'e') { e.preventDefault(); openES(); }
   else if (e.key === 's' && drawerPlayer) toggleStar(drawerPlayer.uid, drawerPlayer.name, drawerPlayer.club_uid);
 });
@@ -1772,6 +1797,7 @@ document.addEventListener('dragover', e => e.preventDefault());
 document.addEventListener('drop', e => { e.preventDefault(); depth = 0; $('#overlay').hidden = true; upload(e.dataTransfer.files[0]); });
 const ping = () => fetch('/api/ping', { method: 'POST' }).catch(() => {});
 ping(); setInterval(ping, 5000);
+setFair(FAIR);
 addEventListener('pagehide', () => navigator.sendBeacon('/api/bye'));
 init();
 checkUpdate();
