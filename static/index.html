@@ -627,6 +627,9 @@ const lensOk = l => l.id === 'blend' || (META.modes?.[MODE]?.lenses || []).inclu
 const mq = (sep = '?') => sep + 'mode=' + MODE;
 
 // ---------- Formatting ----------
+const P90_EXTRA = [['s_shots_p90', 'Shots / 90'], ['s_xa_p90', 'xA / 90'], ['s_dribbles_p90', 'Dribbles / 90'], ['s_prog_passes_p90', 'Prog. passes / 90'],
+  ['s_ccc_p90', 'Big chances created / 90'], ['s_crosses_p90', 'Crosses / 90'], ['s_tackles_p90', 'Tackles / 90'], ['s_interceptions_p90', 'Interceptions / 90'],
+  ['s_headers_won_p90', 'Headers won / 90'], ['s_clearances_p90', 'Clearances / 90'], ['s_possession_won_p90', 'Possession won / 90'], ['s_pressures_p90', 'Pressures / 90']];
 const LABELS = { ability_current: 'CA', ability_potential: 'PA', pa_gap: 'Gap', natural_positions: 'Pos', transfer_value: 'Value',
   months_left: 'Months left', best_role: 'Best role', best_role_score: 'Best role', height_cm: 'Height', nationality: 'Nation',
   club_name: 'Club', contract_squad_status: 'Squad status', contract_end: 'Contract end', deal_ability: 'Ability deal',
@@ -634,7 +637,7 @@ const LABELS = { ability_current: 'CA', ability_potential: 'PA', pa_gap: 'Gap', 
   fair_package_ability: 'Package vs fair', fair_package_attributes: 'Package vs fair', fair_package_form: 'Package vs fair', fair_package_stats: 'Package vs fair',
   package_cost: 'Package (3y)', contract_wage: 'Wage/w', transfer_value: 'Fee', fair_fee: 'Fair fee', fair_wage: 'Fair wage',
   fair_fee_ability: 'Fair fee', fair_fee_attributes: 'Fair fee', fair_fee_form: 'Fair fee', fair_fee_stats: 'Fair fee',
-  fair_wage_ability: 'Fair wage', fair_wage_attributes: 'Fair wage', fair_wage_form: 'Fair wage', fair_wage_stats: 'Fair wage', stat_score: 'Performance', key_attrs: 'Key attributes', key_stats: 'Key stats (per 90)', ...Object.fromEntries(SEASON) };
+  fair_wage_ability: 'Fair wage', fair_wage_attributes: 'Fair wage', fair_wage_form: 'Fair wage', fair_wage_stats: 'Fair wage', stat_score: 'Performance', key_attrs: 'Key attributes', key_stats: 'Key stats (per 90)', ...Object.fromEntries(SEASON), ...Object.fromEntries(P90_EXTRA), owner_club_reputation: 'Owner club rep.' };
 const label = c => LABELS[c] || c.replace(/^(attributes|personality|role|positions)_/, '').replaceAll('_', ' ').replace(/\b\w/g, m => m.toUpperCase());
 const short = c => c.startsWith('attributes_') ? ABBR[c.slice(11)] || label(c) : label(c);
 const money = v => v == null ? '–' : v >= 1e6 ? `£${(v / 1e6).toFixed(v >= 1e7 ? 0 : 1)}M` : v >= 1e3 ? `£${Math.round(v / 1e3)}k` : `£${Math.round(v)}`;
@@ -735,7 +738,7 @@ try { shortlist = new Set(JSON.parse(localStorage.getItem('fm26_shortlist') || '
 const saveSL = () => { try { localStorage.setItem('fm26_shortlist', JSON.stringify([...shortlist])); } catch {} renderLists(); };
 // All search criteria live in F; the quick bar and the Edit search dialog both edit it.
 const F0 = () => ({ positions: [], age_min: null, age_max: null, value_max: null, wage_max: null, ca_min: null, pa_min: null, risks: false,
-  nations: [], months_max: null, squad: '', free_agent: false, on_loan: false, min: {}, max: {} });
+  nations: [], months_max: null, squad: '', club_country: '', free_agent: false, on_loan: false, min: {}, max: {} });
 let F = F0();
 let saved = []; try { saved = JSON.parse(localStorage.getItem('fm26_searches') || '[]'); } catch {}
 const saveSearches = () => { try { localStorage.setItem('fm26_searches', JSON.stringify(saved)); } catch {} };
@@ -807,6 +810,7 @@ function query(extra = {}, f = F) {
   const filters = {};
   if (f.months_max != null) filters.months_left = num('lessThanOrEqual', f.months_max);
   if (f.squad) filters.contract_squad_status = { filterType: 'text', type: 'equals', filter: f.squad };
+  if (f.club_country) filters.club_country = { filterType: 'text', type: 'equals', filter: f.club_country };
   if (f.free_agent) filters.free_agent = num('equals', 1);
   if (f.on_loan) filters.on_loan = num('equals', 1);
   Object.entries(f.min).forEach(([c, v]) => { if (!hid(c)) filters[c] = num('greaterThanOrEqual', v); });
@@ -900,9 +904,10 @@ function critList(f = F) {
   f.nations.forEach(n => L.push([`<span class="flag">${flag(natCode(n))}</span> ${esc(n)}`, () => f.nations = f.nations.filter(x => x !== n)]));
   if (f.months_max != null) L.push([`≤ ${f.months_max} months left`, () => f.months_max = null]);
   if (f.squad) L.push([esc(label(f.squad)), () => f.squad = '']);
+  if (f.club_country) L.push([`Plays in ${esc(f.club_country)}`, () => f.club_country = '']);
   if (f.free_agent) L.push(['Free agents', () => f.free_agent = false]);
   if (f.on_loan) L.push(['On loan', () => f.on_loan = false]);
-  Object.entries(f.min).forEach(([c, v]) => !hid(c) && L.push([`${esc(short(c))} ≥ ${v}`, () => delete f.min[c]]));
+  Object.entries(f.min).forEach(([c, v]) => !hid(c) && L.push([`${esc(short(c))} ≥ ${c === 'transfer_value' ? money(v) : c === 'contract_wage' ? wage(v) : v}`, () => delete f.min[c]]));
   Object.entries(f.max).forEach(([c, v]) => !hid(c) && L.push([`${esc(short(c))} ≤ ${v}`, () => delete f.max[c]]));
   return L;
 }
@@ -1036,6 +1041,7 @@ async function openPlayer(uid) {
         <div class="radar-wrap">${radar(axes)}<div class="axes-list">${axes.map(([n, x]) => `<div><span class="muted">${n}</span><b class="${tier(Math.round(x))}">${x.toFixed(1)}</b></div>`).join('')}</div></div>`}
       </section>
       <section class="sec" id="seasonSec"></section>
+      ${seasonAll(p)}
       ${roles.length ? `<section class="sec"><h3>Best roles</h3>
         ${roles.map(([r, x]) => `<div class="rolebar"><span>${label('role_' + r)} <span class="muted" style="font-size:11px">${META.roles[r]}</span></span><div class="tr"><i style="width:${x}%;background:${scoreColor(x)}"></i></div><b class="mono" style="color:${scoreColor(x)};text-align:right">${x.toFixed(0)}</b></div>`).join('')}
       </section>` : ''}
@@ -1048,6 +1054,15 @@ async function openPlayer(uid) {
     </div>`;
   renderSeason(p, grp);
   $('[data-close]', dr).focus({ preventScroll: true });
+}
+// Every season total and rate the save holds, folded away like "All attributes".
+function seasonAll(p) {
+  const skip = new Set(['s_league_rep', 's_league_id']);
+  const ks = Object.keys(p).filter(k => k.startsWith('s_') && !skip.has(k) && typeof p[k] === 'number');
+  if (!ks.length) return '';
+  const name = k => k.slice(2).replace(/_p90$/, ' / 90').replace('_pct', ' %').replace(/^xg|^xa/, m => m.toUpperCase()).replaceAll('_', ' ').replace(/^\w/, m => m.toUpperCase());
+  return `<section class="sec"><details><summary>All season stats</summary><dl class="facts" style="margin-top:10px">
+    ${ks.map(k => `<dt>${esc(name(k))}</dt><dd class="mono">${Number.isInteger(p[k]) ? p[k].toLocaleString() : p[k].toFixed(2)}</dd>`).join('')}</dl></details></section>`;
 }
 async function renderSeason(p, grp) {
   const sec = $('#seasonSec'); if (!sec) return;
@@ -1133,7 +1148,8 @@ function runPal(n) { const i = palItems[n]; if (!i) return; $('#pal').close(); i
 let D = null; // draft criteria while the dialog is open
 const STATS_F = [['s_minutes', 'Minutes'], ['s_apps', 'Appearances'], ['s_avg_rating', 'Avg rating'], ['stat_score', 'Performance index'],
   ['s_goals_p90', 'Goals / 90'], ['s_xg_p90', 'xG / 90'], ['s_assists_p90', 'Assists / 90'], ['s_key_passes_p90', 'Key passes / 90'],
-  ['s_def_actions_p90', 'Def. actions / 90'], ['s_pass_pct', 'Pass %'], ['s_tackle_pct', 'Tackle %'], ['s_header_pct', 'Header %']];
+  ['s_def_actions_p90', 'Def. actions / 90'], ...P90_EXTRA, ['s_pass_pct', 'Pass %'], ['s_tackle_pct', 'Tackle %'], ['s_header_pct', 'Header %'],
+  ['s_player_of_the_match', 'Player of the match'], ['s_clean_sheets', 'Clean sheets'], ['s_expected_goals_prevented', 'xG prevented (GK)']];
 const rangeRow = (col, name, max = 20, isMax = false) => { const v = (isMax ? D.max : D.min)[col];
   return `<label class="rg"><span title="${esc(name)}">${esc(name)}</span><input type="range" min="0" max="${max}" step="1" value="${v ?? (isMax ? max : 0)}" ${isMax ? 'data-rmax' : 'data-rmin'}="${col}" aria-label="${esc(name)} ${isMax ? 'maximum' : 'minimum'}"><output class="${v != null ? 'on' : ''}">${v ?? '–'}</output></label>`; };
 function renderES() {
@@ -1162,7 +1178,12 @@ function renderES() {
     <section class="es-sec"><h3>Contract &amp; finance</h3>
       <div class="es-fields">
         <label class="fld">Value ≤ ${nf('value_max', 'e.g. 2.5M')}</label><label class="fld">Wage ≤ /w ${nf('wage_max', 'e.g. 15k')}</label>
+        <label class="fld">Value ≥ <input class="in" data-esminm="transfer_value" type="text" inputmode="decimal" value="${D.min.transfer_value ?? ''}" placeholder="e.g. 500k"></label>
+        <label class="fld">Wage ≥ /w <input class="in" data-esminm="contract_wage" type="text" inputmode="decimal" value="${D.min.contract_wage ?? ''}" placeholder="e.g. 5k"></label>
         <label class="fld">Months left ≤ ${nf('months_max', 'any')}</label>
+        <label class="fld">Months left ≥ <input class="in" data-esmin="months_left" type="number" min="0" value="${D.min.months_left ?? ''}" placeholder="any"></label>
+        <label class="fld">Deal ≥ <span class="muted">% under fair</span><input class="in" data-esmin="deal_score" type="number" step="1" value="${D.min.deal_score ?? ''}" placeholder="any"></label>
+        <label class="fld">Club country <select class="in" data-esf="club_country"><option value="">Any</option>${(META.nations || []).map(n => n.name).sort().map(n => `<option ${D.club_country === n ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
         <label class="fld">Squad status <select class="in" data-esf="squad"><option value="">Any</option>${SQUAD.map(s => `<option value="${s}" ${D.squad === s ? 'selected' : ''}>${label(s)}</option>`).join('')}</select></label>
       </div>
       <div class="es-row" style="margin-top:10px"><label class="check"><input type="checkbox" data-esb="free_agent" ${D.free_agent ? 'checked' : ''}> Free agents only</label>
@@ -1706,7 +1727,8 @@ $('#es').addEventListener('input', e => {
   const t = e.target, d = t.dataset;
   if (!D || t.id === 'esName') return;
   if (t.id === 'esNatQ') { const pos = t.selectionStart; renderES(); const q = $('#esNatQ'); q.focus(); q.setSelectionRange(pos, pos); return; }
-  if (d.esf) D[d.esf] = d.esf === 'squad' ? t.value : esNum(t.value);
+  if (d.esf) D[d.esf] = d.esf === 'squad' || d.esf === 'club_country' ? t.value : esNum(t.value);
+  else if (d.esminm) { const v = esNum(t.value); if (v == null) delete D.min[d.esminm]; else D.min[d.esminm] = v; }
   else if (d.esb) D[d.esb] = t.checked;
   else if (d.esnat) { D.nations = t.checked ? [...D.nations, d.esnat] : D.nations.filter(x => x !== d.esnat); }
   else if (d.esmin) { if (t.value === '') delete D.min[d.esmin]; else D.min[d.esmin] = Number(t.value); }

@@ -271,7 +271,13 @@ def _stats_sql(path):
                round(100.0 * s_headers_won / nullif(s_aerial_challenges_attempted, 0), 1) AS s_header_pct,
                {p90('s_goals')} AS s_goals_p90, {p90('s_assists')} AS s_assists_p90,
                {p90('s_expected_goals')} AS s_xg_p90, {p90('s_key_passes')} AS s_key_passes_p90,
-               {p90('s_tackles_completed + s_interceptions')} AS s_def_actions_p90
+               {p90('s_tackles_completed + s_interceptions')} AS s_def_actions_p90,
+               {p90('s_shots')} AS s_shots_p90, {p90('s_expected_assists')} AS s_xa_p90, {p90('s_dribbles')} AS s_dribbles_p90,
+               {p90('s_progressive_passes')} AS s_prog_passes_p90, {p90('s_clear_cut_chances_created')} AS s_ccc_p90,
+               {p90('s_crosses_completed')} AS s_crosses_p90, {p90('s_tackles_completed')} AS s_tackles_p90,
+               {p90('s_interceptions')} AS s_interceptions_p90, {p90('s_headers_won')} AS s_headers_won_p90,
+               {p90('s_clearances')} AS s_clearances_p90, {p90('s_possession_won')} AS s_possession_won_p90,
+               {p90('s_pressures_completed')} AS s_pressures_p90
         FROM t LEFT JOIN ls ON ls.league_id = t.s_league_id"""
 
 
