@@ -37,16 +37,10 @@ Get up and running in less than two minutes without touching Python or the comma
 
 ---
 
-### 🛡️ First-Launch Security Warnings (Unsigned App)
+### 🛡️ Security prompts on first launch
 
-Because the binary is not code-signed with a commercial developer certificate, your operating system will show a one-time security prompt on first launch:
-
-- **macOS:** the dialog only offers *Move to Trash* or *Done*. Click **Done** (not Trash), then open **System Settings → Privacy & Security**, scroll to the bottom, click **Open Anyway** next to `FM26-Scout`, and confirm with your password. *(Required only once)*
-  Faster alternative, in Terminal (adjust the path if the app is elsewhere):
-  ```bash
-  xattr -dr com.apple.quarantine /Applications/FM26-Scout.app
-  ```
-- **Windows:** If SmartScreen displays *"Windows protected your PC"*, click **More info** → **Run anyway**.
+- **macOS:** no warning. The app is signed with an Apple Developer ID certificate and notarized by Apple, so it opens with a double-click.
+- **Windows:** expect one warning. The `.exe` is not code-signed, because a Windows signing certificate is a paid yearly service and this is a free hobby project. If SmartScreen displays *"Windows protected your PC"*, click **More info** → **Run anyway**. It is a one-time prompt, and the app works normally afterwards. The source code and the CI that builds the binaries are public, so you can check what you run or build it yourself (see below).
 
 ---
 
