@@ -385,7 +385,15 @@ details[open] summary::before { content: "−"; }
 .sd-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .sd-body { position: relative; flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
 .sd-body .sec { padding: 0; border: 0; }
-.sd-sim.wide { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.sd-sim.wide { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 16px; height: 100%; } .sd-sim.wide > div { min-height: 0; overflow-y: auto; }
+.pg-similar .sd-body { overflow: hidden; } .sd-sim.wide > div:last-child { overflow: hidden; display: flex; flex-direction: column; } .sd-sim.wide .scat { flex: 1; min-height: 0; height: 100%; }
+.sw-lg { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -2px 0 6px; font-size: 11.5px; color: var(--text2); } .sw-lg i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.sw-lg .me { background: var(--good, #3ddc84); } .sw-lg .sim { border: 1.6px solid var(--gold); } .sw-lg .pe { width: 5px; height: 5px; background: var(--muted); opacity: .6; } .sw-lg .md { width: 0; height: 10px; border-radius: 0; border-left: 1px dashed var(--text2); }
+.swarm .pt { cursor: pointer; } .swarm .pt:hover circle { stroke: var(--text); stroke-width: 2.4; }
+.cnv-p .lane { overflow: visible; }
+.hm-tr { gap: 4px; } .hm-tr .tag { font-size: 11.5px; }
+table.reg { width: 100%; border-collapse: collapse; font-size: 12.5px; } table.reg th { text-align: left; font: 600 10.5px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 3px 6px; border-bottom: 1px solid var(--line); }
+table.reg td { padding: 4px 6px; border-bottom: 1px solid var(--line); color: var(--text2); } table.reg td:first-child { color: var(--text); font-weight: 600; } table.reg td:not(:first-child) { font-family: var(--f-mono); }
 .sd-sim .sim-row { min-height: 36px; padding: 3px 6px; } .sd-sim .kchips { margin-bottom: 6px; }
 .sd-pos { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; } .sd-pos .legend { display: none; }
 .sd-body .rolebar { grid-template-columns: minmax(0, 150px) 1fr 30px; font-size: 12px; } .sd-body .rolebar > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1440,7 +1448,7 @@ function dial(name, txt, f, color, sub, aria, ghost) {
 // Strength of each foot (1-20) as two small bars with FM's words, strong foot first in the tooltip.
 const FOOT_W = [[18, 'Very strong'], [15, 'Strong'], [12, 'Fairly strong'], [9, 'Reasonable'], [5, 'Weak'], [0, 'Very weak']];
 const feetHTML = p => p.left_foot == null || p.right_foot == null ? '' : `<span class="feet" role="img" aria-label="${[['Left', p.left_foot], ['Right', p.right_foot]].map(([s, v]) => `${s} foot ${FOOT_W.find(w => v >= w[0])[1].toLowerCase()}`).join(', ')}">${[['L', p.left_foot], ['R', p.right_foot]].map(([s, v]) => { const w = FOOT_W.find(x => v >= x[0])[1];
-  return `<span title="${s === 'L' ? 'Left' : 'Right'} foot: ${w} (${v}/20)"><b>${s}</b><i><i style="width:${v * 5}%;background:${scoreColor(v * 5)}"></i></i><small>${w}</small></span>`; }).join('')}</span>`;
+  return `<span title="${s === 'L' ? 'Left' : 'Right'} foot: ${w} (${v}/20)"><b>${s}</b><i><i style="width:${v * 5}%;background:${scoreColor(v * 5)}"></i></i></span>`; }).join('')}</span>`;
 const footOf = p =>p.left_foot != null && p.right_foot != null ? (p.left_foot > p.right_foot ? 'Left' : p.right_foot > p.left_foot ? 'Right' : 'Either') + ' foot' : '';
 const roleList = p => MODE === 'moneyball' ? [] : Object.keys(META.roles).map(r => [r, p['role_' + r]]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
 const roleBars = roles => roles.map(([r, x]) => `<div class="rolebar"><span>${label('role_' + r)} <span class="muted" style="font-size:11px">${META.roles[r]}</span></span><div class="tr"><i style="width:${x}%;background:${scoreColor(x)}"></i></div><b class="mono" style="color:${scoreColor(x)};text-align:right">${x.toFixed(0)}</b></div>`).join('');
@@ -1506,13 +1514,14 @@ function pitchMap(p) {
     <div class="legend" aria-hidden="true">${FAMIL.map(([, n, c]) => `<span class="tag"><i style="background:${c}"></i>${n}</span>`).join('')}</div>`;
 }
 const PERS_SHORT = { adaptability: 'Adapt', ambition: 'Amb', loyalty: 'Loyal', pressure: 'Press', professionalism: 'Prof', sportsmanship: 'Sport', temperament: 'Temp', controversy: 'Contr' };
-function heatMap(p, pers = true) {
+function heatMap(p, pers = true, hidden = true, traits = false) {
   // Columns of groups; in Full the hidden attributes sit under Physical so the map stays three columns wide.
-  const H = MODE === 'full', SP = ['corners', 'free_kick_taking', 'penalty_taking', 'long_throws'];
+  const H = MODE === 'full' && hidden, SP = ['corners', 'free_kick_taking', 'penalty_taking', 'long_throws'];
+  const tr = traits ? (p.traits || '').split(';').filter(t => t && t !== 'unknown') : [];
   const cols = [groupOf(p) === 'GK' ? [['Goalkeeping', ATTR.goalkeeping]] : [['Technical', ATTR.technical.filter(k => !SP.includes(k))], ['Set pieces', SP]], [['Mental', ATTR.mental]],
     [['Physical', ATTR.physical], ...(H ? [['Hidden', ATTR.hidden]] : [])], ...(H && pers ? [[['Personality', PERS, 'personality_']]] : [])];
-  return `<div class="hm">${cols.map(col => `<div>${col.map(([t, keys, pre = 'attributes_']) => `<h4>${t}</h4><div class="hm-g">${keys.filter(k => p[pre + k] != null).map(k => { const c = pre + k, v = p[c];
-    return `<div class="hm-c ${tier(v, BAD.has(c))}" data-n="${esc(label(c))}"><span aria-hidden="true">${pre === 'attributes_' ? ABBR[k] : PERS_SHORT[k]}</span><span class="sr">${esc(label(c))}</span><b>${v}</b></div>`; }).join('')}</div>`).join('')}</div>`).join('')}</div>`;
+  return `<div class="hm">${cols.map((col, i) => `<div>${col.map(([t, keys, pre = 'attributes_']) => `<h4>${t}</h4><div class="hm-g">${keys.filter(k => p[pre + k] != null).map(k => { const c = pre + k, v = p[c];
+    return `<div class="hm-c ${tier(v, BAD.has(c))}" data-n="${esc(label(c))}"><span aria-hidden="true">${pre === 'attributes_' ? ABBR[k] : PERS_SHORT[k]}</span><span class="sr">${esc(label(c))}</span><b>${v}</b></div>`; }).join('')}</div>`).join('')}${i === 2 && traits ? `<h4>Traits</h4>${tr.length ? `<div class="tags hm-tr">${tr.map(t => `<span class="tag">${esc(label(t))}</span>`).join('')}</div>` : '<p class="note" style="margin:0">No player traits.</p>'}` : ''}</div>`).join('')}</div>`;
 }
 // Asking fee against the fair fee and the spread of the per-lens fair fees (fair prices on only).
 function priceBar(p) {
@@ -1616,9 +1625,9 @@ function simMetric(r) {
 }
 
 // Similar players placed by fee (log x) and level (y); free agents and players not for sale sit in side gutters.
-function scatter(p, rows) {
+function scatter(p, rows, H = 250) {
   if ([p, ...rows].filter(r => simMetric(r)[1] != null).length < 2) return '<p class="note" style="margin:0">Not enough rated players to plot.</p>';
-  const all = [p, ...rows], [, , , , ymax] = simMetric(p), W = 540, H = 250, L = 96, Rr = 70, T = 12, B = 30;
+  const all = [p, ...rows], near = new Set(rows.slice(0, 8).map(r => r.uid)), [, , , , ymax] = simMetric(p), W = 540, L = 96, Rr = 70, T = 12, B = 30;
   const fees = all.map(r => r.transfer_value).filter(x => x > 0), lo = Math.log(Math.min(...fees, 1e5) * .8), hi = Math.log(Math.max(...fees, 1e6) * 1.25);
   const ys = all.map(r => simMetric(r)[1]).filter(x => x != null), y0 = Math.max(0, Math.floor((Math.min(...ys) - ymax * .06) / 10) * 10), y1 = Math.min(ymax, Math.ceil((Math.max(...ys) + ymax * .04) / 10) * 10);
   const X = r => r.free_agent ? L - 34 : r.transfer_value == null ? W - Rr + 34 : L + (Math.log(r.transfer_value) - lo) / (hi - lo) * (W - L - Rr);
@@ -1633,7 +1642,7 @@ function scatter(p, rows) {
     ${pts.map(r => { const [, v, txt, c] = simMetric(r), me = r.uid === p.uid, x = X(r).toFixed(1), y = Y(v).toFixed(1);
       return `<g class="pt${me ? ' me' : ''}"${me ? '' : ` data-pp-uid="${r.uid}"`}><title>${esc(r.name)} · ${feeHTML(r).replace(/<[^>]+>/g, '')} · ${txt}</title>
         <circle cx="${x}" cy="${y}" r="${me ? 7 : 5}" fill="${me ? 'none' : c}" stroke="${me ? 'var(--mode)' : 'rgba(0,0,0,.4)'}" stroke-width="${me ? 3 : 1}"/>
-        ${me || (!r.free_agent && r.transfer_value != null) ? `<text x="${+x + (me ? 11 : 8)}" y="${+y + 3}">${esc(me ? 'Him' : r.name.split(' ').slice(-1)[0])}</text>` : ''}</g>`; }).join('')}
+        ${me || (near.has(r.uid) && !r.free_agent && r.transfer_value != null) ? `<text x="${+x + (me ? 11 : 8)}" y="${+y + 3}">${esc(me ? 'Him' : r.name.split(' ').slice(-1)[0])}</text>` : ''}</g>`; }).join('')}
   </svg>`;
 }
 
@@ -1648,7 +1657,7 @@ Object.assign(PP_ICON, {
   table: '<path d="M4 6h16M4 12h16M4 18h16"/>',
 });
 const h3i = (ic, t, small = '') => `<h3>${ppIcon(ic)}<span class="h3l">${t}</span>${small ? `<small>${small}</small>` : ''}</h3>`;
-const PP_SIDE_L = { apx: 'Ability vs price', similar: 'Similar', report: 'Report', attrs: 'Attributes', table: 'Every stat', map: 'Price map', price: 'Price', contract: 'Contract', season: 'Season', position: 'Position', stats: 'All stats', profile: 'Radar' };
+const PP_SIDE_L = { club: 'Club & registrations', traits: 'Reputation', apx: 'Ability vs price', similar: 'Similar', report: 'Report', attrs: 'Attributes', table: 'Every stat', map: 'Price map', price: 'Price', contract: 'Contract', season: 'Season', position: 'Position', stats: 'All stats', profile: 'Radar' };
 const rg = (lbl, f, color, txt, aria, ghost) => `<div class="pp-rg">${ring(f, color, txt, aria, ghost)}<small aria-hidden="true">${lbl}</small></div>`;
 const sev = (v, bad) => v == null ? C.muted : scoreColor((bad ? 21 - v : v) * 5);  // 1-20 attribute colour, inverted for "bad" attributes
 const fbar = (name, v, f, c, sub, tick) => `<div class="fb" title="${esc(name)} ${v}"><span>${name}${sub ? ` <small>${sub}</small>` : ''}</span><i>${tick != null ? `<em style="left:${pctW(tick)}"></em>` : ''}<i style="width:${pctW(f)};background:${c}"></i></i><b style="color:${c}">${v}</b></div>`;
@@ -1698,8 +1707,7 @@ function devOutlook(p) {
 
 // ---- Sections ----
 function secAttr() {
-  const full = MODE === 'full';
-  return `${h3i('attr', 'Attributes', `scale 20${full ? ' · hidden included' : ''} · hover a cell for its name`)}${heatMap(ppx.p, false)}`;
+  return `${h3i('attr', 'Attributes', 'scale 20 · hover a cell for its name')}${heatMap(ppx.p, false, false, true)}`;
 }
 function secDev() {
   const { p } = ppx, o = devOutlook(p);
@@ -1786,10 +1794,7 @@ function secHero() {
 function secDeal() {
   const { p, grp, bench } = ppx, ask = p.free_agent ? 0 : p.transfer_value;
   if (!FAIR || p.fair_fee == null) {
-    const pool = bench?.pool || [];
-    return `${h3i('cost', 'Price against his peers', FAIR ? 'no fair fee for him' : 'fair prices off')}
-      <div class="tix">${[['Asking', p.free_agent ? 'Free' : ask == null ? 'Not for sale' : money(ask)], ['Wage', wage(p.contract_wage)], ['Contract', p.contract_end || '–'], ['Status', (p.contract_squad_status || '–').replaceAll('_', ' ')]].map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>
-      ${bench ? strip('Asking fee', pool.map(r => r.transfer_value), ask, money, grp) + strip('Wage', pool.map(r => r.contract_wage), p.contract_wage, wage, grp) : '<span class="sk" style="height:90px;width:100%"></span>'}`;
+    return `${h3i('cost', 'Fees of similar players', FAIR ? 'no fair fee for him · him = ring · click a dot' : 'fair prices off · him = ring · click a dot')}${sideBody('map').replace(/^<p class="note"[^>]*>.*?<\/p>/, '')}`;
   }
   const lens = LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] != null).map(l => [l.label, p[l.ffee]]);
   const [lo, hi] = p.fair_fee_range || [p.fair_fee, p.fair_fee], vals = [...lens.map(x => x[1]), lo, hi, p.fair_fee, ...(ask > 0 ? [ask] : [])].filter(x => x > 0);
@@ -1805,9 +1810,7 @@ function secDeal() {
       ${lens.map(([n, v], i) => { const y = T + i * rowH + 6; return `<text class="lb" x="0" y="${y + 4}">${n}</text><line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" stroke="#1a242d"/>
         <circle cx="${X(v)}" cy="${y}" r="5.5" fill="${dc(v)}"/><text class="vl" x="${+X(v) + 9}" y="${y + 4}">${money(v)}</text>`; }).join('')}
       <text class="ax" x="${ask > 0 ? X(ask) : L}" y="${H - 6}" text-anchor="middle">${ask > 0 ? 'asking ' + money(ask) : 'not for sale: no asking line'}</text>
-    </svg>
-    <div class="tix">${[['Asking', p.free_agent ? 'Free' : ask == null ? 'Not for sale' : money(ask)], ['Fair fee', money(p.fair_fee), 'var(--accent)'], ['Deal', p.deal_score != null ? `${Math.abs(Math.round(p.deal_score))}% ${p.deal_score >= 0 ? 'under' : 'over'}` : '–', p.deal_score != null ? dealColor(p.deal_score) : null], ['Wage', `${wage(p.contract_wage)}${p.fair_wage ? `<small>fair ${wage(p.fair_wage)}</small>` : ''}`]]
-      .map(([k, v, c]) => `<div><span>${k}</span><b${c ? ` style="color:${c}"` : ''}>${v}</b></div>`).join('')}</div>`;
+    </svg>`;
 }
 // Strengths & gaps: each attribute minus the average of his position peers (hidden too in Full; "bad" attributes flipped).
 function secSG() {
@@ -1824,7 +1827,7 @@ function secSG() {
 }
 // Ability vs price: position sample (grey), similar players (rings, labelled), him (dot).
 function apxScatter() {
-  const { p, abil, sim } = ppx, rows = (abil?.wide || []).filter(r => r.transfer_value > 0 && r.ability_current != null), sims = (sim?.rows || []).filter(r => r.ability_current != null);
+  const { p, abil, sim } = ppx, rows = (abil?.wide || []).filter(r => r.transfer_value > 0 && r.ability_current != null), sims = (sim?.rows || []).slice(0, 8).filter(r => r.ability_current != null);
   if (rows.length < 20) return abil ? '<p class="note">Not enough fees in this save to plot.</p>' : '<span class="sk" style="height:200px;width:100%"></span>';
   const fees = [...rows, ...sims].map(r => r.transfer_value).filter(x => x > 0).concat(p.transfer_value > 0 ? [p.transfer_value] : []);
   const c0 = Math.max(40, Math.min(p.ability_current, ...sims.map(r => r.ability_current)) - 35), c1 = 200, inX = r => r.ability_current >= c0;
@@ -1873,7 +1876,7 @@ function bigPitch(p) {
   const pts = POSITIONS.map(k => [k, p[posKey(k)]]).filter(x => x[1] != null);
   const known = pts.filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]);
   return `<svg class="lane" viewBox="0 0 56 124" role="img" aria-label="${esc(known.length ? 'Position familiarity: ' + known.map(([k, v]) => `${k} ${v} (${famil(v)[1]})`).join(', ') : 'No position familiarity in this save')}">
-    ${pts.map(([k, v]) => { const [x0, y0] = PITCH[k], f = v >= 9 ? famil(v) : null, cx = (28 + (x0 - 50) * .48).toFixed(1), cy = (y0 * 1.24 + 3.5).toFixed(1), r = f ? (5.6 + (v - 9) * .3).toFixed(1) : 3.2;
+    ${pts.map(([k, v]) => { const [x0, y0] = PITCH[k], f = v >= 9 ? famil(v) : null, cx = (28 + (x0 - 50) * .7).toFixed(1), cy = (y0 * 1.24 + 3.5).toFixed(1), r = f ? (5.6 + (v - 9) * .3).toFixed(1) : 3.2;
       return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${f ? f[2] : 'rgba(255,255,255,.05)'}" stroke="rgba(255,255,255,.18)" stroke-width=".3"><title>${k} · ${f ? f[1] : 'Unfamiliar'}</title></circle><text x="${cx}" y="${+cy + 1.3}" text-anchor="middle" font-size="${f ? 3.8 : 2.4}" font-weight="700" font-family="var(--f-display)" fill="${f ? '#04110a' : 'rgba(255,255,255,.45)'}" pointer-events="none">${k}</text>`; }).join('')}
   </svg>`;
 }
@@ -1896,9 +1899,9 @@ function secCanvas() {
 function secSwarm() {
   const { p, grp, bench, sim } = ppx, small = (p.s_minutes || 0) < 900, base = METRICS[grp] || METRICS.CM;
   const keys = grp === 'GK' ? base : [...base, ...['xa', 'prog', 'won', 'crs', 'int'].filter(k => !base.includes(k))].slice(0, 12);
-  const head = h3i('table', `Where he sits among ${bench ? bench.pool.length : 300} ${plural(grp)}`, `per 90 · grey = peers (900+ min) · dashed = median · gold ring = similar · dot = him${small ? ` · his dot and percentiles appear at 900 min (${p.s_minutes || 0})` : ''}`);
+  const head = h3i('table', `Where he sits among ${bench ? bench.pool.length : 300} ${plural(grp)}`, `per 90 · grey = peers (900+ min) · colour = his percentile${small ? ` · his dot and percentiles appear at 900 min (${p.s_minutes || 0})` : ''}`);
   if (!bench) return head + '<span class="sk" style="height:300px;width:100%"></span>';
-  const W = 560, L = 128, R = 92, rowH = 42, H = keys.length * rowH + 6, pool = bench.pool, sims = sim?.rows || [];
+  const W = 560, L = 128, R = 92, rowH = 42, H = keys.length * rowH + 6, pool = bench.pool, sims = (sim?.rows || []).slice(0, 8);
   const rowsSvg = keys.map((k, i) => {
     const [name, fn, dec = 2, unit = ''] = M[k], xs = pool.map(fn).filter(x => x != null).sort((a, b) => a - b);
     if (xs.length < 10) return '';
@@ -1907,11 +1910,12 @@ function secSwarm() {
     return `<g><text class="lb" x="0" y="${y + 4}">${name}</text>
       ${pool.map((r, j) => { const x = fn(r); return x == null ? '' : `<circle cx="${X(x)}" cy="${(y + ((j * 7919) % 13) - 6).toFixed(1)}" r="1.8" fill="var(--muted)" opacity=".4"/>`; }).join('')}
       <line x1="${X(md)}" x2="${X(md)}" y1="${y - 11}" y2="${y + 11}" stroke="var(--text2)" stroke-dasharray="2 2"/>
-      ${sims.map(r => { const x = fn(r); return x == null ? '' : `<circle cx="${X(x)}" cy="${y}" r="4" fill="none" stroke="var(--gold)" stroke-width="1.5"><title>${esc(r.name)} ${x.toFixed(dec)}${unit}</title></circle>`; }).join('')}
+      ${sims.map(r => { const x = fn(r); return x == null ? '' : `<g class="pt" data-pp-uid="${r.uid}"><title>${esc(r.name)}: ${x.toFixed(dec)}${unit} (click to open)</title><circle cx="${X(x)}" cy="${y}" r="5" fill="transparent" stroke="var(--gold)" stroke-width="1.6"/></g>`; }).join('')}
       ${!small && v != null ? `<circle cx="${X(v)}" cy="${y}" r="6" fill="${pc != null ? pctColor(pc) : 'var(--mode)'}" stroke="var(--panel)" stroke-width="2"/>` : ''}
       <text class="vl" x="${W - R + 8}" y="${y + 4}">${v != null ? v.toFixed(dec) + unit : '–'}</text>
       ${pc != null ? `<rect x="${W - 34}" y="${y - 8}" width="32" height="16" rx="8" fill="color-mix(in srgb, ${pctColor(pc)} 18%, transparent)"/><text class="pc" x="${W - 18}" y="${y + 4}" text-anchor="middle" fill="${pctColor(pc)}">${pc}</text>` : `<text class="pc" x="${W - 18}" y="${y + 4}" text-anchor="middle" fill="var(--muted)">–</text>`}</g>`; }).join('');
-  return `${head}<svg class="swarm" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Per-90 stats of ${p.name} among ${pool.length} ${plural(grp)}: ` + keys.map(k => `${M[k][0]} ${M[k][1](p)?.toFixed(M[k][2] ?? 2) ?? 'none'}${!small && bench.pcs[k] != null ? `, percentile ${bench.pcs[k]}` : ''}`).join('; '))}">${rowsSvg}</svg>`;
+  const lg = `<div class="sw-lg" aria-hidden="true"><span><i class="me"></i>${esc(p.name.split(' ').slice(-1)[0])}</span><span><i class="sim"></i>${sims.length} most similar players · hover for the name</span><span><i class="pe"></i>other ${plural(grp)}</span><span><i class="md"></i>median</span></div>`;
+  return `${head}${lg}<svg class="swarm" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Per-90 stats of ${p.name} among ${pool.length} ${plural(grp)}: ` + keys.map(k => `${M[k][0]} ${M[k][1](p)?.toFixed(M[k][2] ?? 2) ?? 'none'}${!small && bench.pcs[k] != null ? `, percentile ${bench.pcs[k]}` : ''}`).join('; '))}">${rowsSvg}</svg>`;
 }
 // Moneyball phase panels from in-game stats, each line with percentile vs position and vs all positions.
 const REPORT_RULES = grp => `Strengths = attributes at 15+, risks = key attributes for his position at 10 or less plus hidden flags (injury proneness 14+, consistency or big-match 8 or less, professionalism 8 or less). Ranks count every ${grp} in this save. Development uses PA gap, age and the average of professionalism, determination and ambition. Value compares his fee with players of his position within 8 CA.`;
@@ -1927,25 +1931,32 @@ function sideBody(k) {
     const chips = [...(sim.crit?.attributes || []).map(x => `<span class="ac" title="${esc(label(x.col))}">${ABBR[x.col.slice(11)] || esc(label(x.col))}<b class="${tier(x.value)}">${x.value}</b></span>`),
       ...(sim.crit?.stats || []).map(x => `<span class="ac st" title="${esc(label(x.col))}: better than ${x.pct}% of peers">${esc(label(x.col))}<b style="color:${pctColor(x.pct)}">${x.value}</b></span>`)];
     const list = sim.rows.map(simRow).join('');
-    return `<div class="sd-sim${MODE === 'fair' ? ' wide' : ''}"><div>${chips.length ? `<div class="kchips" aria-label="Compared on">${chips.join('')}</div>` : ''}
+    return `<div class="sd-sim${MODE !== 'full' ? ' wide' : ''}"><div>${chips.length ? `<div class="kchips" aria-label="Compared on">${chips.join('')}</div>` : ''}
       ${list || `<p class="note">${mb && !p.s_minutes ? 'Needs league minutes to compare on numbers.' : 'No close match found.'}</p>`}
-      <button class="link" data-similar="${p.uid}">Open the full list in Scout →</button></div>${MODE !== 'fair' || !sim.rows.length ? '' : `<div>${scatter(p, sim.rows)}</div>`}</div>`;
+      <button class="link" data-similar="${p.uid}">Open the full list in Scout →</button></div>${MODE === 'full' || !sim.rows.length ? '' : `<div><p class="note" style="margin:0 0 6px">Fee (log) against ${simMetric(p)[0].toLowerCase()} · him = ring · hover or click a dot</p>${scatter(p, sim.rows, 380)}</div>`}</div>`;
   }
   if (k === 'price') return `${priceBar(p)}${priceBody(p)}${bench ? strip('Asking fee', pool.map(r => r.transfer_value), p.free_agent ? 0 : p.transfer_value, money, grp) + strip('Wage', pool.map(r => r.contract_wage), p.contract_wage, wage, grp) : ''}
     ${!FAIR ? '<p class="note">Fair prices are off: fee and wage against his peers only.</p>' : ''}`;
+  const js = s => { try { return JSON.parse(s || '[]') || []; } catch { return []; } };
   if (k === 'contract') {
-    const js = s => { try { return JSON.parse(s || '[]') || []; } catch { return []; } };
-    const clauses = js(p.contract_clauses).filter(c => c.kind && c.kind !== 'unknown'), chain = js(p.contract_chain), traits = (p.traits || '').split(';').filter(t => t && t !== 'unknown');
-    const rep = [['World', p.reputation_world], ['Current', p.reputation_current], ['Home', p.reputation_home], ['Club', p.club_reputation]].filter(x => x[1] != null);
+    const clauses = js(p.contract_clauses).filter(c => c.kind && c.kind !== 'unknown');
     const facts = [['Sale', saleTxt(p)], ['Squad status', (p.contract_squad_status || '–').replaceAll('_', ' ')], ['Wage', wage(p.contract_wage)], p.contract_kind && ['Contract type', p.contract_kind.replaceAll('_', ' ')],
-      ['Club', (p.club_name || 'Free agent') + (p.club_join_date ? ` · since ${p.club_join_date}` : '')], p.on_loan && ['On loan', `from ${p.loan_parent_club_name || '?'}${p.loan_end ? ' until ' + p.loan_end : ''}`],
-      p.home_grown_club_names && ['Home-grown at', p.home_grown_club_names.replaceAll(';', ', ')], p.raw_condition != null && ['Condition · sharpness', `${Math.round(p.raw_condition / 100)}% · ${Math.round((p.raw_match_sharpness ?? 0) / 100)}%`]].filter(Boolean);
+      ['Signed', p.contract_start || '–'], ['Ends', p.contract_end || '–']].filter(Boolean);
     return `${ppTimeline(p, true)}<div class="facts-t">${facts.map(([k_, v]) => `<div><span>${k_}</span><b>${esc(v)}</b></div>`).join('')}</div>
-      ${chain.length > 1 ? `<h4>History</h4><div class="chain">${chain.map(c => `<span class="tag">${esc(c.club_name)}</span>`).join('<i aria-hidden="true">→</i>')}</div>` : ''}
-      ${clauses.length ? `<h4>Clauses</h4><div class="tags">${clauses.map(c => `<span class="tag">${esc(label(c.kind))}${c.value != null ? `<b>${money(c.value)}</b>` : ''}</span>`).join('')}</div>` : ''}
-      ${traits.length ? `<h4>Traits</h4><div class="tags">${traits.map(t => `<span class="tag">${esc(label(t))}</span>`).join('')}</div>` : ''}
-      ${rep.length ? `<h4>Reputation <small class="muted">/10</small></h4><div class="fbs">${rep.map(([n, v]) => fbar(n, (v / 1000).toFixed(1), v / 10000, 'var(--mode)')).join('')}</div>` : ''}
+      <h4>Clauses</h4>${clauses.length ? `<div class="tags">${clauses.map(c => `<span class="tag">${esc(label(c.kind))}${c.value != null ? `<b>${money(c.value)}</b>` : ''}</span>`).join('')}</div>` : '<p class="note">No clause in this contract.</p>'}
       ${p.suspensions ? '<div class="tags" style="margin-top:8px"><span class="tag bad">Suspended</span></div>' : ''}`;
+  }
+  // Registration chain from the save: clubs, dates and wage per spell (no fees or past-season stats in the save).
+  if (k === 'club') {
+    const chain = js(p.contract_chain).slice().reverse();
+    const facts = [['Club', (p.club_name || 'Free agent') + (p.club_join_date ? ` · since ${p.club_join_date}` : '')], p.on_loan && ['On loan', `from ${p.loan_parent_club_name || '?'}${p.loan_end ? ' until ' + p.loan_end : ''}`],
+      p.home_grown_club_names && ['Home-grown at', p.home_grown_club_names.replaceAll(';', ', ')], p.raw_condition != null && ['Condition · sharpness', `${Math.round(p.raw_condition / 100)}% · ${Math.round((p.raw_match_sharpness ?? 0) / 100)}%`]].filter(Boolean);
+    return `<div class="facts-t">${facts.map(([k_, v]) => `<div><span>${k_}</span><b>${esc(v)}</b></div>`).join('')}</div>
+      <h4>Registrations</h4>${chain.length ? `<table class="reg"><thead><tr><th>Club</th><th>From</th><th>To</th><th>Wage</th></tr></thead><tbody>${chain.map(c => `<tr><td>${esc(c.club_name || '?')}</td><td>${esc(c.start || '–')}</td><td>${esc(c.end || '–')}</td><td>${c.wage ? wage(c.wage) : '–'}</td></tr>`).join('')}</tbody></table>` : '<p class="note">No registration recorded.</p>'}`;
+  }
+  if (k === 'traits') {
+    const rep = [['World', p.reputation_world], ['Current', p.reputation_current], ['Home', p.reputation_home], ['Club', p.club_reputation]].filter(x => x[1] != null);
+    return rep.length ? `<p class="note" style="margin:0 0 6px">Scale 10</p><div class="fbs">${rep.map(([n, v]) => fbar(n, (v / 1000).toFixed(1), v / 10000, 'var(--mode)')).join('')}</div>` : '<p class="note">No reputation recorded.</p>';
   }
   if (k === 'apx') return apxScatter();
   if (k === 'report') return secReport();
@@ -1964,9 +1975,9 @@ function sideBody(k) {
 // Profile pages per mode: [id, tab label, cards]. Overview and the stats page with the beeswarm place cards by named grid areas (CSS).
 const PP_PAGES = {
   full: [['over', 'Overview', ['role', 'attr', 'canvas', 'sg', 'dev']], ['report', 'Scouting report', ['hero', 'report', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'season', 'stats']],
-    ['similar', 'Similar players', ['similar', 'apx']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract']]],
-  fair: [['over', 'Overview', ['role', 'attr', 'canvas', 'sg', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'season', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['price']], ['contract', 'Contract', ['contract']]],
-  moneyball: [['over', 'Overview', ['canvas', 'swarm', 'pizza', 'simmini']], ['stats', 'Statistics', ['season', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['price']], ['contract', 'Contract', ['contract']]],
+    ['similar', 'Similar players', ['similar', 'apx']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'club', 'traits']]],
+  fair: [['over', 'Overview', ['role', 'attr', 'canvas', 'sg', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'season', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'club', 'traits']]],
+  moneyball: [['over', 'Overview', ['canvas', 'swarm', 'pizza', 'simmini']], ['stats', 'Statistics', ['season', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'club', 'traits']]],
 };
 const ppPages = () => PP_PAGES[MODE] || PP_PAGES.full;
 const ppCards = () => ppPages().flatMap(x => x[2]);
@@ -2033,8 +2044,8 @@ async function renderProfile() {
   if (mb) ppAll(p.gender).then(a => { x.all = a; again(); }).catch(() => {});
   const j = r => r.ok ? r.json() : null;
   Promise.all([api(`/api/similar/${p.uid}${mq()}`).then(j).catch(() => null),
-    api('/api/players', { start: 0, end: 9, positions: [grp], gender: p.gender || null, mode: MODE, similar_to: p.uid, filters: mb ? { s_minutes: num('greaterThanOrEqual', 600) } : {} }).then(j).catch(() => null)])
-    .then(([crit, res]) => { x.sim = { crit, rows: (res?.rows || []).filter(r => r.uid !== p.uid).slice(0, 8) }; again(); });
+    api('/api/players', { start: 0, end: 25, positions: [grp], gender: p.gender || null, mode: MODE, similar_to: p.uid, filters: mb ? { s_minutes: num('greaterThanOrEqual', 600) } : {} }).then(j).catch(() => null)])
+    .then(([crit, res]) => { x.sim = { crit, rows: (res?.rows || []).filter(r => r.uid !== p.uid).slice(0, 24) }; again(); });
 }
 // Page tabs (click, arrows), role picker, scatter points.
 $('#player').addEventListener('click', e => {
@@ -2121,9 +2132,9 @@ function seasonAll(p, cls = 'sec') {
 async function renderSeason(p, grp, root, alive) {
   const sec = $('[data-sec="season"]', root); if (!sec) return;
   const prof = MODE === 'moneyball' && $('[data-sec="profile"]', root);
-  const head = `<h3>This season <small>per 90 · percentile vs ${grp}s with 900+ min</small></h3>`;
+  const head = `<p class="note" style="margin:0 0 6px">Per 90 · percentile vs ${grp}s with 900+ min</p>`;
   if (!p.s_minutes) {
-    sec.innerHTML = `<h3>This season</h3><p class="note" style="margin:0">No league minutes logged this season, so there is nothing to benchmark yet.</p>`;
+    sec.innerHTML = `<p class="note" style="margin:0">No league minutes logged this season, so there is nothing to benchmark yet.</p>`;
     if (prof) prof.innerHTML = '<h3>Performance profile</h3><p class="note" style="margin:0">Needs league minutes.</p>';
     return;
   }
