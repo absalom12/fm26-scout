@@ -299,8 +299,6 @@ details[open] summary::before { content: "−"; }
 .sim-hd { min-height: 0 !important; padding-top: 0; padding-bottom: 2px; font: 600 10px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); pointer-events: none; } .sim-hd span:not(:first-child) { text-align: right; }
 .sd-sim.pa .sim-row { grid-template-columns: minmax(0, 1fr) auto 44px 44px; }
 .ast-r.ast-hd { height: 14px; font: 600 9.5px var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); } .ast-r.ast-hd b, .ast-r.ast-hd em { font: inherit; color: inherit; } .ast-r.ast-hd span:last-child { text-align: center; }
-/* Scouting report page: two cards, so the report and radar are drawn larger. */
-.pg-report [data-pp="report"] .sd-body { zoom: 1.3; } .pg-report .radar-wrap { zoom: 1.45; }
 /* Contract page: the whole page is available, so bigger type and air. */
 .pg-contract { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, .8fr); }
 .pg-contract .pp-card { padding: 16px 20px; } .pg-contract .pp-card h3 { font-size: 15px; margin-bottom: 14px; }
@@ -361,19 +359,50 @@ details[open] summary::before { content: "−"; }
 .vsc .ax { font: 500 9.5px var(--f-mono); fill: var(--muted); }
 .vread { margin: 4px 0 0; font-size: 12.5px; line-height: 1.4; color: var(--text2); }
 .dv-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; } .dv-head small { font-size: 11.5px; color: var(--muted); }
-/* Report card: six blocks, 2 columns, coloured number chips */
-.rp { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 8px; align-content: stretch; }
-.rp-b { --t: var(--line); min-width: 0; display: flex; flex-direction: column; gap: 5px; padding: 7px 10px 8px; border: 1px solid var(--line); border-left: 3px solid var(--t); border-radius: var(--r); background: color-mix(in srgb, var(--raise) 45%, transparent); }
-.rp-b.warn { --t: var(--warn); } .rp-b.calm { --t: var(--good); } .rp-b:nth-child(3), .rp-b:nth-child(4) { grid-column: 1 / -1; }
-.pp-card .rp-b h4 { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); } .rp-b h4 .ico { width: 14px; height: 14px; color: var(--mode); }
-.rp-h { display: flex; align-items: baseline; gap: 7px; min-width: 0; } .rp-h b { font: 700 26px/1 var(--f-mono); white-space: nowrap; }
-.rp-h span, .rp-h em { font-size: 12.5px; font-style: normal; font-weight: 600; color: var(--text2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .rp-h span::first-letter { text-transform: uppercase; }
-.rp-h:has(> span > em) span { white-space: normal; line-height: 1.25; }
-.rp-cs { display: flex; flex-wrap: wrap; gap: 4px; }
-.rp-c { --c: var(--text2); font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: var(--r-pill); color: var(--c); background: color-mix(in srgb, var(--c) 13%, transparent); white-space: nowrap; }
-.rp-c[title] { cursor: help; } .rp-c b { font-family: var(--f-mono); }
-.rp-b p { margin: 0; font-size: 12px; line-height: 1.35; color: var(--muted); } .rp-b p b { color: var(--text2); font-weight: 600; } .rp-n { font: normal 700 12px var(--f-mono); }
-.rp-rule { flex: none; cursor: help; } .sd-body:has(> .rp) { display: flex; flex-direction: column; }
+/* Scouting report page (Full): 3 x 2 analysis cards. rs-* = shared rows, ra = profile, vs = attributes vs output, tf = tactical fit, rk = risks, ru = usage. */
+.pg-report.m-full { grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
+.pg-report .pp-card { padding: 10px 16px; } .pg-report .pp-card h3 { font-size: 14px; margin-bottom: 5px; } .pg-report .pp-card > .note { margin-top: auto; padding-top: 6px; }
+.pg-report [title] { cursor: help; }
+.rs-a { font-size: 12.5px; color: var(--text2); white-space: nowrap; } .rs-a b { font: 700 12.5px var(--f-mono); }
+.rs-cs { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; }
+.rs-p { --c: var(--muted); flex: none; justify-self: start; font: 700 11px/1 var(--f-display); letter-spacing: .07em; text-transform: uppercase; padding: 4px 8px; border-radius: var(--r-pill); color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); white-space: nowrap; }
+.rs { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; justify-content: space-around; }
+.rs-r { display: grid; grid-template-columns: 96px 78px minmax(0, 1fr); align-items: baseline; gap: 0 8px; padding: 2px 0; border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.rs-r:first-child { border-top: 0; } .rs-r .rs-p { text-align: center; }
+.rs-n { font: 700 12.5px var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--text2); }
+.rs-e { display: flex; flex-wrap: wrap; gap: 0 10px; align-items: baseline; line-height: 1.2; } .rs-t { font-size: 13px; color: var(--text); flex-basis: 100%; }
+.rs-empty { margin: auto 0; text-align: center; color: var(--muted); font-size: 13.5px; line-height: 1.45; padding: 0 12px; }
+.rs-foot { margin: 8px 0 0; font-size: 12.5px; color: var(--muted); } .rs-foot b { color: var(--text2); font-family: var(--f-mono); }
+.ra { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(170px, 210px); gap: 14px; align-items: start; }
+.ra-name { margin: 0 0 4px; font: 700 27px/1 var(--f-display); text-transform: uppercase; letter-spacing: .02em; color: var(--text); text-wrap: balance; }
+.ra-s { margin: 0; font-size: 13px; line-height: 1.4; color: var(--text2); } .ra-s b { font-family: var(--f-mono); }
+.ra h4 { margin: 9px 0 4px; } .ra-r { display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 0; }
+.ra-r .radar { width: 100%; height: auto; max-height: 160px; overflow: visible; padding: 0 18px; }
+.ra-ax { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; font-size: 12px; color: var(--muted); } .ra-ax span { display: flex; justify-content: space-between; } .ra-ax b { font-family: var(--f-mono); }
+.vs-sum { margin: 0 0 6px; font-size: 13.5px; color: var(--text); } .vs-sum b { font-family: var(--f-mono); }
+.vs-lg { display: flex; gap: 14px; font-size: 11.5px; color: var(--muted); margin-bottom: 4px; } .vs-lg span { display: inline-flex; align-items: center; gap: 5px; }
+.vs-lg .vs-o, .vs-lg .vs-d { position: static; transform: none; border-color: var(--text2); } .vs-lg .vs-d { background: var(--text2); }
+.vs { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; justify-content: space-evenly; }
+.vs-r { display: grid; grid-template-columns: 118px minmax(60px, 1fr) 58px 150px; align-items: center; gap: 10px; min-height: 26px; }
+.vs-n { font-size: 13px; font-weight: 600; color: var(--text2); } .vs-r .rs-p { justify-self: start; }
+.vs-v { font-size: 12px; color: var(--faint); text-align: center; white-space: nowrap; } .vs-v b { font: 700 13px var(--f-mono); }
+.vs-tr { position: relative; height: 18px; background: linear-gradient(90deg, transparent calc(50% - .5px), rgba(255,255,255,.28) calc(50% - .5px), rgba(255,255,255,.28) calc(50% + .5px), transparent calc(50% + .5px)), linear-gradient(#1a242d, #1a242d) center / 100% 4px no-repeat; border-radius: 3px; }
+.vs-b { position: absolute; top: 7px; height: 4px; opacity: .55; border-radius: 2px; }
+.vs-o, .vs-d { position: absolute; top: 50%; width: 13px; height: 13px; border-radius: 50%; transform: translate(-50%, -50%); display: inline-block; }
+.vs-o { border: 2.5px solid; background: var(--panel); } .vs-d { box-shadow: 0 0 0 2px var(--panel); animation: vs-in .5s var(--ease) both; }
+@keyframes vs-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.3); } }
+.tf-sum { margin-bottom: 8px; }
+.tf { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; justify-content: space-evenly; gap: 2px; }
+.tf-r { display: grid; grid-template-columns: minmax(0, 150px) minmax(50px, 1fr) 28px 66px; align-items: center; gap: 8px; font-size: 13px; color: var(--text2); position: relative; }
+.tf-r b { font: 700 13px var(--f-mono); text-align: right; } .tf-n { white-space: nowrap; }
+.tf-b { display: block; height: 8px; border-radius: 4px; background: #1a242d; overflow: hidden; } .tf-b i { display: block; height: 100%; border-radius: 4px; transform-origin: left; animation: grow .6s var(--ease) both; }
+.tf-p { --c: var(--muted); font: 700 11.5px var(--f-mono); text-align: center; padding: 2px 0; border-radius: var(--r-pill); color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); }
+.tf-r em { position: absolute; right: 74px; top: -9px; font: italic 600 10.5px var(--f-body); color: var(--warn); } .tf-r.un .tf-p { outline: 1px dashed var(--warn); }
+.rk-sum { display: inline-flex; gap: 6px; } .rk-sum span { --c: var(--muted); font-size: 12.5px; color: var(--c); padding: 2px 10px; border-radius: var(--r-pill); background: color-mix(in srgb, var(--c) 12%, transparent); } .rk-sum b { font: 700 14px var(--f-mono); }
+.ru { flex: 1; min-height: 0; overflow-y: auto; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; justify-content: space-evenly; gap: 4px; }
+.ru li { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 10px; align-items: baseline; font-size: 13.5px; line-height: 1.35; color: var(--text); padding: 3px 0; border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent); } .ru li:first-child { border-top: 0; }
+.ru-t { font: 700 11px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--mode); } .ru-k { display: inline-flex; flex-wrap: wrap; gap: 0 10px; margin-left: 4px; }
+@media (prefers-reduced-motion: reduce) { .vs-d, .tf-b i { animation: none; } }
 .pp-card .hm { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; }
 .pp-card .hm-c span { font-size: 11px; }
 .pp-card .hm-g { grid-template-columns: 1fr 1fr; gap: 3px; } .pp-card .hm-c { padding: 3px 6px; } .pp-card .hm-c b { font-size: 13px; } .pp-card .hm h4 { margin: 0 0 4px; } .pp-card .hm-g + h4 { margin-top: 8px; }
@@ -522,7 +551,6 @@ table.reg td { padding: 4px 6px; border-bottom: 1px solid var(--line); color: va
   .pp-id h1 { font-size: 24px; } .pp-head { padding: 7px 0 6px; } .pp-body { margin-top: 8px; gap: 8px; }
   .ring { width: 54px; height: 54px; } .ring b { font-size: 15px; }
   .lds { gap: 5px; margin-top: 6px; } .ld small { font-size: 10.5px; }
-  .rp { gap: 6px; } .rp-b { padding: 5px 9px 6px; gap: 3px; } .rp-h b { font-size: 21px; } .rp-c { padding: 1px 7px; } .rp-b p { font-size: 11.5px; }
   .mt-r { min-height: 19px; font-size: 12px; } .fbs { gap: 3px; } .fb { font-size: 12px; }
   .pp-card .hm-c { padding: 2px 6px; } .pp-card .hm-g + h4 { margin-top: 5px; } .phz > div { line-height: 1.2; } .phz h5 { margin-bottom: 1px; } .pp-verdict { font-size: 12px; line-height: 1.35; } .vsc { max-height: 120px; } .sg { gap: 1px; } .sg + .note { display: none; } .phz { padding: 5px 8px; gap: 1px; } .tix b { font-size: 13.5px; } .hero-n b { font-size: 64px; } .pp-card h4 { margin: 7px 0 4px; } .tot b { font-size: 13px; } .tot div, .facts-t div { padding: 3px 7px; }
 }
@@ -1703,7 +1731,7 @@ Object.assign(PP_ICON, {
   table: '<path d="M4 6h16M4 12h16M4 18h16"/>',
 });
 const h3i = (ic, t, small = '') => `<h3>${ppIcon(ic)}<span class="h3l">${t}</span>${small ? `<small>${small}</small>` : ''}</h3>`;
-const PP_SIDE_L = { club: 'Club & registrations', traits: 'Reputation', apx: 'Ability vs price', similar: 'Similar', report: 'Report', attrs: 'Attributes', table: 'Every stat', map: 'Price map', price: 'Price', contract: 'Contract', season: 'Season', position: 'Position', stats: 'All stats', profile: 'Radar' };
+const PP_SIDE_L = { club: 'Club & registrations', traits: 'Reputation', apx: 'Ability vs price', similar: 'Similar', attrs: 'Attributes', table: 'Every stat', map: 'Price map', price: 'Price', contract: 'Contract', season: 'Season', position: 'Position', stats: 'All stats', profile: 'Radar' };
 const rg = (lbl, f, color, txt, aria, ghost) => `<div class="pp-rg">${ring(f, color, txt, aria, ghost)}<small aria-hidden="true">${lbl}</small></div>`;
 const sev = (v, bad) => v == null ? C.muted : scoreColor((bad ? 21 - v : v) * 5);  // 1-20 attribute colour, inverted for "bad" attributes
 const fbar = (name, v, f, c, sub, tick) => `<div class="fb" title="${esc(name)} ${v}"><span>${name}${sub ? ` <small>${sub}</small>` : ''}</span><i>${tick != null ? `<em style="left:${pctW(tick)}"></em>` : ''}<i style="width:${pctW(f)};background:${c}"></i></i><b style="color:${c}">${v}</b></div>`;
@@ -1763,44 +1791,194 @@ function secDev() {
     <div class="fbs">${DEV.filter(([, k]) => p[k] != null).map(([n, k, why, bad]) => fbar(n, p[k], p[k] / 20, sev(p[k], bad), why)).join('')}</div>
     <p class="note">Drive = average of professionalism, determination and ambition. ${o.risks.length ? 'Watch: ' + o.risks.join(', ') + '.' : 'No development red flag.'}</p>`;
 }
-// Scouting report: sentences picked by fixed thresholds from his own numbers (no outside knowledge).
-function reportLines() {
-  const { p, grp, abil } = ppx, v = verdict(p, grp), o = devOutlook(p), val = valRead(p, grp, abil);
-  const top = n => Math.max(1, Math.ceil((n[0] + 1) / n[1] * 100));
-  const lvl = lvlWord(p.ability_current);
-  const roles = roleList(p).slice(0, 2), s = [];
-  s.push(`<b>Level.</b> ${esc(p.name)} is ${lvl} ${grp} for this save (CA ${p.ability_current}${abil?.n ? `, top ${top([abil.ca, abil.n])}% of ${abil.n.toLocaleString()} ${plural(grp)}` : ''}${abil?.na ? `, #${abil.caA + 1} of ${abil.na} aged ${p.age - 1}-${p.age + 1}` : ''}).`);
-  s.push(`<b>Strengths.</b> ${v.strong.length ? v.strong.map(([k, x]) => `${label(k)} ${x}`).join(', ') + '.' : 'No attribute at 15 or more.'}${roles.length ? ` Best used as ${label('role_' + roles[0][0])} (${roles[0][1].toFixed(0)}/100)${roles[1] ? `, then ${label('role_' + roles[1][0])} (${roles[1][1].toFixed(0)})` : ''}.` : ''}`);
-  const risks = [...v.weak.map(([k, x]) => `${label(k)} ${x}`), ...v.flags.filter(f => f[0] !== 'good').map(f => f[1].toLowerCase())];
-  s.push(`<b>Risks.</b> ${risks.length ? risks.join(', ') + '.' : 'Nothing below 11 in his key attributes and no hidden red flag.'}`);
-  s.push(`<b>Development.</b> ${o.gap <= 0 ? 'He is at his potential.' : `${o.txt}: +${o.gap} to PA ${p.ability_potential}, age ${p.age}${o.d != null ? `, drive ${o.d.toFixed(1)}/20` : ''}.`}`);
-  s.push(`<b>Value.</b> ${val.fp != null ? `${money(p.transfer_value)} is ${val.word} (higher than ${val.fp}% of similar-CA ${plural(grp)}).` : p.free_agent ? 'Free agent.' : p.transfer_value == null ? 'Not for sale.' : 'Not enough comparable fees.'}${FAIR && p.deal_score != null ? ` Fair-fee model: asking is ${Math.abs(Math.round(p.deal_score))}% ${p.deal_score >= 0 ? 'under' : 'over'} his fair fee of ${money(p.fair_fee)}.` : ''} ${p.months_left != null ? `Contract until ${p.contract_end} (${leftTxt(p.months_left)} left).` : ''}`);
-  s.push(`<b>This season.</b> ${p.stat_score != null ? `Performance index ${Math.round(p.stat_score)}/100 against ${plural(p.stat_group || grp)} in his league, average rating ${p.s_avg_rating?.toFixed(2) ?? '–'} over ${(p.s_minutes || 0).toLocaleString()} min.` : (p.s_minutes ? `Only ${p.s_minutes} league minutes: too few to judge.` : 'No league minutes this season.')}`);
-  return s;
-}
-const lvlWord = ca => ca >= 160 ? 'an elite' : ca >= 130 ? 'a strong' : ca >= 100 ? 'a solid' : ca >= 70 ? 'a modest' : 'a weak';
+// ---- Scouting report page (Full): six analyses written from his own numbers. Every line carries its threshold rule as hover text.
 PP_ICON.risk = '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17.5v.01"/>';
-// Report card: the same facts as reportLines(), one block per section, numbers as coloured chips. Same thresholds (verdict, devOutlook, valRead).
-function secReport() {
-  const { p, grp, abil } = ppx, v = verdict(p, grp), o = devOutlook(p), ca = p.ability_current;
-  const chip = (t, c, tip) => `<span class="rp-c"${c ? ` style="--c:${c}"` : ''}${tip ? ` title="${esc(tip)}"` : ''}>${t}</span>`;
-  const attrC = x => x >= 15 ? C.good : x <= 5 ? C.bad : x <= 10 ? C.warn : null;  // 1-20 scale: 15+ green, 5- red
-  const blk = (ic, t, head, chips, sub = '', tone = '') => `<section class="rp-b${tone}"><h4>${ppIcon(ic)}${t}</h4>${head ? `<div class="rp-h">${head}</div>` : ''}${chips.length ? `<div class="rp-cs">${chips.join('')}</div>` : ''}${sub ? `<p>${sub}</p>` : ''}</section>`;
-  const big = (x, c, w = '') => `<b style="color:${c}">${x}</b>${w ? `<span>${w}</span>` : ''}`;
-  const top = abil?.n ? Math.max(1, Math.ceil((abil.ca + 1) / abil.n * 100)) : null, age = `${p.age - 1}-${p.age + 1}`;
-  const roles = roleList(p).slice(0, 2), goodF = v.flags.filter(f => f[0] === 'good' && f[1] !== 'Free agent'), badF = v.flags.filter(f => f[0] !== 'good');
-  const level = blk('ability', 'Level', ca != null ? big(ca, abilityColor(ca), `${tierOfV(ca, TIERS_CA)} · ${grp}`) : '',
-    [top != null && chip(`top <b>${top}%</b>`, pctColor(100 - top), `CA ranks top ${top}% of ${abil.n.toLocaleString()} ${plural(grp)} in this save`),
-     abil?.na && chip(`<b>#${abil.caA + 1}</b> of ${abil.na} aged ${age}`, pctColor(100 - abil.caA / abil.na * 100), `CA rank among ${plural(grp)} aged ${age}`)].filter(Boolean));
-  const strong = blk('good', 'Strengths', '', [...v.strong.map(([k, x]) => chip(`${esc(label(k))} <b>${x}</b>`, attrC(x))), ...goodF.map(f => chip(esc(f[1]), C.good, 'Hidden attribute / personality flag'))],
-    (v.strong.length ? '' : 'No attribute at 15 or more. ') + (roles.length ? `Best role <b>${label('role_' + roles[0][0])}</b> <i class="rp-n" style="color:${scoreColor(roles[0][1])}">${roles[0][1].toFixed(0)}</i>${roles[1] ? ` · then ${label('role_' + roles[1][0])} <i class="rp-n" style="color:${scoreColor(roles[1][1])}">${roles[1][1].toFixed(0)}</i>` : ''}` : ''));
-  const nRisk = v.weak.length + badF.length;
-  const risk = blk('risk', 'Risks', '', [...v.weak.map(([k, x]) => chip(`${esc(label(k))} <b>${x}</b>`, attrC(x), `Key attribute for a ${grp}, 10 or less`)), ...badF.map(f => chip(esc(f[1]), f[0] === 'bad' ? C.bad : f[0] === 'warn' ? C.warn : null))],
-    nRisk ? '' : 'Nothing below 11 in his key attributes and no hidden red flag.', nRisk ? ' warn' : ' calm');
-  const dev = blk('dev', 'Development', o.gap <= 0 ? big('At his potential', C.muted) : big(`+${o.gap}`, o.c, esc(o.txt)),
-    o.gap <= 0 ? [] : [chip(`PA <b>${p.ability_potential}</b>`, abilityColor(p.ability_potential)), chip(`age <b>${p.age}</b> · window ${o.win}`, null, 'Growth window: 21 or younger wide, 24 open, 27 narrow, then closing'),
-      o.d != null && chip(`drive <b>${o.d.toFixed(1)}</b>/20`, o.d >= 15 ? C.good : o.d >= 11 ? C.ok : C.warn, 'Average of professionalism, determination and ambition')].filter(Boolean));
-  return `<div class="rp">${level}${dev}${strong}${risk}</div><p class="note rp-rule" title="${esc(REPORT_RULES(grp))}">Written by fixed rules from his own numbers · hover for the rules</p>`;
+PP_ICON.mind = '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>';
+PP_ICON.vs = '<circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3" fill="currentColor"/><path d="M9 12h6"/>';
+PP_ICON.use = '<path d="M5 4h14v16H5z"/><path d="M9 9l2 2 4-4M9 15h6"/>';
+// 1-20 colour: 15+ green, 11-14 lime, 6-10 amber, 5 or less red ("bad" attributes read upside down).
+const a20 = (v, bad) => { if (v == null) return C.muted; const x = bad ? 21 - v : v; return x >= 15 ? C.good : x >= 11 ? C.ok : x >= 6 ? C.warn : C.bad; };
+const RS_BAD = new Set(['injury_proneness', 'dirtiness', 'controversy']);
+const rsV = k => ppx.p['attributes_' + k] ?? ppx.p['personality_' + k];
+// "dribbling 18" with the number in its colour.
+const av = k => { const v = rsV(k); return v == null ? '' : `<span class="rs-a">${esc(label(k)).toLowerCase()} <b style="color:${a20(v, RS_BAD.has(k))}">${v}</b></span>`; };
+const rsPill = (t, c) => `<span class="rs-p" style="--c:${c}">${t}</span>`;
+const rsRow = (name, pill, body, tip) => `<div class="rs-r" title="${esc(tip)}"><span class="rs-n">${name}</span>${pill}<span class="rs-e">${body}</span></div>`;
+const rsAvg = ks => mean(ks.map(rsV));
+// Pace / physical / mentality are "body" areas; the others are football skills and name the archetype.
+const ARCH = {
+  out: { body: ['Pace', 'Physical', 'Mentality'], noun: { Defending: 'ball-winner', Passing: 'playmaker', Dribbling: 'dribbler', Finishing: 'finisher', Aerial: 'aerial presence' },
+    adj: { Defending: 'Combative', Passing: 'Creative', Dribbling: 'Technical', Finishing: 'Goal-scoring', Aerial: 'Aerial' }, badj: { Pace: v => v >= 17 ? 'Explosive' : 'Quick', Physical: () => 'Powerful', Mentality: () => 'Disciplined' } },
+  gk: { body: ['Mentality'], noun: { 'Shot stopping': 'shot-stopper', Aerial: 'box commander', Distribution: 'distributor', Sweeping: 'sweeper-keeper', Organising: 'organiser' },
+    adj: { 'Shot stopping': 'Agile', Aerial: 'Commanding', Distribution: 'Ball-playing', Sweeping: 'Proactive', Organising: 'Vocal' }, badj: { Mentality: () => 'Composed' } },
+};
+const ARCH_RULE = 'Area = average of its attributes (see the radar). Noun = his best football area. Adjective = his best of pace, physical and mentality when 14+, otherwise his second football area when 13+. "All-rounder" when his top three football areas are within 1 point.';
+function secArch() {
+  const { p, grp } = ppx, gk = grp === 'GK', A = ARCH[gk ? 'gk' : 'out'];
+  const ax = (gk ? AXES_GK : AXES_OUT).map(([n, ks]) => [n, rsAvg(ks) ?? 0]);
+  const skill = ax.filter(x => !A.body.includes(x[0])).sort((x, y) => y[1] - x[1]), body = ax.filter(x => A.body.includes(x[0])).sort((x, y) => y[1] - x[1]);
+  const adj = body[0][1] >= 14 ? A.badj[body[0][0]](body[0][1]) : skill[1][1] >= 13 ? A.adj[skill[1][0]] : '';
+  const noun = skill[0][1] - skill[2][1] <= 1 ? 'all-rounder' : A.noun[skill[0][0]];
+  const t = `${adj} ${noun}`.trim(), low = [...ax].sort((x, y) => x[1] - y[1])[0];
+  const pool = grp === 'GK' ? [...ATTR.goalkeeping, ...ATTR.mental, ...ATTR.physical] : [...ATTR.technical, ...ATTR.mental, ...ATTR.physical].filter(k => !['long_throws', 'penalty_taking'].includes(k));
+  const top = pool.filter(k => p['attributes_' + k] >= 15).sort((x, y) => p['attributes_' + y] - p['attributes_' + x]);
+  const weak = KEY[grp].filter(k => p['attributes_' + k] != null).sort((x, y) => p['attributes_' + x] - p['attributes_' + y]).slice(0, 3);
+  const ar = ([n, v]) => `${n} <b style="color:${a20(Math.round(v))}">${v.toFixed(1)}</b>`;
+  return `${h3i('role', 'Player profile', 'hover a line for its rule')}
+    <div class="ra"><div class="ra-t">
+      <p class="ra-name" title="${esc(ARCH_RULE)}">${esc(t[0].toUpperCase() + t.slice(1))}</p>
+      <p class="ra-s" title="${esc(ARCH_RULE)}">Best areas ${ar(skill[0])} and ${ar(skill[1])}${body[0][1] >= 14 ? `, with ${ar(body[0])}` : ''}. Weakest area ${ar(low)}.</p>
+      <h4 title="Attributes at 15 or more (set pieces left out)">${top.length} attribute${top.length === 1 ? '' : 's'} at 15+</h4>
+      <div class="rs-cs">${top.length ? top.slice(0, 8).map(av).join('') + (top.length > 8 ? `<span class="rs-a" title="${esc(top.slice(8).map(k => label(k) + ' ' + p['attributes_' + k]).join(', '))}">+${top.length - 8} more</span>` : '') : '<span class="muted">None: no attribute reaches 15.</span>'}</div>
+      <h4 title="${esc(`Key attributes for a ${grp}: ${KEY[grp].map(label).join(', ')}. The three lowest are listed; 10 or less counts as a risk.`)}">Lowest key ${grp} attributes</h4>
+      <div class="rs-cs">${weak.map(av).join('')}</div>
+    </div><div class="ra-r" title="Radar = average of each area's attributes, scale 20 · dashed ring = 15">${radar(ax)}<div class="ra-ax">${ax.map(([n, v]) => `<span>${n}<b style="color:${a20(Math.round(v))}">${v.toFixed(1)}</b></span>`).join('')}</div></div></div>`;
+}
+// Attributes against output: each phase's attribute average and its season stats as percentiles among the same peers.
+const VS_PH = {
+  all: ['Overall level', 'ca', ['rating']], fin: ['Finishing', ['finishing', 'composure', 'off_the_ball'], ['goals', 'xg']], create: ['Chance creation', ['passing', 'vision', 'technique'], ['kp', 'xa', 'ccc']],
+  prog: ['Ball progression', ['passing', 'first_touch', 'decisions'], ['prog', 'passpct']], drb: ['Dribbling', ['dribbling', 'flair', 'agility', 'acceleration'], ['drb']],
+  cross: ['Crossing', ['crossing'], ['crs']], def: ['Defending', ['tackling', 'marking', 'positioning', 'anticipation'], ['tck', 'int']],
+  press: ['Work off the ball', ['work_rate', 'stamina', 'aggression'], ['press', 'won']], aerial: ['Aerial duels', ['heading', 'jumping_reach', 'strength'], ['hdr', 'hdrpct']],
+  shot: ['Shot stopping', ['reflexes', 'one_on_ones', 'handling'], ['xgp']], dist: ['Distribution', ['kicking', 'passing', 'throwing'], ['passpct']],
+};
+const VS_BY = { GK: ['all', 'shot', 'dist'], CB: ['all', 'def', 'aerial', 'prog', 'press'], FB: ['all', 'def', 'cross', 'drb', 'create', 'press'], DM: ['all', 'def', 'prog', 'press', 'create', 'aerial'],
+  CM: ['all', 'prog', 'create', 'def', 'press', 'fin'], W: ['all', 'fin', 'create', 'drb', 'cross', 'press'], AM: ['all', 'create', 'fin', 'drb', 'prog', 'press'], ST: ['all', 'fin', 'aerial', 'create', 'drb', 'press'] };
+const VS_GAP = 20;
+function secVs() {
+  const { p, grp, bench } = ppx, pool = bench?.pool || [];
+  const head = h3i('vs', 'Attributes vs output', `percentiles among ${pool.length || '…'} ${plural(grp)} with 900+ min`);
+  if (!bench) return head + '<span class="sk" style="height:200px;width:100%"></span>';
+  if (pool.length < 20) return head + '<p class="rs-empty">Not enough peers with 900+ minutes in this save to compare.</p>';
+  const played = (p.s_minutes || 0) >= 900;
+  const aOf = (r, ks) => ks === 'ca' ? r.ability_current : mean(ks.map(k => r['attributes_' + k]));
+  const sOf = k => { const [, fn, , , lower] = M[k], v = fn(p), xs = pool.map(fn).filter(x => x != null); return v == null || xs.length < 20 ? null : pctOf(xs, v, lower); };
+  const rows = VS_BY[grp].map(id => { const [n, ks, ss] = VS_PH[id], v = aOf(p, ks), xs = pool.map(r => aOf(r, ks)).filter(x => x != null), sp = played ? ss.map(sOf).filter(x => x != null) : [];
+    return v == null || xs.length < 20 ? null : { n, ks, ss, at: pctOf(xs, v), out: sp.length ? Math.round(mean(sp)) : null }; }).filter(Boolean);
+  if (!rows.length) return head + '<p class="rs-empty">Not enough peer data to compare.</p>';
+  const word = d => d == null ? ['No output yet', C.muted] : d >= VS_GAP ? ['Above his attributes', C.good] : d <= -VS_GAP ? ['Below his attributes', C.orange] : ['In line', C.muted];
+  const both = rows.filter(r => r.out != null), cnt = [0, 0, 0]; both.forEach(r => cnt[r.out - r.at >= VS_GAP ? 0 : r.out - r.at <= -VS_GAP ? 2 : 1]++);
+  const sum = !played ? `Only <b>${(p.s_minutes || 0).toLocaleString()}</b> league minutes: output needs 900+, so only his attributes are placed.`
+    : `In line with his attributes in <b>${cnt[1]} of ${both.length}</b> areas` + (cnt[0] ? `, above them in <b style="color:${C.good}">${cnt[0]}</b>` : '') + (cnt[2] ? `, below them in <b style="color:${C.orange}">${cnt[2]}</b>` : '') + '.';
+  const tip = r => `${r.n}: attributes (${r.ks === 'ca' ? 'current ability' : r.ks.map(label).join(', ')}) beat ${r.at}% of peers` + (r.out != null ? `; output (${r.ss.map(k => M[k][0]).join(', ')}, per 90) beats ${r.out}%. ${VS_GAP}+ points apart = above or below his attributes. Output percentiles mix leagues: a strong league can pull his numbers down.` : '; no output percentile under 900 league minutes.');
+  return `${head}<p class="vs-sum">${sum}</p>
+    <div class="vs-lg" aria-hidden="true"><span><i class="vs-o"></i>attributes</span>${played ? '<span><i class="vs-d"></i>season output</span>' : ''}<span>line = median peer</span></div>
+    <div class="vs" role="list">${rows.map(r => { const d = r.out == null ? null : r.out - r.at, [w, c] = word(d), lo = Math.min(r.at, r.out ?? r.at), hi = Math.max(r.at, r.out ?? r.at);
+      return `<div class="vs-r" role="listitem" title="${esc(tip(r))}"><span class="vs-n">${r.n}</span>
+        <span class="vs-tr" aria-hidden="true"><i class="vs-b" style="left:${lo}%;width:${hi - lo}%;background:${c}"></i><i class="vs-o" style="left:${r.at}%;border-color:${pctColor(r.at)}"></i>${r.out != null ? `<i class="vs-d" style="left:${r.out}%;background:${pctColor(r.out)}"></i>` : ''}</span>
+        <span class="vs-v"><b style="color:${pctColor(r.at)}">${r.at}</b>${r.out != null ? `→<b style="color:${pctColor(r.out)}">${r.out}</b>` : ''}</span>${rsPill(w, c)}
+        <span class="sr">${esc(tip(r))}</span></div>`; }).join('')}</div>`;
+}
+// Tactical fit: every role score next to his familiarity with the positions that role is played from.
+const GRP_POS = { GK: ['GK'], CB: ['DC'], FB: ['DL', 'DR', 'WBL', 'WBR'], DM: ['DM'], CM: ['MC'], W: ['AML', 'AMR', 'ML', 'MR'], AM: ['AMC'], ST: ['ST'] };
+const bestPos = (p, g) => (GRP_POS[g] || []).map(k => [k, p[posKey(k)] ?? 0]).sort((x, y) => y[1] - x[1])[0] || ['?', 0];
+const FIT_RULE = 'Fit 0-100 from the role\'s key attributes (heaviest first). Position = his most familiar position for that role (familiarity 1-20: 18+ natural, 15+ accomplished, 12+ competent). "Not trained" = fit 75+ but familiarity under 12.';
+function secFit() {
+  const { p, grp } = ppx, gk = grp === 'GK';
+  const roles = Object.keys(META.roles).filter(r => (META.roles[r] === 'GK') === gk).map(r => [r, p['role_' + r]]).filter(x => x[1] != null).sort((x, y) => y[1] - x[1]);
+  if (!roles.length) return `${h3i('role', 'Tactical fit')}<p class="rs-empty">No role scores in this save.</p>`;
+  const gap = roles[1] ? roles[0][1] - roles[1][1] : null, n75 = roles.filter(x => x[1] >= 75).length;
+  const shape = gap == null ? null : gap >= 8 ? ['Specialist', `his best role leads the next by ${gap.toFixed(0)}`] : gap <= 3 ? ['Flexible', `his top two roles are ${gap.toFixed(0)} apart`] : ['Clear first role', `leads the next by ${gap.toFixed(0)}`];
+  const cover = POSITIONS.map(k => [k, p[posKey(k)]]).filter(x => x[1] >= 12 && x[1] < 15);
+  const row = ([r, x]) => { const [pk, pv] = bestPos(p, META.roles[r]), f = famil(pv), untrained = x >= 75 && pv < 12;
+    return `<div class="tf-r${untrained ? ' un' : ''}"><span class="tf-n">${label('role_' + r)}</span><i class="tf-b"><i style="width:${x}%;background:${scoreColor(x)}"></i></i><b style="color:${scoreColor(x)}">${x.toFixed(0)}</b>
+      <span class="tf-p" style="--c:${f ? f[2] : C.muted}" title="${esc(`${pk} familiarity ${pv}/20${f ? ' (' + f[1] + ')' : ''}`)}">${pk} ${pv}</span></div>`; };
+  return `${h3i('role', 'Tactical fit', 'role fit · best position for it')}
+    <div class="rs-cs tf-sum" title="${esc(FIT_RULE + ' Specialist = best role 8+ ahead of the second; flexible = 3 or less.')}">
+      ${shape ? rsPill(shape[0], 'var(--mode)') + `<span class="rs-a">${shape[1]}</span>` : ''}${gk ? '' : `<span class="rs-a"><b style="color:${n75 >= 3 ? C.good : 'var(--text2)'}">${n75}</b> role${n75 === 1 ? '' : 's'} at 75+</span>`}
+      ${av('versatility')}</div>
+    <div class="tf"${gk ? ' style="flex:none"' : ''} title="${esc(FIT_RULE)}">${roles.slice(0, 7).map(row).join('')}</div>
+    ${gk ? '' : `<p class="rs-foot">Pill = his best position for the role${roles.slice(0, 7).some(([r, x]) => x >= 75 && bestPos(p, META.roles[r])[1] < 12) ? ' · <span style="color:var(--warn)">dashed</span> = fits 75+ but not trained there' : ''}.</p>`}
+    ${cover.length ? `<p class="rs-foot" title="Positions at familiarity 12-14 (competent): not in the header, which lists natural and accomplished positions">Can cover at a pinch: ${cover.map(([k, v]) => `<b>${k}</b> ${v}`).join(', ')}</p>` : ''}
+    ${gk ? gkStyle(p) : ''}`;
+}
+// Keepers have one scored role, so the card adds his keeper areas as percentiles among keepers with 900+ min.
+function gkStyle(p) {
+  const pool = ppx.bench?.pool || [];
+  if (pool.length < 20) return '';
+  const rows = AXES_GK.filter(([n]) => n !== 'Mentality').map(([n, ks]) => { const av_ = r => mean(ks.map(k => r['attributes_' + k])), v = av_(p), xs = pool.map(av_).filter(x => x != null);
+    return v == null ? null : [n, ks, v, pctOf(xs, v)]; }).filter(Boolean).sort((x, y) => y[3] - x[3]);
+  return `<h4 title="Each area = average of its attributes, placed among ${pool.length} keepers with 900+ min">Keeper areas vs ${pool.length} keepers</h4>
+    <div class="tf">${rows.map(([n, ks, v, pc]) => `<div class="tf-r" title="${esc(`${n}: ${ks.map(label).join(', ')} average ${v.toFixed(1)}, above ${pc}% of keepers`)}"><span class="tf-n">${n}</span><i class="tf-b"><i style="width:${pc}%;background:${pctColor(pc)}"></i></i><b style="color:${pctColor(pc)}">${pc}</b><span class="tf-p" style="--c:${a20(Math.round(v))}">${v.toFixed(1)}</span></div>`).join('')}</div>
+    <p class="rs-foot">Bar = percentile among keepers · pill = area average, scale 20.</p>`;
+}
+// Character rows: level from the average of the listed values (bad ones flipped): 15+ strong, 8 or less low.
+const CHAR = [
+  ['Work ethic', ['professionalism', 'determination'], ['Sets the standard in training.', 'Normal training habits.', 'Poor habits can hold him back.']],
+  ['Ambition', ['ambition'], ['Wants the top: may push for a move.', 'Content at a good level.', 'Little drive to move up.']],
+  ['Temperament', ['temperament', 'aggression'], ['Keeps his head under provocation.', 'Usually keeps calm.', 'Can lose his temper.'], [0]],
+  ['Discipline', ['dirtiness', 'sportsmanship'], ['Plays fair.', 'Ordinary discipline.', 'Picks up needless cards.']],
+  ['Leadership', ['leadership', 'teamwork'], ['Leads and plays for the team.', 'Fits in without leading.', 'Not a dressing-room voice.']],
+  ['Loyalty', ['loyalty'], ['Hard to prise away, stays once signed.', 'Neither loyal nor restless.', 'Will listen to other clubs.']],
+  ['Media', ['controversy'], ['Stays out of the headlines.', 'Occasional media noise.', 'Can stir trouble in the media.']],
+];
+const lvl3 = (v, hi, lo) => v >= hi ? 0 : v <= lo ? 2 : 1;
+function secMind() {
+  const { p } = ppx, out = [];
+  CHAR.forEach(([n, ks, txt, only]) => { const vs = (only || ks.map((_, i) => i)).map(i => ks[i]).map(k => RS_BAD.has(k) ? (rsV(k) == null ? null : 21 - rsV(k)) : rsV(k)).filter(x => x != null);
+    if (!vs.length) return; const s = mean(vs), l = lvl3(s, 15, 8);
+    let extra = '';
+    if (n === 'Discipline' && p.s_minutes >= 450) extra = ` <span class="rs-a" title="This season: ${p.s_yellow_cards ?? 0} yellow and ${p.s_red_cards ?? 0} red cards in ${p.s_minutes.toLocaleString()} min, ${(per90('s_fouls_made')(p) ?? 0).toFixed(2)} fouls per 90 (fewer is better)">cards <b>${p.s_yellow_cards ?? 0}</b>Y <b style="color:${p.s_red_cards ? C.bad : 'inherit'}">${p.s_red_cards ?? 0}</b>R</span>`;
+    out.push(rsRow(n, rsPill(['Strong', 'Average', 'Low'][l], [C.good, C.muted, C.bad][l]), `<span class="rs-t">${txt[l]}</span>${ks.map(av).join('')}${extra}`,
+      `${n} = average of ${(only || ks.map((_, i) => i)).map(i => ks[i]).map(k => RS_BAD.has(k) ? label(k) + ' (flipped, lower is better)' : label(k)).join(' and ')} = ${s.toFixed(1)}. 15+ strong, 8 or less low.${ks.length > (only || ks).length ? ` ${label(ks[1])} shown for context.` : ''}`)); });
+  return `${h3i('mind', 'Character', 'personality and mentality · hover for the rule')}<div class="rs">${out.join('')}</div>`;
+}
+// Risks: Low / Medium / High from fixed thresholds.
+const RLV = [['Low', C.good], ['Medium', C.warn], ['High', C.bad]];
+function secRisk() {
+  const { p, grp } = ppx, gk = grp === 'GK', rows = [], A = k => p['attributes_' + k], Q = k => p['personality_' + k];
+  const add = (n, l, txt, ks, tip, extra = '') => rows.push([l, rsRow(n, rsPill(RLV[l][0], RLV[l][1]), `<span class="rs-t">${txt}</span>${ks.map(av).join('')}${extra}`, tip)]);
+  if (A('injury_proneness') != null) { let l = A('injury_proneness') >= 14 ? 2 : A('injury_proneness') <= 7 ? 0 : 1; if (A('natural_fitness') != null && A('natural_fitness') <= 8 && l < 2) l++;
+    add('Injury', l, ['Rarely misses games through injury.', 'Normal injury risk.', 'Expect spells out injured.'][l], ['injury_proneness', 'natural_fitness'], 'Injury proneness 7 or less = low, 14+ = high; natural fitness 8 or less raises the level by one.'); }
+  if (A('consistency') != null) { const l = lvl3(A('consistency'), 15, 8); add('Form swings', l, ['Plays to his level week in, week out.', 'Some off days.', 'Often below his level.'][l], ['consistency'], 'Consistency 15+ = low, 8 or less = high.'); }
+  const bg = mean([A('important_matches'), Q('pressure')].filter(x => x != null));
+  if (bg != null) { const l = lvl3(bg, 15, 8); add('Big games', l, ['Rises to finals and derbies.', 'No special effect in big games.', 'Can freeze when it matters.'][l], ['important_matches', 'pressure'], `Average of important matches and pressure = ${bg.toFixed(1)}. 15+ = low, 8 or less = high.`); }
+  const [a1, a2] = gk ? [30, 33] : [27, 30], l4 = p.age <= a1 ? 0 : p.age <= a2 ? 1 : 2, pace = rsAvg(['pace', 'acceleration']);
+  const pb = l4 && !gk && pace >= 15;
+  add('Age curve', l4, (pb ? ['', 'Decline can start: his game is pace-based.', 'His pace-based game will fade.'] : ['Before the usual physical decline.', 'Physical decline can start.', 'Physical attributes will fall.'])[l4], pb ? ['pace', 'acceleration'] : [],
+    `${gk ? 'Goalkeepers' : 'Outfield players'}: ${a1} or younger = low, ${a1 + 1}-${a2} = medium, ${a2 + 1}+ = high. Pace and acceleration shown when they average 15+: a pace-based game fades first.`, `<span class="rs-a">age <b>${p.age}</b></span>`);
+  if (Q('adaptability') != null) { const l = lvl3(Q('adaptability'), 15, 8); add('Settling in', l, ['Settles fast, even abroad.', 'Needs time after a move abroad.', 'Slow to settle in a new country.'][l], ['adaptability'], 'Adaptability 15+ = low, 8 or less = high. Matters when he changes country.'); }
+  const weak = KEY[grp].filter(k => A(k) != null && A(k) <= 10).sort((x, y) => A(x) - A(y)), lw = weak.length >= 3 ? 2 : weak.length ? 1 : 0;
+  add(`Key ${grp} gaps`, lw, [`No key ${grp} attribute under 11.`, `${weak.length} key attribute${weak.length > 1 ? 's' : ''} at 10 or less.`, `${weak.length} key attributes at 10 or less.`][lw], weak, `Key attributes for a ${grp}: ${KEY[grp].map(label).join(', ')}. None at 10 or less = low, 1-2 = medium, 3+ = high.`);
+  const n = [0, 1, 2].map(l => rows.filter(r => r[0] === l).length);
+  return `${h3i('risk', 'Risk breakdown', `<span class="rk-sum" title="Hover a line for its thresholds">${[2, 1, 0].map(l => `<span style="--c:${RLV[l][1]}"><b>${n[l]}</b> ${RLV[l][0].toLowerCase()}</span>`).join('')}</span>`)}
+    <div class="rs">${rows.map(r => r[1]).join('')}</div>`;
+}
+// How to use him: one line per rule that fires, at most 8.
+function secUse() {
+  const { p, grp } = ppx, gk = grp === 'GK', A = k => p['attributes_' + k], hi = k => A(k) >= 15, out = [];
+  const add = (tag, txt, ks, tip) => out.push(`<li title="${esc(tip)}"><span class="ru-t">${tag}</span><span>${txt}${ks.length ? ' <span class="ru-k">' + ks.map(av).join('') + '</span>' : ''}</span></li>`);
+  const roles = roleList(p).filter(([r]) => (META.roles[r] === 'GK') === gk);
+  // Main role = best role he can already play (familiarity 15+ at one of its positions); Plan B = the next role within 5 points, flagged when it needs retraining.
+  const trained = ([r]) => bestPos(p, META.roles[r])[1] >= 15;
+  if (roles.length) { const main = roles.find(trained) || roles[0], [r, x] = main, [pk, pv] = bestPos(p, META.roles[r]), f = famil(pv);
+    add('Role', `<b>${label('role_' + r)}</b> (fit ${x.toFixed(0)}) ${pv >= 15 ? `from <b>${pk}</b> (${f[1].toLowerCase()})` : `but needs training at ${pk} (${pv}/20)`}.`, [], 'Best role among those he can already play (familiarity 15+, accomplished, at one of its positions); otherwise his best role.');
+    const alt = roles.find(o => o !== main && o[1] >= x - 5);
+    if (alt) { const [ak, apv] = bestPos(p, META.roles[alt[0]]);
+      add('Plan B', `<b>${label('role_' + alt[0])}</b> (fit ${alt[1].toFixed(0)}), ${apv >= 15 ? (alt[1] > x ? 'a better fit' : 'almost as good') : `${alt[1] > x ? 'a better fit' : 'almost as good'} if trained at ${ak} (${apv}/20)`}.`, [], 'Next role within 5 points of the main one (or above it); positions under 15 familiarity need training.'); } }
+  const s = A('stamina'), nf = A('natural_fitness');
+  if (s != null && nf != null) add('Minutes', s >= 15 && nf >= 15 ? 'Can start every match.' : s <= 10 ? 'Sub him around the hour.' : nf <= 10 ? 'Needs rest between matches.' : 'Rotate him in busy weeks.', ['stamina', 'natural_fitness'],
+    'Both 15+ = every match; stamina 10 or less = substitute around the hour; natural fitness 10 or less = rest between matches; otherwise rotate.');
+  if (!gk) {
+    [['off_the_ball', 'pace', 'Balls in behind.'], ['dribbling', 'flair', 'Let him take on defenders.'], ['passing', 'vision', 'Route attacks through him.'],
+     ['tackling', 'anticipation', 'Use him to win the ball.'], ['work_rate', 'stamina', 'Suits a high press.'], ['heading', 'jumping_reach', 'Aim crosses at him.'], ['long_shots', 'long_shots', 'Shoot from distance.']]
+      .filter(([x, y]) => hi(x) && hi(y)).slice(0, 3).forEach(([x, y, t]) => add('Style', t, x === y ? [x] : [x, y], x === y ? `${label(x)} 15+ (at most 3 style lines).` : `${label(x)} and ${label(y)} both 15+ (at most 3 style lines).`));
+    hi('crossing') && !(hi('heading') && hi('jumping_reach')) && ['FB', 'W'].includes(grp) && add('Style', 'Room to cross.', ['crossing'], 'Crossing 15+ for a full-back or winger.');
+    A('work_rate') <= 10 && ['W', 'AM', 'ST'].includes(grp) && add('Cover', 'Put hard workers around him.', ['work_rate'], 'Work rate 10 or less for an attacker.');
+    A('pace') <= 10 && ['CB', 'FB'].includes(grp) && add('Cover', 'Avoid a high defensive line.', ['pace'], 'Pace 10 or less for a defender.');
+    A('decisions') <= 10 && add('Cover', 'Keep his tasks simple.', ['decisions'], 'Decisions 10 or less.');
+  } else {
+    hi('rushing_out') && A('one_on_ones') >= 14 && add('Style', 'Suits a high line: sweeps behind it.', ['rushing_out', 'one_on_ones'], 'Rushing out 15+ and one on ones 14+.');
+    A('rushing_out') <= 10 && add('Cover', 'Keep the defensive line deep.', ['rushing_out'], 'Rushing out 10 or less.');
+    (hi('kicking') || hi('passing')) && add('Style', 'Start attacks from him.', ['kicking', 'passing'], 'Kicking or passing 15+.');
+    hi('command_of_area') && add('Style', 'Lets the team defend crosses deep.', ['command_of_area'], 'Command of area 15+.');
+  }
+  const sp = [['penalty_taking', 'penalties'], ['free_kick_taking', 'direct free kicks'], ['corners', 'corners'], ['long_throws', 'long throws']].filter(([k]) => hi(k));
+  sp.length && add('Set pieces', `Give him ${sp.map(x => x[1]).join(', ')}.`, sp.map(x => x[0]), 'Penalty taking, free kicks, corners or long throws at 15+.');
+  hi('important_matches') && add('Big games', 'Start him in finals and derbies.', ['important_matches'], 'Important matches 15+.');
+  hi('leadership') && add('Squad', 'Captain candidate.', ['leadership'], 'Leadership 15+.');
+  p.age <= 21 && p.pa_gap >= 15 && add('Growth', `Give him regular minutes: <b>+${p.pa_gap}</b> to his potential.`, [], 'Age 21 or less with a PA gap of 15+.');
+  return `${h3i('use', 'How to use him', 'one line per rule that fires · hover for it')}<ul class="ru">${out.slice(0, 8).join('') || '<li><span>No usage rule fires for him.</span></li>'}</ul>`;
 }
 
 function secRole() {
@@ -2041,8 +2219,6 @@ function secSwarm() {
   const lg = `<div class="sw-lg" aria-hidden="true"><span><i class="me"></i>${esc(p.name.split(' ').slice(-1)[0])}</span><span><i class="sim"></i>${sims.length} most similar players · hover for the name</span><span><i class="pe"></i>other ${plural(grp)}</span><span><i class="md"></i>median</span>${neg.length ? '<span>↓ = fewer is better</span>' : ''}</div>`;
   return `${head}${lg}<svg class="swarm" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Per-90 stats of ${p.name} among ${pool.length} ${plural(grp)}: ` + keys.map(k => `${M[k][0]} ${M[k][1](p)?.toFixed(M[k][2] ?? 2) ?? 'none'}${!small && bench.pcs[k] != null ? `, percentile ${bench.pcs[k]}` : ''}`).join('; '))}">${rowsSvg}</svg>`;
 }
-// Moneyball phase panels from in-game stats, each line with percentile vs position and vs all positions.
-const REPORT_RULES = grp => `Strengths = attributes at 15+, risks = key attributes for his position at 10 or less plus hidden flags (injury proneness 14+, consistency or big-match 8 or less, professionalism 8 or less). Ranks count every ${grp} in this save. Development uses PA gap, age and the average of professionalism, determination and ambition. Value compares his fee with players of his position within 8 CA.`;
 // One similar player: flag, name, age and club, fee, and the number he was matched on.
 const simRow = (r, pa) => { const [t, , v, c] = simMetric(r);
   return `<button class="sim-row" data-profile="${r.uid}"><span><b>${natHTML(r)} ${esc(r.name)}</b><small>${r.age} yrs · ${esc(r.club_name || 'Free agent')}</small></span>
@@ -2086,7 +2262,6 @@ function sideBody(k) {
     return rep.length ? `<p class="note" style="margin:0 0 6px">Scale 10</p><div class="fbs">${rep.map(([n, v]) => fbar(n, (v / 1000).toFixed(1), v / 10000, 'var(--mode)')).join('')}</div>` : '<p class="note">No reputation recorded.</p>';
   }
   if (k === 'apx') return apxScatter();
-  if (k === 'report') return secReport();
   if (k === 'attrs') return heatMap(p, false);
   if (k === 'map') return !sim ? '<span class="sk" style="height:200px;width:100%"></span>' : sim.rows.length ? `<p class="note" style="margin:0 0 6px">Similar players: fee (log) against ${simMetric(p)[0].toLowerCase()} · him = ring · click a dot.</p>${scatter(p, sim.rows, 480, 760)}` : '<p class="note">No close match found.</p>';
   if (k === 'season') return '<div data-sec="season"></div>';
@@ -2101,7 +2276,7 @@ function sideBody(k) {
 }
 // Profile pages per mode: [id, tab label, cards]. Overview and the stats page with the beeswarm place cards by named grid areas (CSS).
 const PP_PAGES = {
-  full: [['over', 'Overview', ['role', 'attr', 'canvas', 'sg', 'dev']], ['report', 'Scouting report', ['report', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'season', 'stats']],
+  full: [['over', 'Overview', ['role', 'attr', 'canvas', 'sg', 'dev']], ['report', 'Scouting report', ['rarch', 'rvs', 'rfit', 'rmind', 'rrisk', 'ruse']], ['stats', 'Statistics', ['swarm', 'pizza', 'season', 'stats']],
     ['similar', 'Similar players', ['similar', 'apx']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'club', 'traits']]],
   fair: [['over', 'Overview', ['role', 'attr', 'canvas', 'sg', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'season', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'club', 'traits']]],
   moneyball: [['over', 'Overview', ['canvas', 'swarm', 'pizza', 'simmini']], ['stats', 'Statistics', ['season', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'club', 'traits']]],
@@ -2114,7 +2289,7 @@ function simMini(n) {
   return s.rows.length ? `<div class="sim-mini">${s.rows.slice(0, n).map(r => simRow(r)).join('')}</div><button class="link" data-ppgo="similar">All similar players →</button>` : '<p class="note">No close match found.</p>';
 }
 const PP_FN = { kpis: secKpis, hero: secHero, deal: secDeal, sg: secSG, dev: secDev, attr: secAttr, role: secRole, canvas: secCanvas, swarm: secSwarm, pizza: secPizza,
-  radar: () => profileInner(ppx.p), simmini: () => h3i('role', 'Similar players') + simMini(4) };
+  radar: () => profileInner(ppx.p), rarch: secArch, rvs: secVs, rfit: secFit, rmind: secMind, rrisk: secRisk, ruse: secUse, simmini: () => h3i('role', 'Similar players') + simMini(4) };
 const ppCard = k => PP_FN[k] ? PP_FN[k]() : `<h3><span class="h3l">${PP_SIDE_L[k]}</span></h3><div class="sd-body">${sideBody(k)}</div>`;
 const setPpTab = t => {
   ppTab = t; const box = $('#player');
