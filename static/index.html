@@ -273,6 +273,12 @@ details[open] summary::before { content: "−"; }
 /* ---------- Palette ---------- */
 dialog.pal { width: min(620px, calc(100vw - 32px)); max-height: min(560px, calc(100vh - 120px)); margin: 12vh auto auto; padding: 0; border: 1px solid var(--line2); border-radius: var(--r-lg); background: var(--panel); color: var(--text); box-shadow: var(--shadow); display: none; flex-direction: column; }
 dialog.pal[open] { display: flex; animation: palIn var(--t) var(--ease); }
+.load-body { padding: 16px 18px 18px; display: grid; gap: 12px; overflow-y: auto; }
+.drop { display: grid; justify-items: center; gap: 6px; padding: 28px 16px; border: 2px dashed var(--line2); border-radius: var(--r); color: var(--muted); text-align: center; transition: border-color var(--t), background var(--t); }
+.drop b { color: var(--text); font-size: 15px; }
+.drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.load-saves { display: grid; gap: 6px; }
+.load-saves .btn { justify-content: space-between; text-align: left; }
 @keyframes palIn { from { transform: translateY(-8px) scale(.98); opacity: 0; } }
 dialog::backdrop { background: rgba(3,6,9,.6); backdrop-filter: blur(2px); }
 .pal-in { display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid var(--line); }
@@ -526,6 +532,18 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 </main>
 
 <aside id="drawer" class="drawer" role="dialog" aria-label="Player detail" aria-hidden="true" tabindex="-1"></aside>
+
+<dialog id="load" class="pal" aria-labelledby="loadTitle">
+  <header class="es-head"><h2 id="loadTitle">Load a save</h2><button type="button" class="icon-btn" data-load-close aria-label="Close">×</button></header>
+  <div class="load-body">
+    <button type="button" class="drop" id="dropZone">
+      <svg width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+      <b>Drop your .fm save here</b><span>or click to browse your computer</span>
+    </button>
+    <div class="pal-g" style="padding-left:0">Saves found in your FM26 folder</div>
+    <div id="loadSaves" class="load-saves"><span class="sk" style="width:100%;height:36px"></span></div>
+  </div>
+</dialog>
 
 <dialog id="pal" class="pal" aria-label="Lists and commands">
   <div class="pal-in">
@@ -1145,7 +1163,7 @@ function paletteItems() {
   saved.forEach(s => it.push({ g: 'Saved searches', l: s.name, d: critList(s.f).map(c => c[0].replace(/<[^>]+>/g, '')).join(' · ') || 'No extra criteria', run: () => loadSearch(s) }));
   it.push({ g: 'Actions', l: 'Edit search', d: 'All criteria: nationality, attributes, stats, contract…', k: 'e', run: openES },
     { g: 'Actions', l: 'Export CSV', d: 'Current list with all columns', run: exportCSV },
-    { g: 'Actions', l: 'Load .fm save', d: 'Re-extract players from a save file', run: () => $('#file').click() },
+    { g: 'Actions', l: 'Load .fm save', d: 'Drop a save, browse, or pick one from your FM26 folder', run: openLoad },
     { g: 'Actions', l: 'Reset filters', d: 'Clear quick filters, criteria, search and column filters', run: resetAll });
   if (st.preset) it.push({ g: 'Actions', l: 'Clear list', d: 'Back to all players', run: () => pickList(st.preset) });
   return it;
@@ -1587,6 +1605,7 @@ async function runLoad(doFetch) {
 }
 function upload(f) {
   if (!f) return;
+  if ($('#load').open) $('#load').close();
   if (!/\.fm$/i.test(f.name)) return toast('That is not a .fm save file.', 'bad');
   const fd = new FormData(); fd.append('file', f);
   return runLoad(() => fetch('/api/upload', { method: 'POST', body: fd }));
@@ -1690,7 +1709,23 @@ $('#search').addEventListener('input', () => { if (st.page === 'club' || st.page
 $$('.qf').forEach(el => el.addEventListener('input', () => { F[el.dataset.q] = el.value === '' ? null : Number(el.value); debounced(() => { renderSummary(); refresh(); }); }));
 $('#reset').onclick = resetAll;
 $('#exportBtn').onclick = exportCSV;
-$('#loadBtn').onclick = () => $('#file').click();
+async function openLoad() {
+  const d = $('#load'); if (d.open) return; d.showModal();
+  let r = { folder_found: false, saves: [] };
+  try { r = await (await api('/api/saves')).json(); } catch {}
+  $('#loadSaves').innerHTML = r.saves.length
+    ? r.saves.map(s => `<button type="button" class="btn" data-save="${esc(s.name)}"><span>${esc(s.name)}</span><span class="muted mono" style="font-size:12px">${Math.round(s.size / 1048576)} MB · ${new Date(s.mtime * 1000).toLocaleDateString()}</span></button>`).join('')
+    : `<p class="note" style="margin:0">${r.folder_found ? 'No .fm save in the default FM26 folder.' : 'FM26 save folder not found.'} Drop the file above or browse to it.</p>`;
+}
+$('#loadBtn').onclick = openLoad;
+$('#load').addEventListener('click', e => {
+  const t = e.target, s = t.closest('[data-save]');
+  if (t.closest('#dropZone')) $('#file').click();
+  else if (s) { $('#load').close(); loadNamed(s.dataset.save); }
+  else if (t.closest('[data-load-close]') || t === $('#load')) $('#load').close();
+});
+['dragenter', 'dragover'].forEach(ev => $('#dropZone').addEventListener(ev, () => $('#dropZone').classList.add('over')));
+['dragleave', 'drop'].forEach(ev => $('#dropZone').addEventListener(ev, () => $('#dropZone').classList.remove('over')));
 $('#file').onchange = e => upload(e.target.files[0]);
 $('#palBtn').onclick = () => openPalette();
 $('#esBtn').onclick = () => META && openES();
