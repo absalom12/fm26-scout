@@ -362,6 +362,7 @@ MODES = {"full": ["ability", "attributes", "form", "stats"], "fair": ["attribute
 MONEYBALL_MIN = 900  # minutes this season below which Moneyball gives no fair price
 WAGE_WEEKS = 156  # contract_wage is weekly; a signing is judged on fee + 3 years of wages
 MODEL_FIT = {}    # (gender, model) -> R² of ln(fee), for /api/meta
+MODEL_BAND = {}   # (gender, model) -> 25th/75th percentile of ln(real fee / fair fee): the fair range
 
 
 def _alias(e):
@@ -369,7 +370,8 @@ def _alias(e):
 
 
 def _fit_predict(X, y, train):
-    """Ridge-regularised least squares on standardised features; returns predictions for every row and R²."""
+    """Ridge-regularised least squares on standardised features; returns predictions for every row, R² and the
+    25th-75th percentile of the log residuals (half of the players the model was fit on sell inside that band)."""
     mu, sd = X[train].mean(0), X[train].std(0) + 1e-9
     Z = np.column_stack([np.ones(len(X)), (X - mu) / sd])
     A = Z[train]
@@ -380,7 +382,7 @@ def _fit_predict(X, y, train):
     # so fair prices keep the real market's spread, elite end included.
     pred = np.interp(raw, np.sort(raw[train]), np.sort(y[train]))
     resid = y[train] - pred[train]
-    return pred, 1 - resid.var() / y[train].var()
+    return pred, 1 - resid.var() / y[train].var(), tuple(np.percentile(resid, [25, 75]))
 
 
 def add_deals():
@@ -413,10 +415,11 @@ def add_deals():
                 train = rows & ~np.isnan(y[tgt])
                 if train.sum() < 200:
                     continue
-                p, r2 = _fit_predict(X[rows], y[tgt][rows], train[rows])
+                p, r2, band = _fit_predict(X[rows], y[tgt][rows], train[rows])
                 pred[rows] = p
                 if tgt == "fee":
                     MODEL_FIT[(g or "Unknown", name)] = round(float(r2), 3)
+                    MODEL_BAND[(g or "Unknown", name)] = tuple(float(b) for b in band)
             out[f"{tgt}_{name}"] = np.exp(pred)
 
     ctx_ok = ~np.isnan(ctx_X).any(1)
@@ -1041,6 +1044,15 @@ class OfferQuery(BaseModel):
     fair_play: bool = False
 
 
+def fair_range(fee, gender, mode):
+    """Where half of comparable players' real fees fall around the fair fee (model residuals, 25th-75th percentile).
+    Lenses disagree far more than that (a stats-only lens can be 100x below CA/PA), so they are no range."""
+    band = MODEL_BAND.get((gender or "Unknown", mode))
+    if fee is None or band is None:
+        return None
+    return [round(fee * float(np.exp(band[0])), -3), round(fee * float(np.exp(band[1])), -3)]
+
+
 @app.post("/api/offer")
 def offer(q: OfferQuery):
     mode = _mode(q.mode, q.fair_play)
@@ -1087,13 +1099,11 @@ def offer(q: OfferQuery):
         notes.append("The wage would break your wage structure (over 1.25× your top earner).")
     if q.wage is not None and q.wage < cur_wage:
         notes.append("You offer less than his current wage: players rarely accept a pay cut.")
-    # The mode's fee comes from one joint model, so it can sit outside the single-lens fees: include it.
-    fees = [l["fair_fee"] for l in lenses] + ([fair_fee] if fair_fee is not None else [])
     return {"uid": q.uid, "name": p["name"], "mode": mode, "fee": q.fee, "wage": wage, "current_wage": cur_wage,
             "transfer_value": value, "for_sale": value is not None or bool(p.get("free_agent")),
             "package": q.fee + WAGE_WEEKS * wage, "fair_fee": fair_fee, "fair_wage": fair_wage,
             "fair_package": fair_fee + WAGE_WEEKS * fair_wage if fair_fee is not None else None,
-            "fair_fee_range": [min(fees), max(fees)] if fees else None, "lenses": lenses,
+            "fair_fee_range": fair_range(fair_fee, p.get("gender"), mode), "lenses": lenses,
             "ratio": round(ratio, 2) if ratio is not None else None, "verdict": verdict,
             "asking_estimate": asking, "acceptance": acceptance, "notes": notes}
 

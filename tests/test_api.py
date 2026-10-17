@@ -131,3 +131,10 @@ def test_club_leagues_picks_biggest_domestic_table(scout):
     tables = [(1, 20, [10, 11, None]), (2, 36, [10]), (3, 8, [10, 12]), (4, 5, [13])]
     # club 10 is in a 20-club league, a 36-club league phase (too big) and an 8-club table (smaller); 13's table is too small
     assert scout.club_leagues(tables) == {10: 1, 11: 1, 12: 3}
+
+
+def test_fair_range_uses_model_band(scout, monkeypatch):
+    monkeypatch.setitem(scout.MODEL_BAND, ("Men", "full"), (-0.5, 0.5))
+    lo, hi = scout.fair_range(10_000_000, "Men", "full")
+    assert lo == 6_065_000 and hi == 16_487_000  # 10M x e^-0.5 / e^0.5, rounded to £1k
+    assert scout.fair_range(None, "Men", "full") is None and scout.fair_range(1, "Women", "nope") is None
