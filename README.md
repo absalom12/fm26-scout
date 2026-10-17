@@ -81,7 +81,7 @@ Windows: %APPDATA%\FM26 Scout\
 
 # 🙏 Credits & Shoutouts
 
-A massive shoutout to Randal S. Olson for creating the fmsave library. This project wouldn't be possible without his incredible work reverse-engineering Football Manager save files! Be sure to check out his other projects on GitHub.
+A massive shoutout to [Randal S. Olson](https://x.com/randal_olson) for creating the [fmsave](https://pypi.org/project/fmsave/) library. This project wouldn't be possible without his incredible work reverse-engineering Football Manager save files! Be sure to check out his other projects on GitHub.
 
 # 📄 License
 
