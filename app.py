@@ -353,6 +353,7 @@ LENS_FEATURES = {
 }
 # Which lenses each data mode may use.
 MODES = {"full": ["ability", "attributes", "form", "stats"], "fair": ["attributes", "form", "stats"], "moneyball": ["form", "stats"]}
+MONEYBALL_MIN = 900  # minutes this season below which Moneyball gives no fair price
 WAGE_WEEKS = 156  # contract_wage is weekly; a signing is judged on fee + 3 years of wages
 MODEL_FIT = {}    # (gender, model) -> R² of ln(fee), for /api/meta
 
@@ -442,6 +443,10 @@ def add_deals():
                   {", ".join(deal(f"fair_package_{m}") + f" AS deal_score_{m}" for m in MODES)}
         FROM p""")
     os.unlink(f.name)
+    # Moneyball prices on numbers only: under 900 min this season there are none to price on, so no fair price at all.
+    if has_stats:
+        con().execute(f"""UPDATE players SET {", ".join(f"{p}_moneyball = NULL" for p in ("fair_fee", "fair_wage", "fair_package", "deal_score"))}
+                          WHERE coalesce(s_minutes, 0) < {MONEYBALL_MIN}""")
 
 
 def load(d=None):
@@ -1034,7 +1039,8 @@ def offer(q: OfferQuery):
     notes = []
     if fair_fee is None:
         verdict, ratio = "unknown", None
-        notes.append(f"Not enough data to value this player in {mode} mode.")
+        notes.append("Fair fee can't be computed in Moneyball under 900 minutes played this season." if mode == "moneyball"
+                     else f"Not enough data to value this player in {mode} mode.")
     else:
         ratio = q.fee / fair_fee if fair_fee else None
         verdict = ("unknown" if ratio is None else "steal" if ratio < 0.7 else "good" if ratio < 0.9
