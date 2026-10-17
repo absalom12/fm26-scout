@@ -1,49 +1,85 @@
 <img width="1512" height="826" alt="Capture d’écran 2026-10-16 à 12 35 38" src="https://github.com/user-attachments/assets/5ae00cb3-cfd1-405a-9079-e6c0a2369a64" />
 In save data - Decembre 2028.
 
-# FM26 Scout
+# ⚽ FM26 Scout
 
-Local web app to scout, value and shortlist players from a *Football Manager 26* save, read with
-[`fmsave`](https://pypi.org/project/fmsave/) (read-only). FastAPI + DuckDB backend, single-page
-frontend (AG Grid) in `static/index.html`.
+A fast, local web application to scout, value, and shortlist players directly from your **Football Manager 2026** save file. 
 
-Features: 75k-player grid with presets and an FM-style "Edit search", three data modes (Full /
-Fair play: no CA/PA or hidden attributes / Moneyball: stats only), Deal Finder (fair fee and wage
-vs actual), My Club (formation inferred from recent matches, squad power ranking, targets per
-slot), Offers (fair-fee verdict and acceptance estimate), nationalities, men/women filter.
+Powered by `fmsave` for read-only save parsing, **FastAPI + DuckDB** for lightning-fast queries, and **AG Grid** for a responsive single-page frontend.
 
-## Download (no install, no terminal)
+---
 
-1. Go to [Releases](https://github.com/absalom12/fm26-scout/releases/latest) and download **FM26-Scout-mac.zip** (Apple Silicon Macs) or **FM26-Scout-windows.zip**.
-2. Unzip. Mac: drag **FM26-Scout** to your Applications folder (optional), then double-click it. Windows: move the whole **FM26-Scout** folder anywhere (don't run it from inside the zip) and double-click `FM26-Scout.exe`.
-3. Your browser opens. Click your save in the list and wait about a minute. That's it.
+## 🔥 Key Features
 
-The app closes by itself a few seconds after you close the browser tab.
+- **75,000+ Player Grid:** Fast data exploration with FM-style "Edit Search" filters, column presets, and deep customization.
+- **3 Flexible Scouting Modes:**
+  - 🔓 **Full:** Unrestricted view including hidden $CA / PA$ attributes and potential.
+  - ⚖️ **Fair Play:** Realistic view—hidden attributes, $CA$, and $PA$ are completely hidden.
+  - 📊 **Moneyball:** Pure stats & observable in-game performance metrics without relying on raw attributes.
+- **Deal Finder:** Evaluates fair transfer fees and wages versus actual club valuations to highlight genuine bargains.
+- **My Club Engine:** Infer your team's tactical formation from recent matches, rank squad power, and receive slot-by-slot recruitment targets tailored to your tactical gaps.
+- **Offers Validator:** Analyze incoming and outgoing bids with fair-fee verdicts and likelihood-of-acceptance estimates.
+- **Comprehensive Database Filters:** Includes nationality filters, positional role weightings, and gender filters (strictly isolating men's database entries via UID structure).
 
-**First launch warnings** (the app is not code-signed):
-- **Mac:** it refuses to open. Open *System Settings → Privacy & Security*, scroll down and click **Open Anyway** next to "FM26-Scout", then confirm. Only needed once.
-- **Windows:** SmartScreen says "Windows protected your PC". Click **More info → Run anyway**.
+---
 
-Your save is read locally and never leaves your computer. Loading another save replaces the previous one.
+## 🚀 Download & Run (No Terminal / No Install)
 
-## For developers
+Get up and running in less than two minutes without touching Python or the command line:
+
+1. **Download:** Head over to **[Releases](https://github.com/absalom12/fm26-scout/releases/tag/v0.1.1)** and grab `FM26-Scout-mac.zip` (for Apple Silicon Macs) or `FM26-Scout-windows.zip`.
+2. **Extract & Open:**
+   - **macOS:** Unzip and drag `FM26-Scout` to your Applications folder (optional), then double-click it.
+   - **Windows:** Move the extracted `FM26-Scout` folder anywhere (*do not run it from inside the ZIP file*) and double-click `FM26-Scout.exe`.
+3. **Scout:** Your default browser will automatically open `http://localhost:8000`. Select your `.fm` save file from the detected list and give it ~1 minute to parse.
+
+> ℹ️ **Auto-Exit & Local Security:** The background server automatically closes a few seconds after you close your browser tab. Your save file is read **100% locally** and never leaves your machine.
+
+---
+
+### 🛡️ First Launch Security Prompts (Unsigned App)
+
+Because the binary is not code-signed with a commercial developer certificate, your operating system will show a one-time security warning:
+
+- **macOS:** If macOS blocks execution, go to **System Settings → Privacy & Security**, scroll down to the bottom, click **Open Anyway** next to `FM26-Scout`, and confirm. *(Required only once)*
+- **Windows:** If SmartScreen displays *"Windows protected your PC"*, click **More info** → **Run anyway**.
+
+---
+
+## 🛠️ For Developers & Contributors
+
+If you want to run from source, modify the code, or build executables manually:
 
 ```bash
+# Clone repository
+git clone [https://github.com/absalom12/fm26-scout.git](https://github.com/absalom12/fm26-scout.git)
+cd fm26-scout
+
+# Setup virtual environment (Python 3.12)
 python3.12 -m venv venv
 venv/bin/pip install -r requirements.txt -r requirements-dev.txt
+
+# Run local development server
 venv/bin/python launcher.py     # or: venv/bin/uvicorn app:app --port 8000
+
+# Run unit tests
 venv/bin/pytest
-venv/bin/python build.py        # builds dist/ with PyInstaller
+
+# Build standalone desktop executables (PyInstaller)
+venv/bin/python build.py
 ```
 
-Generated data lives in `~/Library/Application Support/FM26 Scout` (macOS) or `%APPDATA%/FM26 Scout` (Windows); set `FM26_DATA_DIR` to change it.
+📁 Application Storage
+Generated databases and cached parse outputs live in:
 
-It's an interface dedicated to every type of recruitment style :
-* CA / PA
-* Player Attributes (no hidden attributes are displayed)
-* Moneyball, only displaying in game statistics
+macOS: ~/Library/Application Support/FM26 Scout/
 
-All the available data of your save are in there and you can filter your way out to find the best possible player for your team.
+Windows: %APPDATA%\FM26 Scout\
 
-Shoutouts to https://x.com/randal_olson for creating the fmsave python library, couldn't be possible without it.
-Please check more of his work here https://github.com/rhiever.
+(Note: Set the FM26_DATA_DIR environment variable to override this storage path.)
+
+🙏 Credits & Shoutouts
+A massive shoutout to Randal S. Olson for creating the fmsave library. This project wouldn't be possible without his incredible work reverse-engineering Football Manager save files! Be sure to check out his other projects on GitHub.
+
+📄 License
+Distributed under the MIT License. See LICENSE for details.
