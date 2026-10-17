@@ -335,7 +335,7 @@ def add_stat_score():
 CONTEXT = ["age", "age * age AS age2",
            # value collapses after ~29 whatever the reputation: hinge terms let the model bend there
            "greatest(age - 29, 0) AS age_late", "greatest(age - 29, 0) * greatest(age - 29, 0) AS age_late2",
-           "greatest(age - 29, 0) * coalesce(reputation_current, 0) / 1000.0 AS age_late_rep", "ln(coalesce(club_reputation, 0) + 1) AS crep", "coalesce(reputation_current, 0) / 1000.0 AS prep",
+           "greatest(age - 29, 0) * coalesce(reputation_current, 0) / 1000.0 AS age_late_rep", "ln(coalesce(owner_club_reputation, 0) + 1) AS crep", "coalesce(reputation_current, 0) / 1000.0 AS prep",
            "least(greatest(coalesce(months_left, 0), 0), 72) / 12.0 AS yrs", "coalesce(s_minutes, 0) / 1000.0 AS mins"] + [
            f"(contract_squad_status = '{s}')::INT AS st_{s}" for s in
            ("star_player", "important_player", "regular_starter", "squad_player", "fringe_player", "youngster", "breakthrough_prospect")]
@@ -475,6 +475,8 @@ def load(d=None):
                ability_potential - ability_current AS pa_gap,
                date_diff('month', DATE '{GAME_DATE}', contract_end) AS months_left,
                (b.club_uid IS NULL) AS free_agent,
+               -- the club that owns him sets his price: a Man City youngster on loan at Wimbledon is valued as City's
+               coalesce(pc.parent_rep, b.club_reputation) AS owner_club_reputation,
                -- current club's label, else the most common label among clubs in the contract chain
                coalesce(cg.gender, (SELECT mode(g2.gender) FROM unnest(string_split(CAST(b.contract_chain_club_uids AS VARCHAR), ';')) x(u)
                                     JOIN cg g2 ON g2.club_uid = try_cast(x.u AS BIGINT))) AS gender,
@@ -483,6 +485,7 @@ def load(d=None):
                 JOIN nat n2 ON n2.id = try_cast(x.u AS INT)) AS second_nationalities,
                st.* EXCLUDE (player_uid)
         FROM b LEFT JOIN cg ON cg.club_uid = b.club_uid LEFT JOIN st ON st.player_uid = b.uid
+             LEFT JOIN (SELECT club_uid AS parent_uid, max(club_reputation) AS parent_rep FROM raw GROUP BY 1) pc ON pc.parent_uid = b.loan_parent_club_uid
              LEFT JOIN nat n1 ON n1.id = b.nation_id LEFT JOIN nat n3 ON n3.id = b.club_nation_id""")
     con().execute("DROP TABLE raw; DROP TABLE cg; DROP TABLE st; DROP TABLE nat; DROP TABLE cl")
     if has_s:
