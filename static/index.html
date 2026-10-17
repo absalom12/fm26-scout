@@ -1306,7 +1306,10 @@ function renderES() {
       <div class="es-row" style="margin-top:10px"><label class="check"><input type="checkbox" data-esb="free_agent" ${D.free_agent ? 'checked' : ''}> Free agents only</label>
         <label class="check"><input type="checkbox" data-esb="on_loan" ${D.on_loan ? 'checked' : ''}> On loan only</label></div>
     </section>
-    ${noAttr ? '' : `<section class="es-sec wide"><h3>Attributes <small>minimum values · drag to 0 to clear</small></h3>
+    ${noAttr ? '' : `<section class="es-sec wide"><h3>Attributes <small>minimum values · drag to 0 to clear</small>
+      <span style="margin-left:auto;display:inline-flex;gap:6px" role="group" aria-label="Shift every set attribute minimum">
+        <button type="button" class="btn" data-esshift="-1" title="Lower every attribute minimum you set by 1">−1</button>
+        <button type="button" class="btn" data-esshift="1" title="Raise every attribute minimum you set by 1">+1</button></span></h3>
       <div class="es-grid">${[['Technical', ATTR.technical], ['Mental', ATTR.mental], ['Physical', ATTR.physical], ['Goalkeeping', ATTR.goalkeeping]].map(([t, list]) =>
         `<div><h4>${t}</h4>${list.filter(a => cols.has('attributes_' + a) && !hid('attributes_' + a)).map(a => rangeRow('attributes_' + a, label('attributes_' + a))).join('')}</div>`).join('')}</div>
     </section>`}
@@ -1894,6 +1897,11 @@ $('#es').addEventListener('click', e => {
   else if (d.esdel != null) { saved.splice(+d.esdel, 1); saveSearches(); renderES(); }
   else if (t.id === 'esApply') applyES();
   else if (t.id === 'esClear') { D = F0(); renderES(); }
+  else if (t.dataset.esshift) {  // only the attribute minimums already set; 1-20 scale, never cleared by a shift
+    const k = +t.dataset.esshift;
+    Object.keys(D.min).filter(c => c.startsWith('attributes_')).forEach(c => { D.min[c] = Math.min(20, Math.max(1, D.min[c] + k)); });
+    const top = $('#esBody').scrollTop; renderES(); $('#esBody').scrollTop = top;
+  }
   else if (t.id === 'esSave') { const n = $('#esName').value.trim(); if (!n) { $('#esName').focus(); $('#esName').setAttribute('aria-invalid', 'true'); return; }
     $('#esName').removeAttribute('aria-invalid');
     const f = clone(D); delete f.gender; saved = [...saved.filter(s => s.name !== n), { name: n, f }]; saveSearches(); renderES(); toast(`Saved search “${n}”`, 'good'); }
