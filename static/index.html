@@ -202,19 +202,7 @@ body .ag-theme-quartz-dark {
 .hist .icon-btn svg { width: 18px; height: 18px; }
 .hist .icon-btn[disabled] { opacity: .3; background: none; color: var(--muted); cursor: default; }
 @keyframes grow { from { transform: scaleX(0); } }
-/* Hero dials: the 2-4 numbers that matter in this mode, as rings under the sticky name */
-.hero { margin: 0 -18px; padding: 16px 18px 14px; border-bottom: 1px solid var(--line); background: radial-gradient(120% 100% at 50% 0%, color-mix(in srgb, var(--mode) 10%, transparent), transparent 70%); }
-.dials { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 10px 8px; }
-.dial { position: relative; display: grid; justify-items: center; align-content: start; text-align: center; gap: 1px; min-width: 0; }
-.dial svg { width: 76px; height: 76px; transform: rotate(-90deg); }
-.dial circle { fill: none; stroke-width: 6; stroke-linecap: round; }
-.dial .trk { stroke: #1a242d; }
-.dial .arc { transform-origin: 32px 32px; animation: dial .8s var(--ease) both; }
 @keyframes dial { from { transform: rotate(-120deg); opacity: 0; } }
-.dial > b { position: absolute; top: 0; left: 0; right: 0; height: 76px; display: grid; place-items: center; font: 700 20px var(--f-mono); }
-.dial > span { margin-top: 4px; font: 700 11px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--text2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dial small { font-size: 11px; line-height: 1.3; color: var(--muted); }
-.hero .note { margin: 12px 0 0; text-align: center; }
 .ticket { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .kv-h { display: flex; justify-content: space-between; align-items: center; gap: 6px; min-height: 20px; }
 .kv-h .deal { text-transform: none; letter-spacing: 0; }
@@ -222,7 +210,19 @@ body .ag-theme-quartz-dark {
 .ticket .vf { margin-top: 6px; }
 .ticket .vf::before { content: "fair"; font: 600 10px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .ticket .vf .mono { min-width: 0; text-transform: none; letter-spacing: 0; color: var(--text2); }
-.dr-body .tags.terms { margin-top: 10px; }
+.dr-nm { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; } .dr-nm .pos { font-size: 13px; line-height: 22px; padding: 0 7px; }
+.dr-id .feet { margin-left: 8px; } .dr-id .link { min-height: 28px; }
+.dr-kpis { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 12px; }
+.dr-kpis .kpi { flex: 1 1 28%; min-width: 0; max-width: none; } .dr-kpis .kpi:nth-child(-n+2) { flex-basis: 40%; }
+.dr-kpis .kpi small { white-space: normal; } .dr-kpis .kpi b { white-space: normal; overflow-wrap: anywhere; }
+.dr-body > .tags { margin-bottom: 12px; } .dr-body .pbar { margin: 0 0 14px; }
+.dr-act { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; } .dr-act .btn { justify-content: center; }
+.dr-body h3 .ico { color: var(--mode); align-self: center; }
+.dr-body .hm { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px; } .dr-body .hm-g { grid-template-columns: 1fr 1fr; gap: 3px; }
+.dr-body .hm-c { padding: 3px 5px; } .dr-body .hm-c b { font-size: 13px; } .dr-body .hm h4 { margin: 0 0 4px; } .dr-body .hm-g + h4 { margin-top: 8px; }
+.dr-body .pizza { display: block; height: auto; }
+.dr-sim .sim-row { min-height: 40px; }
+.drawer .h3l { position: static; width: auto; height: auto; overflow: visible; clip: auto; } .drawer .kpi small { display: block; }  /* the profile's short-screen rules hide these; the drawer scrolls */
 .dr-body { padding: 4px 18px 28px; }
 .sec { padding: 16px 0; border-bottom: 1px solid var(--line); }
 .sec:last-child { border-bottom: 0; }
@@ -1493,58 +1493,13 @@ function radar(axes, max = 20, ring = 15) {
     ${axes.map((a, i) => { const [x, y] = pt(i, max * 1.27); return `<text x="${x}" y="${y + 3}" text-anchor="${Math.abs(x - cx) < 8 ? 'middle' : x > cx ? 'start' : 'end'}">${a[0]}</text>`; }).join('')}
   </svg>`;
 }
-function verdict(p, grp) {
-  const strong = [], weak = [];
-  if (MODE !== 'moneyball') {
-    const pool = grp === 'GK' ? [...ATTR.goalkeeping, ...ATTR.mental, ...ATTR.physical] : [...ATTR.technical, ...ATTR.mental, ...ATTR.physical].filter(k => !['long_throws', 'penalty_taking'].includes(k));
-    strong.push(...pool.map(k => [k, p['attributes_' + k]]).filter(x => x[1] != null && x[1] >= 15).sort((a, b) => b[1] - a[1]).slice(0, 5));
-    weak.push(...KEY[grp].map(k => [k, p['attributes_' + k]]).filter(x => x[1] != null && x[1] <= 10).sort((a, b) => a[1] - b[1]).slice(0, 3));
-  }
-  const H = MODE === 'full', a = k => p['attributes_' + k], q = k => p['personality_' + k];
-  const flags = [
-    H && a('injury_proneness') >= 14 && ['bad', 'Injury-prone'], H && a('consistency') <= 8 && ['bad', 'Inconsistent'], H && a('important_matches') <= 8 && ['bad', 'Shrinks in big games'],
-    H && q('professionalism') <= 8 && ['bad', 'Unprofessional'], H && q('controversy') >= 15 && ['warn', 'Controversial'],
-    H && q('professionalism') >= 17 && ['good', 'Model pro'], H && a('consistency') >= 16 && ['good', 'Consistent'], H && a('injury_proneness') != null && a('injury_proneness') <= 4 && ['good', 'Rarely injured'],
-    H && a('important_matches') >= 16 && ['good', 'Big-game player'], p.months_left != null && p.months_left <= 6 && ['warn', `Contract ends in ${p.months_left}m`],
-    p.free_agent && ['good', 'Free agent'], p.on_loan && ['', `On loan from ${p.loan_parent_club_name || '?'}`],
-  ].filter(Boolean);
-  return { strong, weak, flags };
-}
-// Ring gauge for the drawer hero. f = fill 0..1; ghost = [fill, color] drawn faint behind (PA behind CA).
-function dial(name, txt, f, color, sub, aria, ghost) {
-  const arc = (x, c, o = 1) => `<circle class="arc" cx="32" cy="32" r="27" pathLength="100" stroke="${c}" opacity="${o}" stroke-dasharray="${Math.max(0, Math.min(1, x)) * 100} 100"/>`;
-  return `<div class="dial" role="img" aria-label="${esc(aria)}"><svg viewBox="0 0 64 64" aria-hidden="true"><circle class="trk" cx="32" cy="32" r="27"/>
-    ${ghost ? arc(ghost[0], ghost[1], .3) : ''}${f ? arc(f, color) : ''}</svg><b style="color:${color}" aria-hidden="true">${txt}</b><span aria-hidden="true">${esc(name)}</span><small aria-hidden="true">${sub}</small></div>`;
-}
 // ---------- Player blocks shared by the drawer and the profile page ----------
 // Strength of each foot (1-20) as two small bars with FM's words, strong foot first in the tooltip.
 const FOOT_W = [[18, 'Very strong'], [15, 'Strong'], [12, 'Fairly strong'], [9, 'Reasonable'], [5, 'Weak'], [0, 'Very weak']];
 const feetHTML = p => p.left_foot == null || p.right_foot == null ? '' : `<span class="feet" role="img" aria-label="${[['Left', p.left_foot], ['Right', p.right_foot]].map(([s, v]) => `${s} foot ${FOOT_W.find(w => v >= w[0])[1].toLowerCase()}`).join(', ')}">${[['L', p.left_foot], ['R', p.right_foot]].map(([s, v]) => { const w = FOOT_W.find(x => v >= x[0])[1];
   return `<span title="${s === 'L' ? 'Left' : 'Right'} foot: ${w} (${v}/20)"><b>${s}</b><i><i style="width:${v * 5}%;background:${scoreColor(v * 5)}"></i></i></span>`; }).join('')}</span>`;
-const footOf = p =>p.left_foot != null && p.right_foot != null ? (p.left_foot > p.right_foot ? 'Left' : p.right_foot > p.left_foot ? 'Right' : 'Either') + ' foot' : '';
 const roleList = p => MODE === 'moneyball' ? [] : Object.keys(META.roles).map(r => [r, p['role_' + r]]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
 const roleBars = roles => roles.map(([r, x]) => `<div class="rolebar"><span>${label('role_' + r)} <span class="muted" style="font-size:11px">${META.roles[r]}</span></span><div class="tr"><i style="width:${x}%;background:${scoreColor(x)}"></i></div><b class="mono" style="color:${scoreColor(x)};text-align:right">${x.toFixed(0)}</b></div>`).join('');
-// The 2-4 rings that matter in this mode.
-function heroDials(p) {
-  const grp = groupOf(p), noAttr = MODE === 'moneyball', showAbility = !hid('ability_current') && p.ability_current != null;
-  return `${showAbility ? dial('Current ability', p.ability_current, p.ability_current / 200, abilityColor(p.ability_current),
-      `PA <b class="mono" style="color:${abilityColor(p.ability_potential)}">${p.ability_potential ?? '–'}</b> · ${p.pa_gap > 0 ? `+${p.pa_gap}` : 'at ceiling'}`,
-      `Current ability ${p.ability_current}, potential ${p.ability_potential ?? 'unknown'}, scale 200`, p.ability_potential != null && [p.ability_potential / 200, abilityColor(p.ability_potential)]) : ''}
-    ${dial('Performance', p.stat_score != null ? Math.round(p.stat_score) : '–', (p.stat_score ?? 0) / 100, p.stat_score != null ? pctColor(p.stat_score) : C.muted,
-      p.stat_score == null ? 'Not enough minutes to rate' : `vs ${esc(p.stat_group || grp)}s, 600+ min`, `Performance index ${p.stat_score != null ? Math.round(p.stat_score) : 'unknown'} of 100`)}
-    ${p.best_role_score != null && !noAttr ? dial('Best role', p.best_role_score.toFixed(0), p.best_role_score / 100, scoreColor(p.best_role_score), esc(label('role_' + p.best_role)),
-      `Best role ${label('role_' + p.best_role)}, score ${p.best_role_score.toFixed(0)} of 100`) : ''}
-    ${p.s_minutes ? dial('Avg rating', p.s_avg_rating ? p.s_avg_rating.toFixed(2) : '–', p.s_avg_rating ? (p.s_avg_rating - 5.5) / 2.5 : 0, p.s_avg_rating ? ratingColor(p.s_avg_rating) : C.muted,
-      `${p.s_apps ?? 0} apps · ${p.s_minutes.toLocaleString()} min`, p.s_avg_rating ? `Average rating ${p.s_avg_rating.toFixed(2)} this season` : 'No rating this season') : ''}`;
-}
-function verdictSec(p, grp) {
-  const v = verdict(p, grp), noAttr = MODE === 'moneyball';
-  return !noAttr || v.flags.length ? `<section class="sec"><h3>Scouting verdict</h3>
-    ${noAttr ? '' : v.strong.length ? `<div class="tags">${v.strong.map(([k, x]) => `<span class="tag good">${label(k)}<b>${x}</b></span>`).join('')}</div>` : '<p class="note" style="margin:0">No standout attributes (15+).</p>'}
-    ${v.weak.length ? `<div class="tags" style="margin-top:6px">${v.weak.map(([k, x]) => `<span class="tag bad">${label(k)}<b>${x}</b></span>`).join('')}</div>` : ''}
-    ${v.flags.length ? `<div class="tags" style="margin-top:6px">${v.flags.map(([c, t]) => `<span class="tag ${c}">${esc(t)}</span>`).join('')}</div>` : ''}
-  </section>` : '';
-}
 // Fee and wage tickets; with fair prices on, the fair values, deal % and per-lens fair fees.
 function priceBody(p) {
   const noAttr = MODE === 'moneyball';
@@ -1999,8 +1954,8 @@ function secRole() {
     ${gk ? '<p class="note">Sweeper Keeper is the only goalkeeper role the save scores: compare it with other keepers, not with outfield roles.</p>' : ''}
     <h4>Similar players</h4>${simMini(3)}`;
 }
-function secPizza() {
-  const { p, grp, bench } = ppx, mins = p.s_minutes || 0;
+function secPizza(x = ppx) {
+  const { p, grp, bench } = x, mins = p.s_minutes || 0;
   const body = !mins ? '<p class="note">No league minutes this season, so there is nothing to benchmark yet.</p>'
     : mins < 900 ? ladder('Minutes played', mins.toLocaleString(), mins / 900, C.warn, `${900 - mins} more minutes and he gets percentiles. Per-90 numbers on few matches swing too much to rank.`)
     : !bench ? '<span class="sk" style="height:220px;width:100%"></span>'
@@ -2015,8 +1970,8 @@ const tierOfV = (v, t) => t.find(x => v >= x[0])[1];
 const pill = pc => pc == null ? '<span class="pill">–</span>' : `<span class="pill" style="--c:${pctColor(pc)}">${pc}</span>`;
 const mean = xs => { const v = xs.filter(x => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
 // Header KPI tiles: the five numbers this mode is judged on.
-function secKpis() {
-  const { p, grp, abil } = ppx, mb = MODE === 'moneyball', mins = p.s_minutes || 0;
+function secKpis(x = ppx) {
+  const { p, grp, abil } = x, mb = MODE === 'moneyball', mins = p.s_minutes || 0;
   const k = (lbl, v, c, sub) => `<div class="kpi"><span>${lbl}</span><b style="color:${c || 'var(--text)'}">${v}</b><small>${sub}</small></div>`;
   const perf = p.stat_score != null ? Math.round(p.stat_score) : null, out = [];
   if (!hid('ability_current') && p.ability_current != null) out.push(k('CA / PA', `${p.ability_current} / ${p.ability_potential ?? '–'}`, abilityColor(p.ability_current), abil?.n ? `top ${Math.max(1, Math.ceil((abil.ca + 1) / abil.n * 100))}% of ${plural(grp)}` : tierOfV(p.ability_current, TIERS_CA)));
@@ -2384,67 +2339,51 @@ function closeDrawer() {
   $('#drawer').classList.remove('open'); $('#drawer').setAttribute('aria-hidden', 'true'); drawerUid = null; drawerPlayer = null;
   if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
 }
+// Quick look: who he is, the five numbers the mode judges, price, then one visual (attribute grid, or the percentile pizza in Moneyball) and his closest matches.
 async function openPlayer(uid) {
   if (!$('#drawer').classList.contains('open')) lastFocus = document.activeElement;
   mark(); drawerUid = uid;
   const dr = $('#drawer');
-  dr.innerHTML = `<div class="dr-head"><span class="sk" style="height:24px;width:60%"></span><span class="sk" style="margin-top:10px;width:40%"></span><span class="sk" style="margin-top:18px;height:8px;width:100%"></span></div>
-    <div class="dr-body">${'<div class="sec"><span class="sk" style="width:30%"></span><span class="sk" style="margin-top:12px;height:60px;width:100%"></span></div>'.repeat(3)}</div>`;
+  dr.innerHTML = `<div class="dr-head"><span class="sk" style="height:24px;width:60%"></span><span class="sk" style="margin-top:10px;width:40%"></span></div>
+    <div class="dr-body"><span class="sk" style="margin-top:14px;height:58px;width:100%"></span>${'<div class="sec"><span class="sk" style="width:30%"></span><span class="sk" style="margin-top:12px;height:120px;width:100%"></span></div>'.repeat(2)}</div>`;
   dr.classList.add('open'); dr.setAttribute('aria-hidden', 'false');
   let p;
   try { const r = await api('/api/player/' + uid + mq()); if (!r.ok) throw r.status; p = await r.json(); }
   catch { if (drawerUid === uid) dr.innerHTML = `<div class="dr-head dr-row"><div class="dr-id"></div><button class="icon-btn" data-close aria-label="Close">×</button></div>${emptyState('Player not found', 'The server could not load this player. It may be restarting, so try again in a moment.')}`; return; }
   if (drawerUid !== uid) return;
   drawerPlayer = p;
-  const grp = groupOf(p), isGK = grp === 'GK', noAttr = MODE === 'moneyball', roles = roleList(p).slice(0, 4);
-  const block = (title, keys, pre = 'attributes_') => `<div><h4>${title}</h4>${keys.map(k => `<div class="row"><span>${label(k)}</span><span class="mono ${tier(p[pre + k], BAD.has(pre + k))}">${p[pre + k] ?? '–'}</span></div>`).join('')}</div>`;
-  const foot = footOf(p);
+  const grp = groupOf(p), mb = MODE === 'moneyball', mins = p.s_minutes || 0, alive = () => drawerPlayer === p;
+  const x = { p, grp, abil: null, bench: null };
+  const facts = [p.months_left != null && p.months_left <= 6 && `<span class="tag warn">Contract ends in ${leftTxt(p.months_left)}</span>`,
+    p.on_loan && `<span class="tag">On loan from ${esc(p.loan_parent_club_name || '?')}</span>`,
+    p.contract_squad_status && `<span class="tag">${esc(p.contract_squad_status.replaceAll('_', ' '))}</span>`].filter(Boolean).join('');
   dr.innerHTML = `
-    <div class="dr-head">
-      <div class="dr-row">
-        <div class="dr-id"><h2 id="drName"><span class="pname" data-profile="${p.uid}" role="link" tabindex="0" title="Full profile">${esc(p.name)}</span></h2>
-          <p>${natHTML(p) || 'Unknown nation'} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${p.height_cm} cm` : ''}${foot ? ' · ' + foot : ''}</p>
-          <div>${posChips(p.natural_positions)}<button class="link" data-profile="${p.uid}" title="Full profile (Shift+click a player)" style="margin-left:6px">Full profile →</button></div></div>
-        <button class="icon-btn star star-btn" data-star="${p.uid}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist" title="Shortlist (s)">★</button>
-        <button class="icon-btn" data-close aria-label="Close player detail" title="Close (Esc)">×</button>
-      </div>
-    </div>
+    <div class="dr-head"><div class="dr-row">
+      <div class="dr-id"><div class="dr-nm"><h2 id="drName"><span class="pname" data-profile="${p.uid}" role="link" tabindex="0" title="Full profile">${esc(p.name)}</span></h2><span class="dr-pos">${posChips(p.natural_positions)}</span></div>
+        <p>${natHTML(p) || 'Unknown nation'} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${p.height_cm} cm` : ''}${mb ? '' : feetHTML(p)}</p>
+        <button class="link" data-profile="${p.uid}" title="Full profile (Shift+click a player)">Full profile →</button></div>
+      <button class="icon-btn star star-btn" data-star="${p.uid}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist" title="Shortlist (s)">★</button>
+      <button class="icon-btn" data-close aria-label="Close player detail" title="Close (Esc)">×</button>
+    </div></div>
     <div class="dr-body">
-      <div class="hero"><div class="dials">${heroDials(p)}</div>${noAttr ? '<p class="note">Moneyball: judged on numbers only, no attributes.</p>' : ''}</div>
-      ${verdictSec(p, grp)}
-      <section class="sec"><h3>Price</h3>
-        ${priceBody(p)}
-        <div class="tags terms">
-          <span class="tag${p.months_left != null && p.months_left <= 6 ? ' warn' : ''}" title="Contract end">Contract <b>${esc(p.contract_end || '–')}${p.months_left != null ? ` · ${leftTxt(p.months_left)}` : ''}</b></span>
-          <span class="tag" title="Squad status">${esc((p.contract_squad_status || 'Squad status unknown').replaceAll('_', ' '))}</span>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
-          <button class="btn" style="justify-content:center" data-similar="${p.uid}" title="${{ full: 'Same position, closest on his 6 best attributes', fair: 'Same position, closest on his 6 best attributes', moneyball: 'Same position, closest on his 5 best in-game stats for his position' }[MODE]}">Find similar players</button>
-          <button class="btn primary" style="justify-content:center" data-offer="${p.uid}">Make an offer →</button>
-        </div>
-      </section>
-      <section class="sec" data-sec="profile">${profileInner(p)}</section>
-      <section class="sec" data-sec="season"></section>
-      ${seasonAll(p)}
-      ${roles.length ? `<section class="sec"><h3>Best roles</h3>${roleBars(roles)}</section>` : ''}
-      ${noAttr ? '' : `<section class="sec"><details><summary>All attributes</summary>
-        <div class="attrs">
-          ${isGK ? block('Goalkeeping', ATTR.goalkeeping) : block('Technical', ATTR.technical)}
-          ${block('Mental', ATTR.mental)}${block('Physical', ATTR.physical)}
-          ${MODE === 'full' ? `<div style="display:grid;gap:14px">${block('Hidden', ATTR.hidden)}${block('Personality', PERS, 'personality_')}</div>` : ''}
-        </div></details></section>`}
+      <div class="dr-kpis">${secKpis(x)}</div>
+      ${mb && mins < 900 ? '' : priceBar(p)}
+      ${facts ? `<div class="tags">${facts}</div>` : ''}
+      <div class="dr-act">
+        <button class="btn" data-similar="${p.uid}" title="${{ full: 'Same position, closest on his 6 best attributes', fair: 'Same position, closest on his 6 best attributes', moneyball: 'Same position, closest on his 5 best in-game stats for his position' }[MODE]}">Find similar players</button>
+        <button class="btn primary" data-offer="${p.uid}">Make an offer →</button>
+      </div>
+      <section class="sec" data-dr="main">${mb ? secPizza(x) : `${h3i('attr', 'Attributes', MODE === 'full' ? 'hidden under physical · hover a cell' : 'scale 20 · hover a cell for its name')}${heatMap(p, false, true)}`}</section>
+      <section class="sec" data-dr="sim">${h3i('similar', 'Similar players')}<span class="sk" style="height:120px;width:100%"></span></section>
     </div>`;
-  renderSeason(p, grp, dr, () => drawerUid === p.uid);
   $('[data-close]', dr).focus({ preventScroll: true });
-}
-// Every season total and rate the save holds, folded away like "All attributes".
-function seasonAll(p, cls = 'sec') {
-  const skip = new Set(['s_league_rep', 's_league_id']);
-  const ks = Object.keys(p).filter(k => k.startsWith('s_') && !skip.has(k) && typeof p[k] === 'number');
-  if (!ks.length) return '';
-  const name = k => k.slice(2).replace(/_p90$/, ' / 90').replace('_pct', ' %').replace(/^xg|^xa/, m => m.toUpperCase()).replaceAll('_', ' ').replace(/^\w/, m => m.toUpperCase());
-  return `<section class="${cls}"><details><summary>All season stats</summary><dl class="facts" style="margin-top:10px">
-    ${ks.map(k => `<dt>${esc(name(k))}</dt><dd class="mono">${Number.isInteger(p[k]) ? p[k].toLocaleString() : p[k].toFixed(2)}</dd>`).join('')}</dl></details></section>`;
+  if (mb && mins >= 900) ppBench(p, grp).then(b => { if (!alive()) return; x.bench = b; $('[data-dr="main"]', dr).innerHTML = secPizza(x); });
+  api('/api/players', { start: 0, end: 6, positions: [grp], gender: p.gender || null, mode: MODE, similar_to: p.uid, filters: mb ? { s_minutes: num('greaterThanOrEqual', 600) } : {} })
+    .then(r => r.ok ? r.json() : null).catch(() => null).then(res => {
+      if (!alive()) return;
+      const rows = (res?.rows || []).filter(r => r.uid !== p.uid).slice(0, 4);
+      $('[data-dr="sim"]', dr).innerHTML = h3i('similar', 'Similar players') + (rows.length ? `<div class="dr-sim">${simHead(p)}${rows.map(r => simRow(r)).join('')}</div>` : '<p class="note" style="margin:0">No close match found.</p>');
+    });
 }
 // Fills root's [data-sec=season] (and, in Moneyball, the percentile radar in [data-sec=profile]); alive() = still on screen.
 async function renderSeason(p, grp, root, alive) {
