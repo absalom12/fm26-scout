@@ -935,6 +935,8 @@ def squad_report(formation, mode="full"):
         need = round((team_fit - sf) + 0.3 * (sf - bf), 1)
         slots.append({"slot_index": i, "pos": pos, "starter": card(st, pos), "backup": card(backup, pos),
                       "depth": len(ranked[pos]), "need": need,
+                      # everyone else who can play there, best first (starters elsewhere included: the manager decides)
+                      "others": [card(x, pos) for x in ranked[pos] if x is not st and x is not backup],
                       "grade": "weak" if need >= 4 else "strong" if need <= 1 else "ok"})
     values = [s["transfer_value"] or 0 for s in squad]
     wages = sorted((s["contract_wage"] or 0 for s in squad), reverse=True)

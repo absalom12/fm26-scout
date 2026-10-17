@@ -343,7 +343,8 @@ dialog::backdrop { background: rgba(3,6,9,.6); backdrop-filter: blur(2px); }
 .rank .w span { font-size: 11px; color: var(--muted); }
 .rank .f { font: 700 13px var(--f-mono); text-align: right; }
 .rank .f small { display: block; font: 500 10px var(--f-body); color: var(--muted); }
-.reco { display: grid; grid-template-columns: 26px minmax(160px, 1.3fr) minmax(150px, 1fr) minmax(170px, 1fr) 36px; gap: 12px; align-items: center; padding: 10px 8px; border-bottom: 1px solid var(--line); animation: slotIn .4s var(--ease) both; }
+.slot-list { max-height: 260px; overflow-y: auto; }
+.reco { display: grid; grid-template-columns: 26px minmax(160px, 1fr) auto auto 36px; gap: 12px; align-items: center; padding: 10px 8px; border-bottom: 1px solid var(--line); animation: slotIn .4s var(--ease) both; }
 .reco:hover { background: var(--bg2); }
 .reco .i { font: 700 13px var(--f-mono); color: var(--faint); text-align: right; }
 .reco .nm { text-align: left; font-weight: 700; font-size: 15px; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -351,7 +352,6 @@ dialog::backdrop { background: rgba(3,6,9,.6); backdrop-filter: blur(2px); }
 .reco .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .reco .rep { font-size: 13px; }
 .reco .rep .up { color: var(--good); font: 700 12px var(--f-mono); }
-.reco .why { font-size: 12px; color: var(--muted); margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .reco .money { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
 .sk-card { height: 58px; margin-bottom: 6px; border-radius: 8px; }
 
@@ -874,10 +874,22 @@ const clearSort = () => grid.applyColumnState({ defaultState: { sort: null } });
 // ---------- Pages ----------
 // Scout list of players like p, as this mode understands "like": same position group and gender, age ±3,
 // then the server sorts by closeness (similar_to). Every criterion stays an editable chip.
+const SIMILAR_STATS = { ST: ['s_goals_p90', 's_xg_p90'], W: ['s_dribbles_p90', 's_xa_p90'], AM: ['s_key_passes_p90', 's_xa_p90'], CM: ['s_prog_passes_p90', 's_key_passes_p90'],
+  DM: ['s_tackles_p90', 's_interceptions_p90'], FB: ['s_crosses_p90', 's_tackles_p90'], CB: ['s_headers_won_p90', 's_interceptions_p90'], GK: [] };
 function findSimilar(p) {
   const f = F0();
   f.positions = [groupOf(p)]; f.age_min = Math.max(15, p.age - 3); f.age_max = p.age + 3;
-  if (MODE === 'moneyball') f.min.s_minutes = 600;  // per-90 numbers need a sample
+  // Visible, editable floors on what makes him him (the server sorts by the same signals): his 6 best
+  // attributes (3 below his level) in Full / Fair play; performance and his position's key per-90 stats in Moneyball.
+  if (MODE === 'moneyball') {
+    f.min.s_minutes = 600;  // per-90 numbers need a sample
+    if (p.stat_score != null) f.min.stat_score = Math.max(0, Math.round(p.stat_score - 10));
+    (SIMILAR_STATS[groupOf(p)] || []).forEach(k => { if (p[k] > 0) f.min[k] = +(p[k] * 0.75).toFixed(2); });
+  } else {
+    const pool = (groupOf(p) === 'GK' ? ATTR.goalkeeping : ATTR.technical.filter(a => !['long_throws', 'penalty_taking'].includes(a))).concat(ATTR.mental, ATTR.physical);
+    pool.filter(a => p['attributes_' + a] != null).sort((a, b) => p['attributes_' + b] - p['attributes_' + a]).slice(0, 6)
+      .forEach(a => { if (p['attributes_' + a] > 3) f.min['attributes_' + a] = p['attributes_' + a] - 3; });
+  }
   f.similar = { uid: p.uid, name: p.name };
   F = f; if (p.gender) setGender(p.gender);
   closeDrawer(); setPage('scout'); clearSort(); renderSummary(); refresh();
@@ -1386,15 +1398,13 @@ function renderSlotCard() {
   card.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px"><b style="font:700 15px var(--f-display);letter-spacing:.06em;text-transform:uppercase">Slot ${slotSel + 1} · ${pos}</b>
       <span><button class="link" data-pos-edit aria-expanded="${posEdit}">${posEdit ? 'Done' : 'Change position'}</button><button class="link" data-clear-slot>Close</button></span></div>
     ${posEdit ? `<div class="chips" role="group" aria-label="Position for slot ${slotSel + 1}" style="margin-bottom:8px">${POSITIONS.map(p => `<button class="chip" data-setpos="${p}" aria-pressed="${p === pos}">${p}</button>`).join('')}</div>` : ''}
-    <div>${same ? person(s.starter, 'Starter') + person(s.backup, 'Backup') : '<p class="muted" style="font-size:13px">Updating…</p>'}</div>`;
+    <div class="slot-list">${same ? person(s.starter, 'Starter') + person(s.backup, 'Backup') + (s.others || []).map((o, i) => person(o, `Option ${i + 3}`)).join('') : '<p class="muted" style="font-size:13px">Updating…</p>'}</div>`;
 }
 function selectSlot(i) {
   slotSel = i == null || slotSel === i ? null : i; posEdit = false;
   $$('[data-slot]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.slot === slotSel));
   renderSlotCard(); renderScope(); loadRecos();
 }
-// Fair prices off: drop the backend's "x% under fair fee + wages" clause from the reason.
-const why = p => (p.reason || '').split(' · ').filter(x => FAIR || !/fair/i.test(x)).join(' · ');
 function loadRecos() {
   clearTimeout(recoT);
   recoT = setTimeout(async () => {
@@ -1408,16 +1418,13 @@ function loadRecos() {
     if (!r || !r.ok) { box.innerHTML = emptyState('No recommendations', r && r.status === 404 ? 'This endpoint is not live on the server yet.' : 'The server did not answer. Try again in a moment.'); return; }
     const rows = (await r.json()).rows || [];
     if (!rows.length) { box.innerHTML = emptyState('Nobody fits the brief', `No targets${slotSel != null ? ' for ' + formation[slotSel] : ''} under this budget, wage and age cap. Loosen one of them.`); return; }
-    const med = CLUB.xi_median_wage;
     box.innerHTML = rows.map((p, i) => `
       <div class="reco" style="animation-delay:${Math.min(i, 12) * 25}ms">
         <span class="i">${i + 1}</span>
         <div style="min-width:0"><button class="nm" data-player="${p.uid}"><span class="flag" title="${esc(p.nationality || '')}">${flag(p.nationality_code)}</span> ${esc(p.name)}</button>
-          <div class="meta">${p.age} yrs · <span class="pos">${esc(p.target_pos || '')}</span> ${esc(p.club_name || 'Free agent')} · ${esc(p.nationality || '')}${hid('ability_current') || p.ability_current == null ? (p.stat_score != null ? ` · Perf <b style="color:${pctColor(p.stat_score)}">${Math.round(p.stat_score)}</b>` : '') : ` · CA <b style="color:${abilityColor(p.ability_current)}">${p.ability_current}</b> / PA ${p.ability_potential}`}</div></div>
-        <div style="min-width:0"><div class="rep">${p.replaces ? `replaces ${esc(lastName(p.replaces.name))} <span class="up">${p.upgrade != null ? (p.upgrade >= 0 ? '+' : '') + p.upgrade.toFixed(0) : ''} ${fitWord()}</span>` : '<span class="up">fills an empty slot</span>'}</div>
-          <div class="why" title="${esc(why(p))}">${esc(why(p))}</div></div>
-        <div><div class="money">Fee <b class="mono">${feeHTML(p)}</b> · <b class="mono ${med && p.contract_wage > 1.5 * med ? 'wage-hi' : ''}" title="${med ? `${(p.contract_wage / med).toFixed(1)}× your XI median wage (${wage(med)})` : ''}">${wage(p.contract_wage)}</b></div>
-          ${FAIR && p.fair_fee != null ? `<div class="money">Fair fee <b class="mono">${money(p.fair_fee)}</b></div>` : ''}${FAIR ? dealBadge(p.deal_score) : ''}</div>
+          <div class="meta">${p.age} yrs · <span class="pos">${esc(p.target_pos || '')}</span> ${esc(p.club_name || 'Free agent')}</div></div>
+        <span class="rep"><span class="up" title="${p.replaces ? `Upgrade over ${esc(p.replaces.name)}` : 'Fills an empty slot'}">${p.upgrade != null ? (p.upgrade >= 0 ? '+' : '') + p.upgrade.toFixed(0) + ' ' + fitWord() : 'new'}</span></span>
+        <b class="mono money" style="margin:0">${feeHTML(p)}</b>
         <button class="star-btn" data-star="${p.uid}" data-name="${esc(p.name)}" data-club="${p.club_uid ?? ''}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist ${esc(p.name)}">★</button>
       </div>`).join('');
   }, 250);
