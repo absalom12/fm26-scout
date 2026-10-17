@@ -1412,12 +1412,17 @@ const KEY_ATTRS = { GK: ['reflexes', 'handling', 'one_on_ones'], CB: ['marking',
   DM: ['tackling', 'positioning', 'passing'], CM: ['passing', 'decisions', 'stamina'], AM: ['vision', 'passing', 'technique'],
   W: ['pace', 'dribbling', 'crossing'], ST: ['finishing', 'composure', 'off_the_ball'] };
 const STAT_ABBR = { s_goals_p90: 'G/90', s_xg_p90: 'xG/90', s_dribbles_p90: 'Drb/90', s_xa_p90: 'xA/90', s_key_passes_p90: 'KP/90',
-  s_prog_passes_p90: 'Prog/90', s_tackles_p90: 'Tck/90', s_interceptions_p90: 'Int/90', s_crosses_p90: 'Crs/90', s_headers_won_p90: 'Hdr/90' };
+  s_prog_passes_p90: 'Prog/90', s_tackles_p90: 'Tck/90', s_interceptions_p90: 'Int/90', s_crosses_p90: 'Crs/90', s_headers_won_p90: 'Hdr/90',
+  s_shots_p90: 'Sh/90', s_possession_won_p90: 'Won/90', s_clearances_p90: 'Clr/90', stat_score: 'Perf', s_clean_sheets: 'CS', s_expected_goals_prevented: 'xGP' };
+const KEY_STATS = { ST: ['s_goals_p90', 's_xg_p90', 's_shots_p90'], W: ['s_dribbles_p90', 's_xa_p90', 's_crosses_p90'], AM: ['s_key_passes_p90', 's_xa_p90', 's_dribbles_p90'],
+  CM: ['s_prog_passes_p90', 's_key_passes_p90', 's_possession_won_p90'], DM: ['s_tackles_p90', 's_interceptions_p90', 's_possession_won_p90'],
+  FB: ['s_crosses_p90', 's_tackles_p90', 's_interceptions_p90'], CB: ['s_headers_won_p90', 's_interceptions_p90', 's_clearances_p90'],
+  GK: ['stat_score', 's_clean_sheets', 's_expected_goals_prevented'] };
 function recoKeys(p) {
   const g = SLOT_GRP[p.target_pos] || groupOf(p), chip = (l, v, cls = '', t = l) => `<span class="ac" title="${esc(t)}">${l}<b class="${cls}">${v}</b></span>`;
   if (MODE === 'moneyball') return [p.s_avg_rating != null ? chip('Rtg', p.s_avg_rating.toFixed(2), '', 'Average rating') : '',
-    ...(SIMILAR_STATS[g] || []).map(k => p[k] != null ? chip(STAT_ABBR[k], p[k].toFixed(2), '', label(k)) : '')].join('');
-  return [MODE === 'full' && p.ability_current != null ? chip('CA', p.ability_current, '', `Current ability (PA ${p.ability_potential})`) : '',
+    ...(KEY_STATS[g] || []).map(k => p[k] != null ? chip(STAT_ABBR[k], Number.isInteger(p[k]) ? p[k] : p[k].toFixed(k === 'stat_score' ? 0 : 2), '', label(k)) : '')].join('');
+  return [MODE === 'full' && p.ability_current != null ? chip('CA', p.ability_current, '', 'Current ability') + chip('PA', p.ability_potential ?? '–', '', 'Potential ability') : '',
     ...KEY_ATTRS[g].map(a => p['attributes_' + a] != null ? chip(ABBR[a] || a.slice(0, 3), p['attributes_' + a], tier(p['attributes_' + a]), label('attributes_' + a)) : '')].join('');
 }
 function loadRecos() {
