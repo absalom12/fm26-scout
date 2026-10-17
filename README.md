@@ -27,7 +27,7 @@ Powered by `fmsave` for read-only save file parsing, **FastAPI + DuckDB** for li
 
 Get up and running in less than two minutes without touching Python or the command line:
 
-1. **Download:** Head over to **[Releases (v0.1.3)](https://github.com/absalom12/fm26-scout/releases/tag/v0.1.3)** and grab `FM26-Scout-mac.zip` (for Apple Silicon Macs) or `FM26-Scout-windows.zip`.
+1. **Download:** Head over to **[Releases (v0.2.0)](https://github.com/absalom12/fm26-scout/releases/tag/v0.2.0)** and grab `FM26-Scout-mac.zip` (for Apple Silicon Macs) or `FM26-Scout-windows.zip`.
 2. **Extract & Open:**
    - **macOS:** Unzip and drag `FM26-Scout` to your Applications folder (optional), then double-click it.
    - **Windows:** Extract the `FM26-Scout` folder anywhere (*do not run inside the ZIP archive*) and double-click `FM26-Scout.exe`.
