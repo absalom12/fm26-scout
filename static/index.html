@@ -663,7 +663,7 @@ dialog::backdrop { background: rgba(3,6,9,.6); backdrop-filter: blur(2px); }
 .pname:hover, .pname:focus-visible { color: var(--accent); text-decoration-color: currentColor; }
 .reco .keys { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
 .reco { display: grid; grid-template-columns: 26px minmax(150px, 1fr) auto auto auto 36px; gap: 12px; align-items: center; padding: 10px 8px; border-bottom: 1px solid var(--line); animation: slotIn .4s var(--ease) both; }
-.reco:hover { background: var(--bg2); }
+.reco { cursor: pointer; } .reco:hover { background: var(--bg2); } .reco:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .reco .i { font: 700 13px var(--f-mono); color: var(--faint); text-align: right; }
 .reco .nm { text-align: left; font-weight: 700; font-size: 15px; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .reco .nm:hover { color: var(--accent); }
@@ -2819,9 +2819,9 @@ function loadRecos() {
     const rows = (await r.json()).rows || [];
     if (!rows.length) { box.innerHTML = emptyState('Nobody fits the brief', `No targets${slotSel != null ? ' for ' + formation[slotSel] : ''} under this budget, wage and age cap. Loosen one of them.`); return; }
     box.innerHTML = rows.map((p, i) => `
-      <div class="reco" style="animation-delay:${Math.min(i, 12) * 25}ms">
+      <div class="reco" data-player="${p.uid}" role="button" tabindex="0" aria-label="Quick view of ${esc(p.name)}" style="animation-delay:${Math.min(i, 12) * 25}ms">
         <span class="i">${i + 1}</span>
-        <div style="min-width:0"><button class="nm" data-profile="${p.uid}" title="Full profile"><span class="flag" title="${esc(p.nationality || '')}">${flag(p.nationality_code)}</span> ${esc(p.name)}</button>
+        <div style="min-width:0"><span class="nm"><span class="flag" title="${esc(p.nationality || '')}">${flag(p.nationality_code)}</span> <span class="pname" data-profile="${p.uid}" role="link" tabindex="0" title="Full profile">${esc(p.name)}</span></span>
           <div class="meta">${p.age} yrs · <span class="pos">${esc(p.target_pos || '')}</span> ${esc(p.club_name || 'Free agent')}</div></div>
         <div class="keys">${recoKeys(p)}</div>
         <span class="rep"><span class="up" title="${p.replaces ? `Upgrade over ${esc(p.replaces.name)}` : 'Fills an empty slot'}">${p.upgrade != null ? (p.upgrade >= 0 ? '+' : '') + p.upgrade.toFixed(0) + ' ' + fitWord() : 'new'}</span></span>
@@ -3166,6 +3166,8 @@ $('#esBtn').onclick = () => META && openES();
 document.addEventListener('click', e => {
   const pn = e.target.closest('.pname[data-profile]');  // a player's name, anywhere: straight to his full profile
   if (pn) { e.stopPropagation(); return openProfile(+pn.dataset.profile); }
+  const row = e.target.closest('.reco[data-player]');  // My Club targets: the row opens the quick view
+  if (row && !e.target.closest('button')) return e.shiftKey ? openProfile(+row.dataset.player) : openPlayer(+row.dataset.player);
   const t = e.target.closest('button'); if (!t || t.closest('#es')) return;
   const d = t.dataset;
   if (t.id === 'navBack') history.back();
@@ -3303,6 +3305,7 @@ $('#pal').addEventListener('click', e => { if (e.target === $('#pal')) $('#pal')
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.matches?.('.pname[data-profile]')) { e.preventDefault(); return openProfile(+e.target.dataset.profile); }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('.reco[data-player]')) { e.preventDefault(); return openPlayer(+e.target.dataset.player); }
   if ($$('dialog[open]').length) return;
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openPalette(); return; }
   if (e.key === 'Escape') { closeDrawer(); return; }
