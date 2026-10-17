@@ -889,7 +889,7 @@ async function findSimilar(p) {
   catch { return toast('Could not find similar players. The server may be restarting.', 'bad'); }
   mark();  // before F changes: the entry we leave keeps the old criteria
   const f = F0();
-  f.positions = [groupOf(p)]; f.age_min = Math.max(15, p.age - 3); f.age_max = p.age + 3;
+  f.positions = [groupOf(p)]; f.age_min = F.age_min; f.age_max = F.age_max;  // the user's age range stays as it was
   // Visible, editable floors: Full / Fair play = his 6 best attributes, 3 below his level; Moneyball = his 5 best
   // in-game stats for his position (where he ranks highest among peers), at 80% of his output.
   if (MODE === 'moneyball') {
@@ -1147,7 +1147,7 @@ async function openPlayer(uid) {
           <span class="tag" title="Squad status">${esc((p.contract_squad_status || 'Squad status unknown').replaceAll('_', ' '))}</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
-          <button class="btn" style="justify-content:center" data-similar="${p.uid}" title="${{ full: 'Same position, age ±3, closest on his 6 best attributes', fair: 'Same position, age ±3, closest on his 6 best attributes', moneyball: 'Same position, age ±3, closest on his 5 best in-game stats for his position' }[MODE]}">Find similar players</button>
+          <button class="btn" style="justify-content:center" data-similar="${p.uid}" title="${{ full: 'Same position, closest on his 6 best attributes', fair: 'Same position, closest on his 6 best attributes', moneyball: 'Same position, closest on his 5 best in-game stats for his position' }[MODE]}">Find similar players</button>
           <button class="btn primary" style="justify-content:center" data-offer="${p.uid}">Make an offer →</button>
         </div>
       </section>
