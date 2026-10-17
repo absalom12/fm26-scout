@@ -31,7 +31,7 @@ def test_data_routes_409_loading(scout, client):
 
 
 def test_status_identifies_app(client):
-    assert client.get("/api/status").json() == {"app": "fm26-scout", "status": "empty"}
+    assert client.get("/api/status").json() == {"app": "fm26-scout", "status": "empty", "version": "dev"}
 
 
 def test_saves_lists_and_reports_missing_folder(scout, client, tmp_path, monkeypatch):

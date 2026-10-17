@@ -33,7 +33,7 @@ Get up and running in less than two minutes without touching Python or the comma
    - **Windows:** Extract the `FM26-Scout` folder anywhere (*do not run inside the ZIP archive*) and double-click `FM26-Scout.exe`.
 3. **Scout:** Your default browser will automatically launch `http://127.0.0.1:8765` (the next free port if that one is taken). Select your `.fm` save file from the detected list and allow ~1 minute for parsing.
 
-> ℹ️ **Auto-Exit & Local Security:** The background server automatically closes a few seconds after you close your browser tab. Your save file is read **100% locally** and never leaves your machine.
+> ℹ️ **Auto-Exit & Local Security:** The background server automatically closes a few seconds after you close your browser tab. Your save file is read **100% locally** and never leaves your machine. The only online request is a check, at launch, for a newer version on GitHub (nothing about you or your save is sent).
 
 ---
 
@@ -42,7 +42,7 @@ Get up and running in less than two minutes without touching Python or the comma
 - **Mac:** yes, and nothing to do. The app is made by a registered Apple developer and checked by Apple, so it opens like any other app.
 - **Windows:** yes, but Windows will show a blue **"Windows protected your PC"** screen the first time. That is normal for small free apps from independent developers: Microsoft's seal of approval costs a yearly fee, which I'm not paying for a free project. To continue, click **More info**, then **Run anyway**. You only do this once.
 
-The app runs only on your computer and never sends your save file anywhere. The code is public, so anyone can check it.
+The app runs only on your computer and never sends your save file anywhere. When it starts, it only asks GitHub whether a newer version exists, and shows a link if there is one. The code is public, so anyone can check it.
 
 ---
 

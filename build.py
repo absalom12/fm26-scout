@@ -13,4 +13,5 @@ PyInstaller.__main__.run([
     "--collect-submodules", "uvicorn",
     "--hidden-import", "multipart",
     *sign,
+    *(["--add-data", f"VERSION{sep}."] if os.path.exists("VERSION") else []),  # written by CI from the tag
 ])

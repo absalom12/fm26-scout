@@ -415,6 +415,7 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .cmp .vf { align-self: center; }
 .pkg { margin-top: 10px; font-size: 13px; color: var(--text2); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .r2 { font: 600 11px var(--f-mono); color: var(--faint); border: 1px dashed var(--line2); border-radius: 4px; padding: 0 5px; cursor: help; }
+.update { position: fixed; left: 16px; bottom: 16px; z-index: 50; padding: 10px 14px; border-radius: var(--r); background: var(--accent); color: #07090c; font-weight: 600; font-size: 13px; text-decoration: none; box-shadow: 0 6px 24px rgba(0,0,0,.4); }
 .nfs-banner { display: flex; gap: 10px; align-items: center; padding: 10px 12px; margin-bottom: 14px; border-radius: var(--r); background: var(--bad-soft); color: var(--text2); font-size: 13px; }
 .lens-mini span { font: 600 11px var(--f-mono); margin-left: 6px; }
 .legend-row { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 6px; font-size: 12px; color: var(--muted); }
@@ -1548,6 +1549,25 @@ async function waitReady() {
   location.reload();
 }
 
+// The app's only call outside this computer: ask GitHub, once per launch, whether a newer release exists.
+async function checkUpdate() {
+  try {
+    const { version } = await (await api('/api/status')).json();
+    if (!version || version === 'dev') return;
+    const r = await fetch('https://api.github.com/repos/absalom12/fm26-scout/releases/latest');
+    if (!r.ok) return;
+    const latest = ((await r.json()).tag_name || '').replace(/^v/, '');
+    const n = v => v.split('.').map(x => parseInt(x, 10) || 0);
+    const [a, b] = [n(latest), n(version)];
+    const i = [0, 1, 2].find(k => a[k] !== b[k]);
+    if (i === undefined || a[i] < b[i]) return;
+    const el = document.createElement('a');
+    el.className = 'update'; el.href = 'https://fm26-scout-site.bien-vu-server.workers.dev/'; el.target = '_blank'; el.rel = 'noopener';
+    el.textContent = `FM26 Scout ${latest} is out (you have ${version}). Download it ↗`;
+    document.body.append(el);
+  } catch {}
+}
+
 // ---------- Init & events ----------
 async function init() {
   let r; try { r = await api('/api/meta', undefined, 8); } catch {}
@@ -1730,5 +1750,6 @@ const ping = () => fetch('/api/ping', { method: 'POST' }).catch(() => {});
 ping(); setInterval(ping, 5000);
 addEventListener('pagehide', () => navigator.sendBeacon('/api/bye'));
 init();
+checkUpdate();
 </script>
 </body></html>

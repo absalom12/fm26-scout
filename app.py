@@ -10,6 +10,10 @@ from pydantic import BaseModel
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RES = getattr(sys, "_MEIPASS", HERE)  # bundled read-only resources (static/) when frozen
+try:  # written by the release CI from the git tag; absent when running from source
+    VERSION = open(os.path.join(RES, "VERSION")).read().strip()
+except OSError:
+    VERSION = "dev"
 
 STATUS = "empty"  # empty | loading | ready
 _ingest_lock = threading.Lock()  # one load at a time (startup load or a save load)
@@ -783,7 +787,7 @@ def load_save(q: SaveReq):
 
 @app.get("/api/status")
 def status():
-    return {"app": "fm26-scout", "status": STATUS}
+    return {"app": "fm26-scout", "status": STATUS, "version": VERSION}
 
 
 @app.get("/api/saves")
