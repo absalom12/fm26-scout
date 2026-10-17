@@ -376,36 +376,111 @@ dialog::backdrop { background: rgba(3,6,9,.6); backdrop-filter: blur(2px); }
   *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
 }
 
-/* ---------- Edit search ---------- */
-dialog.es { width: min(1120px, calc(100vw - 32px)); height: min(820px, calc(100vh - 48px)); padding: 0; border: 1px solid var(--line2); border-radius: var(--r-lg); background: var(--panel); color: var(--text); box-shadow: var(--shadow); }
+/* ---------- Edit search: a scouting board. Rail of sections, live criteria strip, pitch, attribute tiles ---------- */
+dialog.es { width: min(1180px, calc(100vw - 32px)); height: min(860px, calc(100vh - 40px)); padding: 0; border: 1px solid var(--line2); border-radius: var(--r-lg); background: var(--panel); color: var(--text); box-shadow: var(--shadow), inset 0 3px 0 color-mix(in srgb, var(--mode) 70%, transparent); overflow: hidden; }
 dialog.es[open] { animation: palIn var(--t) var(--ease); }
+@keyframes esIn { from { transform: scale(.85); opacity: 0; } }
+@keyframes esTick { 40% { transform: translateY(-3px) scale(1.08); } }
 .es-in { display: flex; flex-direction: column; height: 100%; margin: 0; }
-.es-head { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); }
-.es-head h2 { margin: 0; font: 700 22px var(--f-display); text-transform: uppercase; letter-spacing: .03em; }
+.es-head { display: flex; align-items: center; gap: 12px; padding: 12px 18px 10px; }
+.es-head h2 { margin: 0; font: 700 26px/1 var(--f-display); text-transform: uppercase; letter-spacing: .03em; }
 .es-head .icon-btn { margin-left: auto; }
-.es-body { flex: 1; overflow-y: auto; padding: 16px 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-content: start; }
-.es-sec { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; min-width: 0; }
-.es-sec.wide { grid-column: 1 / -1; }
-.es-sec h3 { margin: 0 0 10px; font: 700 13px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; gap: 8px; align-items: baseline; }
-.es-sec h3 small { font: 400 12px var(--f-body); letter-spacing: 0; text-transform: none; color: var(--faint); }
-.es-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 22px; }
-.es-grid h4 { margin: 4px 0; font: 700 11px var(--f-display); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
-.rg { display: grid; grid-template-columns: 1fr 96px 22px; align-items: center; gap: 8px; font-size: 13px; min-height: 26px; }
-.rg span:first-child { color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rg input[type=range] { width: 100%; accent-color: var(--mode); }
-.rg output { font: 700 12px var(--f-mono); text-align: right; color: var(--faint); }
-.rg output.on { color: var(--mode); }
-.es-row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 10px; }
-.es-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
-.es-fields .fld input, .es-fields .fld select { width: 100%; }
-.es-fields .fld { display: grid; gap: 4px; }
-.nat-list { max-height: 180px; overflow-y: auto; margin-top: 6px; border: 1px solid var(--line); border-radius: var(--r-sm); }
-.nat-list label { display: flex; align-items: center; gap: 8px; padding: 4px 8px; font-size: 13px; cursor: pointer; min-height: 30px; }
+.es-strip { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; max-height: 70px; overflow-y: auto; padding: 8px 18px; border-block: 1px solid var(--line); background: var(--bg2); font-size: 12px; min-height: 43px; }
+.es-strip > .muted { font-weight: 600; margin-right: 4px; }
+.es-strip .crit-chip { animation: esIn var(--t) var(--ease); }
+.es-strip .crit-chip button { min-width: 22px; height: 22px; border-radius: 50%; }
+.es-main { flex: 1; min-height: 0; display: grid; grid-template-columns: 178px 1fr; }
+.es-rail { border-right: 1px solid var(--line); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; background: var(--bg2); }
+.es-rail button { display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border-radius: var(--r); text-align: left; color: var(--muted); font: 700 15px var(--f-display); letter-spacing: .06em; text-transform: uppercase; position: relative; transition: background var(--t-fast), color var(--t-fast); }
+.es-rail button i { font: 500 10px var(--f-mono); font-style: normal; color: var(--faint); }
+.es-rail button:hover { background: var(--raise); color: var(--text); }
+.es-rail button[aria-current="true"] { color: var(--text); background: color-mix(in srgb, var(--mode) 12%, transparent); }
+.es-rail button[aria-current="true"]::before { content: ''; position: absolute; left: -10px; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0; background: var(--mode); }
+.es-rail b { min-width: 22px; height: 20px; padding: 0 6px; border-radius: var(--r-pill); display: grid; place-items: center; font: 700 11px var(--f-mono); background: var(--mode); color: var(--accent-ink); }
+.es-rail b:empty { background: none; }
+.es-rail p { margin: auto 0 0; padding: 10px; font-size: 12px; color: var(--faint); line-height: 1.45; }
+.es-body { position: relative; overflow-y: auto; padding: 4px 22px 40px; scroll-padding-top: 8px; }
+.es-sec { padding: 18px 0 22px; border-bottom: 1px dashed var(--line); min-width: 0; }
+.es-sec:last-child { border-bottom: 0; min-height: 100%; }
+.es-sec h3 { margin: 0 0 14px; font: 700 21px/1 var(--f-display); letter-spacing: .05em; text-transform: uppercase; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; outline: none; }
+.es-sec h3::before { content: attr(data-n); font: 500 11px var(--f-mono); color: var(--mode); letter-spacing: 0; }
+.es-sec h3 small { font: 400 13px var(--f-body); letter-spacing: 0; text-transform: none; color: var(--muted); }
+.es-tools { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; font: 500 12px var(--f-body); letter-spacing: 0; text-transform: none; color: var(--faint); }
+.es-sub { margin: 16px 0 8px; font: 700 12px var(--f-display); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); display: flex; gap: 8px; align-items: baseline; }
+.es-sub small { font: 400 12px var(--f-body); letter-spacing: 0; text-transform: none; }
+.es-gen { display: grid; grid-template-columns: minmax(280px, 360px) 1fr; gap: 26px; align-items: start; }
+/* mini pitch, attacking right */
+.es-pitch { position: relative; aspect-ratio: 105 / 68; border-radius: var(--r); overflow: hidden; background: repeating-linear-gradient(90deg, var(--pitch) 0 10%, var(--pitch2) 10% 20%); box-shadow: inset 0 0 0 1px #1d3d2a, inset 0 0 40px rgba(0,0,0,.45); }
+.es-pitch > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pz { position: absolute; transform: translate(-50%, -50%); min-width: 44px; height: 32px; padding: 0 8px; border-radius: var(--r-pill); font: 700 13px var(--f-display); letter-spacing: .06em; color: var(--text2); background: rgba(11,15,19,.72); border: 1px solid rgba(255,255,255,.18); transition: background var(--t-fast), color var(--t-fast), transform var(--t) var(--ease), box-shadow var(--t); }
+.pz:hover { color: var(--text); border-color: var(--mode); }
+.pz[aria-pressed="true"] { background: var(--mode); border-color: var(--mode); color: var(--accent-ink); box-shadow: 0 0 0 6px color-mix(in srgb, var(--mode) 22%, transparent); transform: translate(-50%, -50%) scale(1.06); }
+.es-note { margin-top: 6px; font-size: 12px; color: var(--faint); }
+/* dual-thumb range: two native ranges stacked on one track, each keyboard operable */
+.dual { display: grid; gap: 4px; margin-bottom: 14px; }
+.dual-h { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--text2); }
+.dual-h output { font: 700 13px var(--f-mono); color: var(--faint); }
+.dual-h output.on { color: var(--mode); }
+.dual-t { position: relative; height: 30px; }
+.dual-t::before, .dual-t::after { content: ''; position: absolute; top: 13px; height: 4px; border-radius: 2px; pointer-events: none; }
+.dual-t::before { left: 0; right: 0; background: var(--line2); }
+.dual-t::after { left: var(--lo); right: calc(100% - var(--hi)); background: var(--mode); }
+.dual-t input { position: absolute; inset: 0; width: 100%; height: 30px; margin: 0; background: none; pointer-events: none; -webkit-appearance: none; appearance: none; }
+.dual-t input::-webkit-slider-runnable-track { background: none; height: 30px; }
+.dual-t input::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; width: 22px; height: 22px; margin-top: 4px; border-radius: 50%; background: var(--text); border: 4px solid var(--mode); cursor: grab; transition: transform var(--t-fast); }
+.dual-t input::-moz-range-thumb { pointer-events: auto; width: 14px; height: 14px; border-radius: 50%; background: var(--text); border: 4px solid var(--mode); cursor: grab; }
+.dual-t input:active::-webkit-slider-thumb { transform: scale(1.15); cursor: grabbing; }
+.dual-t input:focus-visible { outline: none; }
+.dual-t input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--panel), 0 0 0 5px var(--accent); }
+.dual-t input:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px var(--panel), 0 0 0 5px var(--accent); }
+.dual-s { display: flex; justify-content: space-between; font: 500 10px var(--f-mono); color: var(--faint); }
+/* fields */
+.es-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 12px 16px; }
+.es-fields .fld input, .es-fields .fld select { width: 100%; height: 36px; }
+.es-fields .fld { display: grid; gap: 5px; align-content: start; font-size: 13px; color: var(--text2); }
+.es-sec input.in:not(:placeholder-shown), .es-sec select.in:has(option:checked:not([value=""])) { border-color: color-mix(in srgb, var(--mode) 65%, transparent); background: color-mix(in srgb, var(--mode) 6%, var(--bg)); }
+.es-fields .fld:has(.es-pair) { grid-column: span 2; }
+.es-pair { display: grid; grid-template-columns: 1fr 18px 1fr; align-items: center; gap: 4px; }
+.es-pair > span { color: var(--faint); font: 500 12px var(--f-mono); text-align: center; }
+.es-row { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; margin-top: 14px; }
+.es-row .check { min-height: 32px; }
+.nat-wrap { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 18px; align-items: start; }
+.nat-list { max-height: 230px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-sm); display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.nat-list label { display: flex; align-items: center; gap: 8px; padding: 4px 10px; font-size: 13px; cursor: pointer; min-height: 36px; }
 .nat-list label:hover { background: var(--raise); }
+.nat-list label:has(:checked) { background: color-mix(in srgb, var(--mode) 12%, transparent); color: var(--text); }
 .nat-list .n { margin-left: auto; font: 500 11px var(--f-mono); color: var(--faint); }
-.es-foot { display: flex; align-items: center; gap: 10px; padding: 10px 18px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+/* attribute tiles: the tile IS the slider (a native range stretched over it, so arrows / Home / End / Page keys work) */
+.es-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 6px; }
+.rg { --c: var(--line2); position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; height: 50px; padding: 7px 9px; border-radius: var(--r-sm); background: var(--bg); border: 1px solid var(--line); overflow: hidden; font-size: 12px; transition: border-color var(--t-fast); }
+.rg::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transform-origin: left; transform: scaleX(var(--v, 0)); background: linear-gradient(90deg, color-mix(in srgb, var(--c) 4%, transparent), color-mix(in srgb, var(--c) 26%, transparent)); transition: transform var(--t-fast) var(--ease); pointer-events: none; }
+.rg::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: repeating-linear-gradient(90deg, transparent 0 calc(25% - 1px), var(--line2) calc(25% - 1px) 25%); pointer-events: none; }
+.rg span { position: relative; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; pointer-events: none; }
+.rg output { position: relative; font: 700 19px/1 var(--f-mono); color: var(--faint); pointer-events: none; }
+.rg.on { border-color: color-mix(in srgb, var(--c) 60%, transparent); }
+.rg.on output { color: var(--c); }
+.rg.on span { color: var(--text); }
+.rg[data-t="1"] { --c: var(--bad); } .rg[data-t="2"] { --c: var(--warn); } .rg[data-t="3"] { --c: var(--ok); } .rg[data-t="4"] { --c: var(--good); }
+.rg.top output { animation: esTick .4s var(--ease); text-shadow: 0 0 14px color-mix(in srgb, var(--gold) 70%, transparent); color: var(--gold); }
+.rg input[type=range] { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
+.rg:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.rg:hover { border-color: var(--line2); }
+.es-roles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0 14px; }
+.es-roles .es-tiles { grid-template-columns: 1fr; }
+.es-legend { display: inline-flex; gap: 10px; }
+.es-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
+/* footer */
+.es-foot { display: flex; align-items: center; gap: 10px; padding: 10px 18px; border-top: 1px solid var(--line); flex-wrap: wrap; background: var(--bg2); }
 .es-save { display: inline-flex; gap: 6px; }
-.es-save .in { width: 170px; }
+.es-save .in { width: 170px; height: 36px; }
+#esLive { display: inline-flex; align-items: baseline; gap: 6px; font: 500 13px var(--f-body); color: var(--muted); }
+#esLive b { font: 700 28px/1 var(--f-display); color: var(--mode); letter-spacing: .02em; display: inline-block; }
+#esLive.tick b { animation: esTick .3s var(--ease); }
+#esLive.zero b { color: var(--warn); }
+.dual:not(:has(output.on)) .dual-t::after { background: var(--faint); }
+@media (max-width: 1180px) { .es-main { grid-template-columns: 150px 1fr; } .es-gen { grid-template-columns: minmax(250px, 320px) 1fr; } }
+@media (max-width: 900px) { .es-gen, .nat-wrap { grid-template-columns: 1fr; } .es-pitch { max-width: 420px; } }
+@media (prefers-reduced-motion: reduce) { .pz[aria-pressed="true"] { transform: translate(-50%, -50%); } }
 
 /* ---------- Offers ---------- */
 .offers { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(340px, 400px) 1fr; }
@@ -457,7 +532,7 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 @media (max-width: 1600px) { .nav kbd { display: none; } }
 @media (max-width: 1320px) { .top { gap: 10px; } #palBtn kbd, .nav kbd { display: none; } .nav button { white-space: nowrap; } .search { min-width: 130px; } }  /* room for the Fair prices toggle */
 @media (max-width: 1240px) { .brand span { display: none; } }  /* the logo alone leaves room for the back / forward arrows */
-@media (max-width: 1180px) { .es-body { grid-template-columns: 1fr 1fr; } .es-grid { grid-template-columns: 1fr 1fr; } .offers { grid-template-columns: 1fr; } }
+@media (max-width: 1180px) { .offers { grid-template-columns: 1fr; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js"></script>
 </head>
@@ -567,12 +642,16 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 <dialog id="es" class="es" aria-labelledby="esTitle">
   <form method="dialog" class="es-in" id="esForm">
     <header class="es-head"><h2 id="esTitle">Edit search</h2><span class="muted" id="esMode"></span><button type="button" class="icon-btn" data-es-close aria-label="Close">×</button></header>
-    <div class="es-body" id="esBody"></div>
+    <div class="es-strip" id="esStrip" aria-label="Active criteria"></div>
+    <div class="es-main">
+      <nav class="es-rail" id="esRail" aria-label="Search sections"></nav>
+      <div class="es-body" id="esBody"></div>
+    </div>
     <footer class="es-foot">
       <div id="esSaved" class="chips"></div>
       <span class="es-save"><input id="esName" class="in" placeholder="Name this search" aria-label="Search name"><button type="button" class="btn" id="esSave">Save</button></span>
       <span class="spacer"></span>
-      <span id="esLive" class="muted mono" aria-live="polite"></span>
+      <span id="esLive" aria-live="polite"></span>
       <button type="button" class="link" id="esClear">Clear all</button>
       <button type="button" class="btn" data-es-close>Cancel</button>
       <button type="button" class="btn primary" id="esApply">Apply</button>
@@ -1267,83 +1346,130 @@ const STATS_F = [['s_minutes', 'Minutes'], ['s_apps', 'Appearances'], ['s_avg_ra
   ['s_goals_p90', 'Goals / 90'], ['s_xg_p90', 'xG / 90'], ['s_assists_p90', 'Assists / 90'], ['s_key_passes_p90', 'Key passes / 90'],
   ['s_def_actions_p90', 'Def. actions / 90'], ...P90_EXTRA, ['s_pass_pct', 'Pass %'], ['s_tackle_pct', 'Tackle %'], ['s_header_pct', 'Header %'],
   ['s_player_of_the_match', 'Player of the match'], ['s_clean_sheets', 'Clean sheets'], ['s_expected_goals_prevented', 'xG prevented (GK)']];
-const rangeRow = (col, name, max = 20, isMax = false) => { const v = (isMax ? D.max : D.min)[col];
-  return `<label class="rg"><span title="${esc(name)}">${esc(name)}</span><input type="range" min="0" max="${max}" step="1" value="${v ?? (isMax ? max : 0)}" ${isMax ? 'data-rmax' : 'data-rmin'}="${col}" aria-label="${esc(name)} ${isMax ? 'maximum' : 'minimum'}"><output class="${v != null ? 'on' : ''}">${v ?? '–'}</output></label>`; };
+const HID_A = ['attributes_consistency', 'attributes_important_matches', 'attributes_versatility', 'attributes_injury_proneness', 'attributes_dirtiness'];
+const tierOf = (v, max, bad) => tier(Math.max(1, Math.round(v * 20 / max)), bad).slice(1);
+// A tile that IS a slider: a native range stretched over it (arrows, Home = any, End = max). Fill + tier colour show the minimum (or maximum).
+const rangeRow = (col, name, max = 20, isMax = false) => { const v = (isMax ? D.max : D.min)[col], on = v != null, x = on ? v : isMax ? max : 0;
+  return `<label class="rg${on ? ' on' : ''}${on && !isMax && v >= max ? ' top' : ''}" data-t="${on ? tierOf(v, max, isMax) : ''}" style="--v:${x / max}"><span title="${esc(name)}">${esc(name)}</span><output>${on ? v : '–'}</output><input type="range" min="0" max="${max}" step="1" value="${x}" ${isMax ? 'data-rmax' : 'data-rmin'}="${col}" aria-label="${esc(name)} ${isMax ? 'maximum' : 'minimum'}" aria-valuetext="${on ? v : 'any'}"></label>`; };
+// Dual-thumb ranges: [low key, high key, scale min, scale max, unit]; a thumb at the end of the scale means "any".
+const DUAL = { age: ['age_min', 'age_max', 14, 45, ''], height: ['min.height_cm', 'max.height_cm', 150, 210, ' cm'] };
+const dget = k => { const [a, b] = k.split('.'); return b ? D[a][b] : D[a]; };
+const dset = (k, v) => { const [a, b] = k.split('.'); if (!b) D[a] = v; else if (v == null) delete D[a][b]; else D[a][b] = v; };
+const dualTxt = (lo, hi, u) => lo != null && hi != null ? `${lo}–${hi}${u}` : lo != null ? `${lo}${u}+` : hi != null ? `≤ ${hi}${u}` : 'Any';
+const dualPct = (id, v) => { const [, , mn, mx] = DUAL[id]; return (Math.min(mx, Math.max(mn, v)) - mn) / (mx - mn) * 100 + '%'; };
+function dual(id, name) { const [lk, hk, mn, mx, u] = DUAL[id], lo = dget(lk), hi = dget(hk);
+  return `<div class="dual"><div class="dual-h"><span>${name}</span><output class="${lo != null || hi != null ? 'on' : ''}">${dualTxt(lo, hi, u)}</output></div>
+    <div class="dual-t" style="--lo:${dualPct(id, lo ?? mn)};--hi:${dualPct(id, hi ?? mx)}">
+      <input type="range" min="${mn}" max="${mx}" value="${lo ?? mn}" data-dlo="${id}" aria-label="${name} minimum" aria-valuetext="${lo ?? 'any'}" style="z-index:${(lo ?? mn) > (mn + mx) / 2 ? 3 : 1}">
+      <input type="range" min="${mn}" max="${mx}" value="${hi ?? mx}" data-dhi="${id}" aria-label="${name} maximum" aria-valuetext="${hi ?? 'any'}" style="z-index:2"></div>
+    <div class="dual-s" aria-hidden="true"><span>${mn}${u}</span><span>${mx}${u}</span></div></div>`; }
+// Position groups on a pitch attacking right; FB and W get a mirrored (mouse-only) twin on the other flank.
+const PZ = { GK: [[7, 50]], CB: [[21, 50]], FB: [[25, 14], [25, 86]], DM: [[37, 50]], CM: [[52, 50]], W: [[70, 14], [70, 86]], AM: [[68, 50]], ST: [[87, 50]] };
+const PZN = { GK: 'Goalkeeper', CB: 'Centre-back', FB: 'Full-back / wing-back', DM: 'Defensive midfielder', CM: 'Central midfielder', W: 'Winger', AM: 'Attacking midfielder', ST: 'Striker' };
+const PITCH_SVG = `<svg viewBox="0 0 105 68" preserveAspectRatio="none" fill="none" stroke="rgba(255,255,255,.18)" stroke-width=".4" aria-hidden="true"><rect x="1.5" y="1.5" width="102" height="65" rx=".8"/><path d="M52.5 1.5v65"/><circle cx="52.5" cy="34" r="9.15"/><rect x="1.5" y="13.85" width="16.5" height="40.3"/><rect x="1.5" y="24.85" width="5.5" height="18.3"/><rect x="87" y="13.85" width="16.5" height="40.3"/><rect x="98" y="24.85" width="5.5" height="18.3"/><path d="M18 27.5a8 8 0 0 1 0 13M87 27.5a8 8 0 0 0 0 13"/></svg>`;
+const ES_SECS = [['gen', 'General'], ['nat', 'Nationality'], ['money', 'Contract'], ['attr', 'Attributes'], ['stats', 'Statistics'], ['roles', 'Roles'], ['hidden', 'Hidden']];
+const esSecs = () => ES_SECS.filter(([k]) => MODE === 'moneyball' ? !['attr', 'roles', 'hidden'].includes(k) : k !== 'hidden' || MODE === 'full');
+function esCounts() {
+  const m = D.min, x = D.max, has = (o, k) => o[k] != null && !hid(k), nn = (...v) => v.filter(z => z != null).length, keys = o => Object.keys(o).filter(k => !hid(k));
+  return { gen: (D.age_min != null || D.age_max != null) + D.positions.length + has(m, 'height_cm') + has(x, 'height_cm'), nat: D.nations.length,
+    money: nn(D.value_max, D.wage_max, D.months_max) + ['transfer_value', 'contract_wage', 'months_left', 'deal_score'].filter(k => has(m, k)).length + !!D.squad + !!D.club_country + !!D.free_agent + !!D.on_loan,
+    attr: keys(m).filter(k => k.startsWith('attributes_') && !HID_A.includes(k)).length, stats: STATS_F.filter(([c]) => has(m, c)).length,
+    roles: keys(m).filter(k => k.startsWith('role_')).length,
+    hidden: nn(D.ca_min, D.pa_min) + !!D.risks + [...keys(m), ...keys(x)].filter(k => HID_A.includes(k) || k.startsWith('personality_')).length };
+}
+const sec = (k, n, title, sub, body, tools = '') => `<section class="es-sec" data-sec="${k}" aria-labelledby="esh-${k}"><h3 id="esh-${k}" tabindex="-1" data-n="${String(n).padStart(2, '0')}">${title}${sub ? ` <small>${sub}</small>` : ''}${tools ? `<span class="es-tools">${tools}</span>` : ''}</h3>${body}</section>`;
 function renderES() {
   const cols = new Set(META.columns), noAttr = MODE === 'moneyball', full = MODE === 'full';
   const g = $('#gender [aria-pressed="true"]').dataset.g;
   const natQ = ($('#esNatQ')?.value || '').toLowerCase();
   const nats = (META.nations || []).filter(n => !natQ || n.name.toLowerCase().includes(natQ)).slice(0, natQ ? 60 : 30);
-  const nf = (k, ph) => `<input class="in" data-esf="${k}" type="text" inputmode="decimal" value="${D[k] ?? ''}" placeholder="${ph}">`;
+  const nf = (k, ph, al = '') => `<input class="in" data-esf="${k}" type="text" inputmode="decimal" value="${D[k] ?? ''}" placeholder="${ph}"${al ? ` aria-label="${al}"` : ''}>`;
+  const mi = (c, ph, al, money) => `<input class="in" ${money ? 'data-esminm' : 'data-esmin'}="${c}" type="${money ? 'text' : 'number'}" ${money ? 'inputmode="decimal"' : 'min="0" step="any"'} value="${D.min[c] ?? ''}" placeholder="${ph}" aria-label="${al}">`;
+  const pair = (name, lo, hi) => `<div class="fld"><span>${name}</span><div class="es-pair">${lo}<span>to</span>${hi}</div></div>`;
+  const vis = c => cols.has(c) && !hid(c);
+  const statIn = ([c, n]) => `<label class="fld">${n} <input class="in" data-esmin="${c}" type="number" step="any" min="0" value="${D.min[c] ?? ''}" placeholder="any"></label>`;
+  const stats = STATS_F.filter(([c]) => vis(c)), sgrp = [['Volume & form', stats.filter(([c]) => !/_p90|_pct/.test(c))], ['Per 90 minutes', stats.filter(([c]) => c.includes('_p90'))], ['Success rates', stats.filter(([c]) => c.includes('_pct'))]];
+  const roles = Object.entries(META.roles).filter(([r]) => cols.has('role_' + r)), rgrp = [...new Set(roles.map(([, gp]) => gp))];
+  const unknownPos = META.positions.filter(p => !PZ[p]);
+  const n = {}; esSecs().forEach(([k], i) => n[k] = i + 1);
   $('#esMode').innerHTML = `<span class="mode-chip">${MODES[MODE]}</span>${noAttr ? 'Attributes are off in Moneyball' : full ? '' : 'Hidden info is off in Fair play'}`;
-  $('#esBody').innerHTML = `
-    <section class="es-sec"><h3>General</h3>
-      <div class="es-fields">
-        <label class="fld">Age min ${nf('age_min', 'any')}</label><label class="fld">Age max ${nf('age_max', 'any')}</label>
-        <label class="fld">Height min <span class="muted">cm</span><input class="in" data-esmin="height_cm" type="number" min="140" max="220" step="1" value="${D.min.height_cm ?? ''}" placeholder="any"></label><label class="fld">Height max <span class="muted">cm</span><input class="in" data-esmax="height_cm" type="number" min="140" max="220" step="1" value="${D.max.height_cm ?? ''}" placeholder="any"></label>
-      </div>
-      <div class="fld" style="margin-top:10px">Positions</div>
-      <div class="chips" style="margin-top:4px">${META.positions.map(p => `<button type="button" class="chip" data-espos="${p}" aria-pressed="${D.positions.includes(p)}">${p}</button>`).join('')}</div>
-      <div class="fld" style="margin-top:10px">Gender</div>
-      <div class="seg" style="margin-top:4px">${[['', 'All'], ['Men', 'Men'], ['Women', 'Women']].map(([v, l]) => `<button type="button" data-esg="${v}" aria-pressed="${(D.gender ?? g) === v}">${l}</button>`).join('')}</div>
-    </section>
-    <section class="es-sec"><h3>Nationality <small>first or second nationality</small></h3>
-      <div class="chips">${D.nations.map(n => `<span class="crit-chip"><span class="flag">${flag(natCode(n))}</span>${esc(n)}<button type="button" data-esnat-rm="${esc(n)}" aria-label="Remove ${esc(n)}">×</button></span>`).join('') || '<span class="muted" style="font-size:13px">Any nation</span>'}</div>
-      <input id="esNatQ" class="in" placeholder="Find a nation…" style="width:100%;margin-top:8px" value="${esc($('#esNatQ')?.value || '')}" aria-label="Find a nation">
-      <div class="nat-list">${nats.map(n => `<label><input type="checkbox" data-esnat="${esc(n.name)}" ${D.nations.includes(n.name) ? 'checked' : ''}><span class="flag">${flag(n.code)}</span>${esc(n.name)}<span class="n">${n.players.toLocaleString()}</span></label>`).join('')}</div>
-    </section>
-    <section class="es-sec"><h3>Contract &amp; finance</h3>
-      <div class="es-fields">
-        <label class="fld">Value ≤ ${nf('value_max', 'e.g. 2.5M')}</label><label class="fld">Wage ≤ /w ${nf('wage_max', 'e.g. 15k')}</label>
-        <label class="fld">Value ≥ <input class="in" data-esminm="transfer_value" type="text" inputmode="decimal" value="${D.min.transfer_value ?? ''}" placeholder="e.g. 500k"></label>
-        <label class="fld">Wage ≥ /w <input class="in" data-esminm="contract_wage" type="text" inputmode="decimal" value="${D.min.contract_wage ?? ''}" placeholder="e.g. 5k"></label>
-        <label class="fld">Months left ≤ ${nf('months_max', 'any')}</label>
-        <label class="fld">Months left ≥ <input class="in" data-esmin="months_left" type="number" min="0" value="${D.min.months_left ?? ''}" placeholder="any"></label>
-        ${FAIR ? `<label class="fld">Deal ≥ <span class="muted">% under fair</span><input class="in" data-esmin="deal_score" type="number" step="1" value="${D.min.deal_score ?? ''}" placeholder="any"></label>` : ''}
-        <label class="fld">Club country <select class="in" data-esf="club_country"><option value="">Any</option>${(META.nations || []).map(n => n.name).sort().map(n => `<option ${D.club_country === n ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+  $('#esRail').innerHTML = esSecs().map(([k, l]) => `<button type="button" data-esgo="${k}" aria-current="false"><i aria-hidden="true">${String(n[k]).padStart(2, '0')}</i>${l}<b></b></button>`).join('')
+    + `<p>Every criterion must match. The count below updates as you go.</p>`;
+  $('#esBody').innerHTML = [
+    sec('gen', n.gen, 'General', 'who and where on the pitch', `<div class="es-gen">
+      <div><div class="es-pitch" role="group" aria-label="Positions">${PITCH_SVG}${META.positions.filter(p => PZ[p]).map(p => PZ[p].map(([x, y], j) =>
+        `<button type="button" class="pz" data-espos="${p}" aria-pressed="${D.positions.includes(p)}" style="left:${x}%;top:${y}%" title="${PZN[p]}"${j ? ' tabindex="-1" aria-hidden="true"' : ` aria-label="${p}, ${PZN[p]}"`}>${p}</button>`).join('')).join('')}</div>
+        ${unknownPos.length ? `<div class="chips" style="margin-top:8px">${unknownPos.map(p => `<button type="button" class="chip" data-espos="${p}" aria-pressed="${D.positions.includes(p)}">${p}</button>`).join('')}</div>` : ''}
+        <div class="es-note">Pick several: a player qualifies if he can play any of them.</div></div>
+      <div>${dual('age', 'Age')}${dual('height', 'Height')}
+        <div class="fld" style="margin-bottom:6px">Gender</div>
+        <div class="seg">${[['', 'All'], ['Men', 'Men'], ['Women', 'Women']].map(([v, l]) => `<button type="button" data-esg="${v}" aria-pressed="${(D.gender ?? g) === v}">${l}</button>`).join('')}</div></div></div>`),
+    sec('nat', n.nat, 'Nationality', 'first or second nationality', `<div class="nat-wrap">
+      <div><input id="esNatQ" class="in" placeholder="Find a nation…" style="width:100%;height:36px" value="${esc($('#esNatQ')?.value || '')}" aria-label="Find a nation">
+        <div class="chips" style="margin-top:10px">${D.nations.map(x => `<span class="crit-chip"><span class="flag">${flag(natCode(x))}</span>${esc(x)}<button type="button" data-esnat-rm="${esc(x)}" aria-label="Remove ${esc(x)}">×</button></span>`).join('') || '<span class="muted" style="font-size:13px">Any nation. Tick one or more on the right.</span>'}</div></div>
+      <div class="nat-list">${nats.map(x => `<label><input type="checkbox" data-esnat="${esc(x.name)}" ${D.nations.includes(x.name) ? 'checked' : ''}><span class="flag">${flag(x.code)}</span>${esc(x.name)}<span class="n">${x.players.toLocaleString()}</span></label>`).join('') || `<p class="muted" style="padding:10px;margin:0;font-size:13px">No nation called “${esc(natQ)}”.</p>`}</div></div>`),
+    sec('money', n.money, 'Contract &amp; finance', 'money typed as 500k, 2.5M…', `<div class="es-fields">
+        ${pair('Transfer value', mi('transfer_value', 'from', 'Value at least', true), nf('value_max', 'to', 'Value at most'))}
+        ${pair('Wage per week', mi('contract_wage', 'from', 'Wage at least', true), nf('wage_max', 'to', 'Wage at most'))}
+        ${pair('Months left on contract', mi('months_left', 'from', 'Months left at least'), nf('months_max', 'to', 'Months left at most'))}
+        ${FAIR ? `<label class="fld">Deal ≥ <span class="muted">% under fair price</span><input class="in" data-esmin="deal_score" type="number" step="1" value="${D.min.deal_score ?? ''}" placeholder="any"></label>` : ''}
         <label class="fld">Squad status <select class="in" data-esf="squad"><option value="">Any</option>${SQUAD.map(s => `<option value="${s}" ${D.squad === s ? 'selected' : ''}>${label(s)}</option>`).join('')}</select></label>
+        <label class="fld">Club country <select class="in" data-esf="club_country"><option value="">Any</option>${(META.nations || []).map(x => x.name).sort().map(x => `<option ${D.club_country === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></label>
       </div>
-      <div class="es-row" style="margin-top:10px"><label class="check"><input type="checkbox" data-esb="free_agent" ${D.free_agent ? 'checked' : ''}> Free agents only</label>
-        <label class="check"><input type="checkbox" data-esb="on_loan" ${D.on_loan ? 'checked' : ''}> On loan only</label></div>
-    </section>
-    ${noAttr ? '' : `<section class="es-sec wide"><h3>Attributes <small>minimum values · drag to 0 to clear</small>
-      <span style="margin-left:auto;display:inline-flex;gap:6px" role="group" aria-label="Shift every set attribute minimum">
+      <div class="es-row"><label class="check"><input type="checkbox" data-esb="free_agent" ${D.free_agent ? 'checked' : ''}> Free agents only</label>
+        <label class="check"><input type="checkbox" data-esb="on_loan" ${D.on_loan ? 'checked' : ''}> On loan only</label></div>`),
+    noAttr ? '' : sec('attr', n.attr, 'Attributes', 'drag or use the arrow keys on a tile to set a minimum; Home clears it', [['Technical', ATTR.technical], ['Mental', ATTR.mental], ['Physical', ATTR.physical], ['Goalkeeping', ATTR.goalkeeping]].map(([t, list]) => {
+        const l = list.filter(a => vis('attributes_' + a)); return l.length ? `<div class="es-sub">${t}</div><div class="es-tiles">${l.map(a => rangeRow('attributes_' + a, label('attributes_' + a))).join('')}</div>` : ''; }).join(''),
+      `<span class="es-legend" aria-hidden="true">${[['1', '1–5'], ['2', '6–10'], ['3', '11–15'], ['4', '16–20']].map(([t, l]) => `<span><i style="background:var(--${['bad', 'warn', 'ok', 'good'][t - 1]})"></i>${l}</span>`).join('')}</span>
+       <span role="group" aria-label="Shift every set attribute minimum" style="display:inline-flex;gap:6px">
         <button type="button" class="btn" data-esshift="-1" title="Lower every attribute minimum you set by 1">−1</button>
-        <button type="button" class="btn" data-esshift="1" title="Raise every attribute minimum you set by 1">+1</button></span></h3>
-      <div class="es-grid">${[['Technical', ATTR.technical], ['Mental', ATTR.mental], ['Physical', ATTR.physical], ['Goalkeeping', ATTR.goalkeeping]].map(([t, list]) =>
-        `<div><h4>${t}</h4>${list.filter(a => cols.has('attributes_' + a) && !hid('attributes_' + a)).map(a => rangeRow('attributes_' + a, label('attributes_' + a))).join('')}</div>`).join('')}</div>
-    </section>`}
-    <section class="es-sec ${noAttr ? 'wide' : ''}"><h3>Statistics <small>this season, minimums</small></h3>
-      <div class="es-fields">${STATS_F.filter(([c]) => cols.has(c) && !hid(c)).map(([c, n]) => `<label class="fld">${n} <input class="in" data-esmin="${c}" type="number" step="any" min="0" value="${D.min[c] ?? ''}" placeholder="any"></label>`).join('')}</div>
-    </section>
-    ${noAttr ? '' : `<section class="es-sec"><h3>Roles <small>minimum role score 0–100</small></h3>
-      <div class="es-fields">${Object.entries(META.roles).filter(([r]) => cols.has('role_' + r)).map(([r, grp]) => `<label class="fld">${label('role_' + r)} <span class="muted">${grp}</span><input class="in" data-esmin="role_${r}" type="number" min="0" max="100" value="${D.min['role_' + r] ?? ''}" placeholder="any"></label>`).join('')}</div>
-    </section>`}
-    ${full ? `<section class="es-sec"><h3>Hidden &amp; ability <small>Full mode only</small></h3>
-      <div class="es-fields"><label class="fld">CA ≥ ${nf('ca_min', 'any')}</label><label class="fld">PA ≥ ${nf('pa_min', 'any')}</label></div>
-      <label class="check" style="margin:10px 0"><input type="checkbox" data-esb="risks" ${D.risks ? 'checked' : ''}> Hide hidden-stat risks</label>
-      ${rangeRow('attributes_consistency', 'Consistency ≥')}${rangeRow('attributes_important_matches', 'Important matches ≥')}${rangeRow('attributes_versatility', 'Versatility ≥')}
-      ${rangeRow('attributes_injury_proneness', 'Injury proneness ≤', 20, true)}${rangeRow('attributes_dirtiness', 'Dirtiness ≤', 20, true)}
-      <div class="fld" style="margin-top:10px">Personality <span class="muted">pick several, all must match</span></div>
-      <div class="chips" style="margin:4px 0 10px">${PCH.map(([k, n]) => `<button type="button" class="chip" data-espers="${k}" aria-pressed="${persOn(D, k)}" title="${k === 'controversy' ? 'Controversy ≤ 5' : label('personality_' + k) + ' ≥ 15'} (scale 1-20)">${n}</button>`).join('')}</div>
-      ${rangeRow('personality_professionalism', 'Professionalism ≥')}${rangeRow('personality_ambition', 'Ambition ≥')}${rangeRow('personality_pressure', 'Pressure ≥')}
-      ${rangeRow('personality_controversy', 'Controversy ≤', 20, true)}
-    </section>` : ''}`;
+        <button type="button" class="btn" data-esshift="1" title="Raise every attribute minimum you set by 1">+1</button></span>`),
+    sec('stats', n.stats, 'Statistics', 'this season, minimums', sgrp.filter(([, l]) => l.length).map(([t, l]) => `<div class="es-sub">${t}</div><div class="es-fields">${l.map(statIn).join('')}</div>`).join('')),
+    noAttr ? '' : sec('roles', n.roles, 'Roles', 'minimum role score 0–100, grouped by position', `<div class="es-roles">${rgrp.map(gp => `<div><div class="es-sub">${gp} <small>${PZN[gp] || ''}</small></div><div class="es-tiles">${roles.filter(([, x]) => x === gp).map(([r]) => rangeRow('role_' + r, label('role_' + r), 100)).join('')}</div></div>`).join('')}</div>`),
+    full ? sec('hidden', n.hidden, 'Hidden &amp; ability', 'Full mode only', `<div class="es-fields"><label class="fld">Current ability ≥ ${nf('ca_min', 'any')}</label><label class="fld">Potential ability ≥ ${nf('pa_min', 'any')}</label></div>
+      <div class="es-row"><label class="check"><input type="checkbox" data-esb="risks" ${D.risks ? 'checked' : ''}> Hide hidden-stat risks</label></div>
+      <div class="es-sub">Hidden attributes <small>the last two are maximums: lower is safer</small></div>
+      <div class="es-tiles">${rangeRow('attributes_consistency', 'Consistency ≥')}${rangeRow('attributes_important_matches', 'Important matches ≥')}${rangeRow('attributes_versatility', 'Versatility ≥')}
+      ${rangeRow('attributes_injury_proneness', 'Injury proneness ≤', 20, true)}${rangeRow('attributes_dirtiness', 'Dirtiness ≤', 20, true)}</div>
+      <div class="es-sub">Personality <small>pick several, all must match</small></div>
+      <div class="chips" style="margin-bottom:10px">${PCH.map(([k, x]) => `<button type="button" class="chip" data-espers="${k}" aria-pressed="${persOn(D, k)}" title="${k === 'controversy' ? 'Controversy ≤ 5' : label('personality_' + k) + ' ≥ 15'} (scale 1-20)">${x}</button>`).join('')}</div>
+      <div class="es-tiles">${rangeRow('personality_professionalism', 'Professionalism ≥')}${rangeRow('personality_ambition', 'Ambition ≥')}${rangeRow('personality_pressure', 'Pressure ≥')}
+      ${rangeRow('personality_controversy', 'Controversy ≤', 20, true)}</div>`) : ''].join('');
   $('#esSaved').innerHTML = saved.length ? '<span class="muted" style="font-size:12px;font-weight:600">Saved</span>' + saved.map((s, i) => `<span class="crit-chip"><button type="button" class="link" style="padding:0" data-esload="${i}">${esc(s.name)}</button><button type="button" data-esdel="${i}" aria-label="Delete saved search ${esc(s.name)}">×</button></span>`).join('') : '';
-  esLive();
+  esSpy(); esLive();
 }
-let esT;
+// Active-criteria strip + rail counts, refreshed on every change (cheap: no re-render of the body).
+let esCrit = [];
+function esSync() {
+  const c = esCounts(), was = new Set(esCrit.map(([t]) => t));
+  $$('#esRail [data-esgo]').forEach(b => { b.querySelector('b').textContent = c[b.dataset.esgo] || ''; });
+  const pos = D.positions.map(p => [p, () => { D.positions = D.positions.filter(x => x !== p); }]);
+  esCrit = [...(D.age_min != null || D.age_max != null ? [[`Age ${dualTxt(D.age_min, D.age_max, '')}`, () => { D.age_min = D.age_max = null; }]] : []), ...pos,
+    ...(D.value_max != null ? [[`Value ≤ ${money(D.value_max)}`, () => { D.value_max = null; }]] : []), ...(D.wage_max != null ? [[`Wage ≤ ${wage(D.wage_max)}`, () => { D.wage_max = null; }]] : []), ...critList(D)];
+  $('#esStrip').innerHTML = esCrit.length ? `<span class="muted">${esCrit.length} active</span>` + esCrit.map(([t], i) => `<span class="crit-chip"${was.has(t) ? ' style="animation:none"' : ''}>${t}<button type="button" data-esrm="${i}" aria-label="Remove ${esc(t.replace(/<[^>]+>/g, ''))}">×</button></span>`).join('')
+    : '<span class="muted">No criteria yet: every player in the save is in play. Start with a position on the pitch.</span>';
+}
+function esSpy() {
+  const b = $('#esBody'); let cur = b.querySelector('.es-sec');
+  b.querySelectorAll('.es-sec').forEach(s => { if (s.offsetTop <= b.scrollTop + 80) cur = s; });
+  $$('#esRail [data-esgo]').forEach(x => x.setAttribute('aria-current', x.dataset.esgo === cur?.dataset.sec));
+}
+let esT, esN = null;
 function esLive() {
   clearTimeout(esT);
-  $('#esLive').textContent = 'Counting…';
+  if (D) esSync();
+  $('#esLive').classList.remove('tick');
   esT = setTimeout(async () => {
     if (!D) return;
     const r = await api('/api/players', query({ start: 0, end: 1, filters: grid.getFilterModel() }, D)).catch(() => null);
     if (!$('#es').open) return;
-    $('#esLive').textContent = r && r.ok ? `${(await r.json()).total.toLocaleString()} players match` : 'Could not count';
+    const el = $('#esLive'), t = r && r.ok ? (await r.json()).total : null;
+    el.classList.toggle('zero', t === 0);
+    el.innerHTML = t == null ? 'Could not count' : t === 0 ? '<b>0</b> players match: loosen a criterion' : `<b>${t.toLocaleString()}</b> player${t === 1 ? '' : 's'} match`;
+    if (t !== esN) { void el.offsetWidth; el.classList.add('tick'); } esN = t;
   }, 350);
 }
-function openES() { D = clone(F); $('#esName').value = ''; $('#esNatQ') && ($('#esNatQ').value = ''); if (st.page !== 'scout' && st.page !== 'deals') { st.page = '-'; setPage('scout'); } renderES(); $('#es').showModal(); }
+function openES() { D = clone(F); esCrit = []; $('#esName').value = ''; $('#esNatQ') && ($('#esNatQ').value = ''); if (st.page !== 'scout' && st.page !== 'deals') { st.page = '-'; setPage('scout'); } renderES(); $('#esBody').scrollTop = 0; $('#es').showModal(); esSpy(); }
 function applyES() {
   if (D.gender != null) setGender(D.gender);
   delete D.gender;
@@ -1890,7 +2016,11 @@ $('#es').addEventListener('click', e => {
     else if (persOn(D, d.espers)) delete D.min[k]; else D.min[k] = 15;
     renderES(); $('#esBody').scrollTop = top; return;
   }
-  else if (d.espos) { D.positions = D.positions.includes(d.espos) ? D.positions.filter(x => x !== d.espos) : [...D.positions, d.espos]; t.setAttribute('aria-pressed', D.positions.includes(d.espos)); esLive(); }
+  else if (d.espos) { D.positions = D.positions.includes(d.espos) ? D.positions.filter(x => x !== d.espos) : [...D.positions, d.espos]; $$(`#es [data-espos="${d.espos}"]`).forEach(b => b.setAttribute('aria-pressed', D.positions.includes(d.espos))); esLive(); }
+  else if (d.esgo) { const s = $(`#es [data-sec="${d.esgo}"]`), b = $('#esBody');
+    b.scrollTo({ top: s.offsetTop, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); s.querySelector('h3').focus({ preventScroll: true }); }
+  else if (d.esrm != null) { const i = +d.esrm, top = $('#esBody').scrollTop; esCrit[i]?.[1](); renderES(); $('#esBody').scrollTop = top;
+    ($(`#esStrip [data-esrm="${Math.min(i, esCrit.length - 1)}"]`) || $('#esRail button'))?.focus(); }
   else if (d.esg != null) { D.gender = d.esg; $$('[data-esg]').forEach(b => b.setAttribute('aria-pressed', b === t)); esLive(); }
   else if (d.esnatRm) { D.nations = D.nations.filter(x => x !== d.esnatRm); renderES(); }
   else if (d.esload != null) { D = { ...F0(), ...clone(saved[+d.esload].f) }; $('#esName').value = saved[+d.esload].name; renderES(); }
@@ -1919,12 +2049,25 @@ $('#es').addEventListener('input', e => {
   else if (d.rmin || d.rmax) {
     const isMax = d.rmax != null, col = d.rmin || d.rmax, v = Number(t.value), off = isMax ? v >= Number(t.max) : v <= 0;
     if (off) delete (isMax ? D.max : D.min)[col]; else (isMax ? D.max : D.min)[col] = v;
-    const o = t.nextElementSibling; o.textContent = off ? '–' : v; o.classList.toggle('on', !off);
+    const tile = t.closest('.rg'), max = Number(t.max);
+    tile.querySelector('output').textContent = off ? '–' : v; tile.classList.toggle('on', !off); tile.classList.toggle('top', !off && !isMax && v >= max);
+    tile.dataset.t = off ? '' : tierOf(v, max, isMax); tile.style.setProperty('--v', v / max); t.setAttribute('aria-valuetext', off ? 'any' : v);
+  }
+  else if (d.dlo || d.dhi) {  // dual range: thumbs never cross; a thumb at the end of the scale clears that bound
+    const id = d.dlo || d.dhi, [lk, hk, mn, mx, u] = DUAL[id], tr = t.parentElement, [a, b] = tr.querySelectorAll('input');
+    let lo = +a.value, hi = +b.value;
+    if (lo > hi) { if (d.dlo) a.value = lo = hi; else b.value = hi = lo; }
+    dset(lk, lo <= mn ? null : lo); dset(hk, hi >= mx ? null : hi);
+    const L = dget(lk), H = dget(hk), o = tr.previousElementSibling.querySelector('output');
+    tr.style.setProperty('--lo', dualPct(id, lo)); tr.style.setProperty('--hi', dualPct(id, hi)); a.style.zIndex = lo > (mn + mx) / 2 ? 3 : 1;
+    a.setAttribute('aria-valuetext', L ?? 'any'); b.setAttribute('aria-valuetext', H ?? 'any');
+    o.textContent = dualTxt(L, H, u); o.classList.toggle('on', L != null || H != null);
   }
   esLive();
 });
 $('#es').addEventListener('change', e => { if (D && e.target.dataset.esnat) renderES(); });
 $('#es').addEventListener('close', () => { D = null; });
+$('#esBody').addEventListener('scroll', esSpy, { passive: true });
 $('#esForm').addEventListener('submit', e => { e.preventDefault(); if (D) applyES(); });
 
 $('#palQ').addEventListener('input', () => { palIdx = 0; renderPalette(); });
