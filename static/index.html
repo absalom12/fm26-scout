@@ -280,7 +280,19 @@ details[open] summary::before { content: "−"; }
 .pp-id { flex: 1; min-width: 0; }
 .pp-id h1 { margin: 0; font: 700 28px/1 var(--f-display); letter-spacing: .01em; text-transform: uppercase; outline: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pp-id p { margin: 4px 0 0; color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pp-id .pp-pos { margin-left: 8px; } .pp-id .pp-pos .muted { font-size: 12px; margin: 0 5px 0 2px; }
+.pp-nm { display: flex; align-items: center; gap: 10px; min-width: 0; } .pp-nm h1 { min-width: 0; }
+.pp-id .pp-pos { flex: none; white-space: nowrap; } .pp-id .pp-pos .muted { font-size: 12px; margin: 0 5px 0 2px; } .pp-nm .pos { font-size: 13px; line-height: 22px; padding: 0 7px; }
+.feet { display: inline-flex; gap: 12px; margin-left: 10px; vertical-align: middle; } .feet > span { display: inline-flex; align-items: center; gap: 5px; }
+.feet b { font: 700 11px var(--f-display); color: var(--text2); } .feet i { display: inline-block; width: 44px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; } .feet i i { display: block; height: 100%; }
+.feet small { font-size: 12px; color: var(--text2); }
+.pp-tabs { flex: none; display: flex; gap: 4px; margin-top: 8px; border-bottom: 1px solid var(--line); }
+.pp-tabs button { height: 32px; padding: 0 16px; margin-bottom: -1px; border-bottom: 2px solid transparent; font: 700 13px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.pp-tabs button:hover { color: var(--text); } .pp-tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--mode); }
+.pp-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.pp-body[hidden] { display: none; }
+.pp-more { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); } .pp-more[data-m="fair"] [data-k="similar"] { grid-column: span 2; }
+.pp-card[data-pp="radar"] .radar-wrap { grid-template-columns: minmax(0, 180px) 1fr; gap: 40px; padding-left: 34px; } .pp-card[data-pp="radar"] .radar { width: 100%; height: auto; max-height: 100%; }
+.hm-c { position: relative; } .hm-c[data-n]:hover::after { content: attr(data-n); position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); z-index: 20; padding: 3px 8px; border-radius: var(--r-sm); border: 1px solid var(--line2); background: var(--raise); color: var(--text); font: 600 12px var(--f-body); white-space: nowrap; pointer-events: none; }
 .pp-kpis { display: flex; gap: 6px; flex: none; }
 .kpi { display: grid; min-width: 88px; max-width: 150px; padding: 4px 10px 5px; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); }
 .kpi span { font: 600 10px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
@@ -288,9 +300,9 @@ details[open] summary::before { content: "−"; }
 .kpi small { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .kpi small::first-letter { text-transform: uppercase; }
 .pp-act { display: flex; gap: 8px; align-items: center; flex: none; }
 .pp-body { flex: 1; min-height: 0; display: grid; gap: 10px; margin-top: 10px; }
-.m-full { grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(320px, 400px); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "hero deal dev" "hero sg side"; }
-.m-fair { grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(300px, 380px); grid-template-rows: minmax(0, 1.38fr) minmax(0, 1fr); grid-template-areas: "role canvas sg" "role attr side"; }
-.m-moneyball { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(270px, 320px); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "canvas swarm pizza" "canvas swarm side"; }
+.m-full { grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(320px, 400px); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "hero deal dev" "hero sg sg"; }
+.m-fair { grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(300px, 380px); grid-template-rows: minmax(0, 1.38fr) minmax(0, 1fr); grid-template-areas: "role canvas sg" "role attr radar"; }
+.m-moneyball { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(270px, 320px); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "canvas swarm pizza" "canvas swarm pizza"; }
 .pp-card[data-pp="canvas"] { background: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 140%27 preserveAspectRatio=%27none%27 fill=%27none%27 stroke=%27rgba(255,255,255,0.10)%27 stroke-width=%270.4%27%3E%3Crect x=%274%27 y=%273%27 width=%2792%27 height=%27134%27/%3E%3Cpath d=%27M4 70h92%27/%3E%3Ccircle cx=%2750%27 cy=%2770%27 r=%2711%27/%3E%3Crect x=%2727%27 y=%273%27 width=%2746%27 height=%2720%27/%3E%3Crect x=%2727%27 y=%27117%27 width=%2746%27 height=%2720%27/%3E%3C/svg%3E") center / 100% 100% no-repeat, repeating-linear-gradient(180deg, var(--pitch) 0 9.09%, var(--pitch2) 9.09% 18.18%); border-color: #1d3d2a; }
 .pp-card[data-pp="canvas"] .phz { background: color-mix(in srgb, var(--panel) 88%, transparent); border-color: var(--line); }
 .pp-card { position: relative; min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }
@@ -1417,7 +1429,11 @@ function dial(name, txt, f, color, sub, aria, ghost) {
     ${ghost ? arc(ghost[0], ghost[1], .3) : ''}${f ? arc(f, color) : ''}</svg><b style="color:${color}" aria-hidden="true">${txt}</b><span aria-hidden="true">${esc(name)}</span><small aria-hidden="true">${sub}</small></div>`;
 }
 // ---------- Player blocks shared by the drawer and the profile page ----------
-const footOf = p => p.left_foot != null && p.right_foot != null ? (p.left_foot > p.right_foot ? 'Left' : p.right_foot > p.left_foot ? 'Right' : 'Either') + ' foot' : '';
+// Strength of each foot (1-20) as two small bars with FM's words, strong foot first in the tooltip.
+const FOOT_W = [[18, 'Very strong'], [15, 'Strong'], [12, 'Fairly strong'], [9, 'Reasonable'], [5, 'Weak'], [0, 'Very weak']];
+const feetHTML = p => p.left_foot == null || p.right_foot == null ? '' : `<span class="feet" role="img" aria-label="${[['Left', p.left_foot], ['Right', p.right_foot]].map(([s, v]) => `${s} foot ${FOOT_W.find(w => v >= w[0])[1].toLowerCase()}`).join(', ')}">${[['L', p.left_foot], ['R', p.right_foot]].map(([s, v]) => { const w = FOOT_W.find(x => v >= x[0])[1];
+  return `<span title="${s === 'L' ? 'Left' : 'Right'} foot: ${w} (${v}/20)"><b>${s}</b><i><i style="width:${v * 5}%;background:${scoreColor(v * 5)}"></i></i><small>${w}</small></span>`; }).join('')}</span>`;
+const footOf = p =>p.left_foot != null && p.right_foot != null ? (p.left_foot > p.right_foot ? 'Left' : p.right_foot > p.left_foot ? 'Right' : 'Either') + ' foot' : '';
 const roleList = p => MODE === 'moneyball' ? [] : Object.keys(META.roles).map(r => [r, p['role_' + r]]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
 const roleBars = roles => roles.map(([r, x]) => `<div class="rolebar"><span>${label('role_' + r)} <span class="muted" style="font-size:11px">${META.roles[r]}</span></span><div class="tr"><i style="width:${x}%;background:${scoreColor(x)}"></i></div><b class="mono" style="color:${scoreColor(x)};text-align:right">${x.toFixed(0)}</b></div>`).join('');
 // The 2-4 rings that matter in this mode.
@@ -1484,10 +1500,11 @@ function pitchMap(p) {
 const PERS_SHORT = { adaptability: 'Adapt', ambition: 'Amb', loyalty: 'Loyal', pressure: 'Press', professionalism: 'Prof', sportsmanship: 'Sport', temperament: 'Temp', controversy: 'Contr' };
 function heatMap(p, pers = true) {
   // Columns of groups; in Full the hidden attributes sit under Physical so the map stays three columns wide.
-  const H = MODE === 'full', cols = [[groupOf(p) === 'GK' ? ['Goalkeeping', ATTR.goalkeeping] : ['Technical', ATTR.technical]], [['Mental', ATTR.mental]],
+  const H = MODE === 'full', SP = ['corners', 'free_kick_taking', 'penalty_taking', 'long_throws'];
+  const cols = [groupOf(p) === 'GK' ? [['Goalkeeping', ATTR.goalkeeping]] : [['Technical', ATTR.technical.filter(k => !SP.includes(k))], ['Set pieces', SP]], [['Mental', ATTR.mental]],
     [['Physical', ATTR.physical], ...(H ? [['Hidden', ATTR.hidden]] : [])], ...(H && pers ? [[['Personality', PERS, 'personality_']]] : [])];
   return `<div class="hm">${cols.map(col => `<div>${col.map(([t, keys, pre = 'attributes_']) => `<h4>${t}</h4><div class="hm-g">${keys.filter(k => p[pre + k] != null).map(k => { const c = pre + k, v = p[c];
-    return `<div class="hm-c ${tier(v, BAD.has(c))}" title="${esc(label(c))} ${v}"><span aria-hidden="true">${pre === 'attributes_' ? ABBR[k] : PERS_SHORT[k]}</span><span class="sr">${esc(label(c))}</span><b>${v}</b></div>`; }).join('')}</div>`).join('')}</div>`).join('')}</div>`;
+    return `<div class="hm-c ${tier(v, BAD.has(c))}" data-n="${esc(label(c))}"><span aria-hidden="true">${pre === 'attributes_' ? ABBR[k] : PERS_SHORT[k]}</span><span class="sr">${esc(label(c))}</span><b>${v}</b></div>`; }).join('')}</div>`).join('')}</div>`).join('')}</div>`;
 }
 // Asking fee against the fair fee and the spread of the per-lens fair fees (fair prices on only).
 function priceBar(p) {
@@ -1501,7 +1518,7 @@ function priceBar(p) {
     <div class="pbar-lg" aria-hidden="true"><span>Fair range <b>${money(lo)}–${money(hi)}</b></span><span>Asking <b${col ? ` style="color:${col}"` : ''}>${ask == null ? 'Not for sale' : p.free_agent ? 'Free' : money(ask)}</b></span></div></div>`;
 }
 // ---- Player page helpers (charts and peer maths) ----
-let ppx = null, ppSide = 'similar', ppRole = null;  // ppx = { p, grp, alive, bench, sim } for the player on screen
+let ppx = null, ppTab = 'over', ppRole = null;  // ppx = { p, grp, alive, bench, sim } for the player on screen
 const PP_ICON = {
   level: '<path d="M4 20V11M10 20V5M16 20v-6M21 20H3"/>',
   good: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
@@ -1623,8 +1640,9 @@ Object.assign(PP_ICON, {
   table: '<path d="M4 6h16M4 12h16M4 18h16"/>',
 });
 const h3i = (ic, t, small = '') => `<h3>${ppIcon(ic)}<span class="h3l">${t}</span>${small ? `<small>${small}</small>` : ''}</h3>`;
-const PP_SECS = { full: ['hero', 'deal', 'sg', 'dev', 'side'], fair: ['role', 'canvas', 'attr', 'sg', 'side'], moneyball: ['canvas', 'swarm', 'pizza', 'side'] };
-const PP_SIDE = { full: ['apx', 'similar', 'report', 'attrs', 'contract', 'season', 'position', 'stats'], fair: ['contract', 'similar', 'map', 'price', 'profile', 'season', 'stats'], moneyball: ['similar', 'price', 'contract', 'stats'] };
+const PP_SECS = { full: ['hero', 'deal', 'sg', 'dev'], fair: ['role', 'canvas', 'attr', 'sg', 'radar'], moneyball: ['canvas', 'swarm', 'pizza'] };
+// Second page of the profile ("More"): one card per entry.
+const PP_SIDE = { full: ['apx', 'similar', 'report', 'attrs', 'contract', 'season', 'position', 'stats'], fair: ['contract', 'similar', 'season', 'stats', 'price'], moneyball: ['similar', 'price', 'contract', 'stats'] };
 const PP_SIDE_L = { apx: 'Ability vs price', similar: 'Similar', report: 'Report', attrs: 'Attributes', table: 'Every stat', map: 'Price map', price: 'Price', contract: 'Contract', season: 'Season', position: 'Position', stats: 'All stats', profile: 'Radar' };
 const rg = (lbl, f, color, txt, aria, ghost) => `<div class="pp-rg">${ring(f, color, txt, aria, ghost)}<small aria-hidden="true">${lbl}</small></div>`;
 const sev = (v, bad) => v == null ? C.muted : scoreColor((bad ? 21 - v : v) * 5);  // 1-20 attribute colour, inverted for "bad" attributes
@@ -1717,8 +1735,7 @@ function secRole() {
         <span>${gaps.length ? 'Gaps: ' + gaps.slice(0, 3).map(([k, x]) => `${label(k)} ${x}`).join(', ') : 'No key attribute under 12'}</span>
         ${(() => { const xs = (ppx.bench?.pool || []).map(r => r['role_' + role]).filter(x => x != null); if (xs.length < 20) return ''; const pc = pctOf(xs, sc); return `<span>Fit above <b style="color:${pctColor(pc)}">${pc}%</b> of ${xs.length} ${plural(grp)} with 900+ min</span>`; })()}</div></div>
     <div class="fbs">${vals.map(([k, x]) => fbar(label(k), x, x / 20, x >= 15 ? C.good : x >= 12 ? C.ok : C.warn, '', .75)).join('')}</div>
-    <p class="note">Key attributes of the role, heaviest first · tick = 15.${gk ? ' Sweeper Keeper is the only goalkeeper role the save scores: compare it with other keepers, not with outfield roles.' : ''}</p>
-    ${roles.length > 1 ? `<h4>His best roles</h4><div class="tags">${roles.slice(0, 6).map(([r, x]) => `<button class="tag rl-chip" data-pprole="${r}" aria-pressed="${r === role}">${label('role_' + r)}<b style="color:${scoreColor(x)}">${x.toFixed(0)}</b></button>`).join('')}</div>` : ''}`;
+    <p class="note">Key attributes of the role, heaviest first · tick = 15.${gk ? ' Sweeper Keeper is the only goalkeeper role the save scores: compare it with other keepers, not with outfield roles.' : ''}</p>`;
 }
 function secPizza() {
   const { p, grp, bench } = ppx, mins = p.s_minutes || 0;
@@ -1745,8 +1762,8 @@ function secKpis() {
   out.push(k('Performance', perf ?? '–', perf != null ? pctColor(perf) : C.muted, perf != null ? 'index, his league' : 'under 600 min'));
   out.push(k('Avg rating', p.s_avg_rating ? p.s_avg_rating.toFixed(2) : '–', p.s_avg_rating ? ratingColor(p.s_avg_rating) : C.muted, `${p.s_apps ?? 0} apps · ${mins.toLocaleString()} min`));
   const ask = p.free_agent ? 'Free' : p.transfer_value == null ? 'Not for sale' : money(p.transfer_value);
-  out.push(k('Asking', ask, null, FAIR && p.deal_score != null ? `${Math.abs(Math.round(p.deal_score))}% ${p.deal_score >= 0 ? 'under' : 'over'} fair` : FAIR && mb && mins < 900 ? 'No fair fee under 900 min.' : `wage ${wage(p.contract_wage)}`));
-  out.push(k('Contract', p.months_left != null ? p.months_left + 'm' : '–', p.months_left != null && p.months_left <= 6 ? C.warn : 'var(--accent)', esc((p.contract_squad_status || 'status unknown').replaceAll('_', ' '))));
+  out.push(k('Value', ask, null, FAIR && p.deal_score != null ? `${Math.abs(Math.round(p.deal_score))}% ${p.deal_score >= 0 ? 'under' : 'over'} fair fee` : FAIR && mb && mins < 900 ? 'No fair fee under 900 min.' : 'transfer value'));
+  out.push(k('Wage', wage(p.contract_wage), null, p.contract_end ? `until ${esc(p.contract_end)}` : 'no contract'));
   return out.join('');
 }
 // Full hero: the CA number large with its level word, ranks, the written report, contract bar.
@@ -1851,8 +1868,8 @@ function bigPitch(p) {
   const pts = POSITIONS.map(k => [k, p[posKey(k)]]).filter(x => x[1] != null);
   const known = pts.filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]);
   return `<svg class="lane" viewBox="0 0 56 124" role="img" aria-label="${esc(known.length ? 'Position familiarity: ' + known.map(([k, v]) => `${k} ${v} (${famil(v)[1]})`).join(', ') : 'No position familiarity in this save')}">
-    ${pts.map(([k, v]) => { const [x0, y0] = PITCH[k], f = v >= 9 ? famil(v) : null, cx = (28 + (x0 - 50) * .48).toFixed(1), cy = (y0 * 1.24 + 3.5).toFixed(1), r = f ? (4.4 + (v - 9) * .3).toFixed(1) : 3.2;
-      return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${f ? f[2] : 'rgba(255,255,255,.05)'}" stroke="rgba(255,255,255,.18)" stroke-width=".3"/><text x="${cx}" y="${+cy + 1.2}" text-anchor="middle" font-size="${f ? 3.4 : 2.4}" font-weight="700" font-family="var(--f-display)" fill="${f ? '#04110a' : 'rgba(255,255,255,.45)'}">${k}</text>`; }).join('')}
+    ${pts.map(([k, v]) => { const [x0, y0] = PITCH[k], f = v >= 9 ? famil(v) : null, cx = (28 + (x0 - 50) * .48).toFixed(1), cy = (y0 * 1.24 + 3.5).toFixed(1), r = f ? (5.6 + (v - 9) * .3).toFixed(1) : 3.2;
+      return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${f ? f[2] : 'rgba(255,255,255,.05)'}" stroke="rgba(255,255,255,.18)" stroke-width=".3"><title>${k} · ${f ? f[1] : 'Unfamiliar'}</title></circle><text x="${cx}" y="${+cy + 1.3}" text-anchor="middle" font-size="${f ? 3.8 : 2.4}" font-weight="700" font-family="var(--f-display)" fill="${f ? '#04110a' : 'rgba(255,255,255,.45)'}" pointer-events="none">${k}</text>`; }).join('')}
   </svg>`;
 }
 const famLegend = () => `<div class="cnv-lg" aria-hidden="true">${FAMIL.map(([, n, c]) => `<span><i style="background:${c}"></i>${n}</span>`).join('')}</div>`;
@@ -1864,8 +1881,9 @@ function secCanvas() {
       <div class="cnv mb"><div class="cnv-s">${statPanel(o[0])}${statPanel(o[2])}</div><div class="cnv-p">${bigPitch(p)}</div><div class="cnv-s">${statPanel(o[1])}${statPanel(o[3])}</div>${grp === 'GK' ? '' : `<div class="cnv-w">${statPanel('wrk')}</div>`}</div>${famLegend()}`;
   }
   const ph = PHASE_ATTR[grp === 'GK' ? 'gk' : 'out'];
+  const hl = v => v >= 15 ? C.good : v <= 5 ? C.bad : 'var(--text)';  // FM's own colouring: 15+ green, 5 or less red
   const panel = ([t, ks]) => { const av = mean(ks.map(k => p['attributes_' + k])), pm = mean(ks.map(k => mean(pool.map(r => r['attributes_' + k]))));
-    return `<div class="phz"><h5>${t}<b style="color:${sev(av)}" title="${pm != null ? `peer average ${pm.toFixed(1)}` : ''}">${av != null ? av.toFixed(1) : '–'}${pm != null ? ` <small>vs ${pm.toFixed(1)}</small>` : ''}</b></h5>${ks.filter(k => p['attributes_' + k] != null).map(k => { const v = p['attributes_' + k]; return `<div><span>${label(k)}</span><b style="color:${sev(v)}">${v}</b></div>`; }).join('')}</div>`; };
+    return `<div class="phz"><h5>${t}<b style="color:${sev(av)}" title="${pm != null ? `peer average ${pm.toFixed(1)}` : ''}">${av != null ? av.toFixed(1) : '–'}${pm != null ? ` <small>vs ${pm.toFixed(1)}</small>` : ''}</b></h5>${ks.filter(k => p['attributes_' + k] != null).map(k => { const v = p['attributes_' + k]; return `<div title="${esc(label(k))} ${v}"><span>${label(k)}</span><b style="color:${hl(v)}">${v}</b></div>`; }).join('')}</div>`; };
   return `${h3i('where', 'Where he plays and what he brings', 'bubbles = familiarity · panels = attribute averages')}
     <div class="cnv"><div class="cnv-s">${panel(ph[0])}${panel(ph[2])}</div><div class="cnv-p">${bigPitch(p)}</div><div class="cnv-s">${panel(ph[1])}${panel(ph[3])}</div></div>${famLegend()}`;
 }
@@ -1936,13 +1954,10 @@ function sideBody(k) {
   if (k === 'profile') return profileInner(p);
   return '';
 }
-function secSide() {
-  const ks = PP_SIDE[MODE] || PP_SIDE.full, cur = ks.includes(ppSide) ? ppSide : ks[0];
-  return `<div class="sd-tabs" role="tablist" aria-label="More about him">${ks.map(k => `<button role="tab" id="pps-${k}" data-ppside="${k}" aria-selected="${k === cur}" tabindex="${k === cur ? 0 : -1}" aria-controls="ppSideP">${PP_SIDE_L[k]}</button>`).join('')}</div>
-    <div class="sd-body" id="ppSideP" role="tabpanel" aria-labelledby="pps-${cur}">${sideBody(cur)}</div>`;
-}
-let ppSideMode = null;
-const PP_FN = { kpis: secKpis, hero: secHero, deal: secDeal, sg: secSG, dev: secDev, attr: secAttr, role: secRole, canvas: secCanvas, swarm: secSwarm, pizza: secPizza, side: secSide };
+// Page 2 of the profile: every remaining block as its own card.
+const secSide = () => (PP_SIDE[MODE] || PP_SIDE.full).map(k => `<section class="pp-card" data-k="${k}"><h3><span class="h3l">${PP_SIDE_L[k]}</span></h3><div class="sd-body">${sideBody(k)}</div></section>`).join('');
+const PP_FN = { kpis: secKpis, hero: secHero, deal: secDeal, sg: secSG, dev: secDev, attr: secAttr, role: secRole, canvas: secCanvas, swarm: secSwarm, pizza: secPizza, side: secSide, radar: () => profileInner(ppx.p) };
+const setPpTab = t => { ppTab = t; const box = $('#player'); $$('[data-pptab]', box).forEach(b => b.setAttribute('aria-selected', b.dataset.pptab === t)); $('#ppOver', box).hidden = t !== 'over'; $('#ppMore', box).hidden = t !== 'more'; };
 function ppPaint(which) {
   if (!ppx || !ppx.alive()) return;
   const box = $('#player'), focus = document.activeElement?.closest?.('[data-pp]')?.dataset.pp, fid = document.activeElement?.id;
@@ -1968,15 +1983,14 @@ async function renderProfile() {
   try { const r = await api('/api/player/' + uid + mq()); if (!r.ok) throw r.status; p = await r.json(); }
   catch { if (alive()) box.innerHTML = emptyState('Player not found', 'The server could not load this player: it may be restarting, or this save does not have him. Go back or try again in a moment.'); return; }
   if (!alive()) return;
-  ppPlayer = p; ppRole = null;
-  if (ppSideMode !== MODE) { ppSide = null; ppSideMode = MODE; }
-  const grp = groupOf(p), mb = MODE === 'moneyball', foot = mb ? '' : footOf(p);
+  ppPlayer = p; ppRole = null; ppTab = 'over';
+  const grp = groupOf(p), mb = MODE === 'moneyball';
   ppx = { p, grp, alive, bench: null, sim: null, abil: null, all: null };
   box.innerHTML = `<article class="pp-in" aria-labelledby="ppName">
     <header class="pp-head">
-      <div class="pp-id"><h1 id="ppName" tabindex="-1">${esc(p.name)}</h1>
-        <p>${natHTML(p) || 'Unknown nation'}${p.second_nationalities ? ` <span class="muted">(+${esc(p.second_nationalities)})</span>` : ''} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${p.height_cm} cm` : ''}${foot ? ' · ' + foot : ''}
-          <span class="pp-pos">${posChips(p.natural_positions)}${p.accomplished_positions ? `<span class="muted">also</span>${posChips(p.accomplished_positions)}` : ''}</span></p></div>
+      <div class="pp-id"><div class="pp-nm"><h1 id="ppName" tabindex="-1">${esc(p.name)}</h1>
+          <span class="pp-pos">${posChips(p.natural_positions)}${p.accomplished_positions ? `<span class="muted">also</span>${posChips(p.accomplished_positions)}` : ''}</span></div>
+        <p>${natHTML(p) || 'Unknown nation'}${p.second_nationalities ? ` <span class="muted">(+${esc(p.second_nationalities)})</span>` : ''} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${p.height_cm} cm` : ''}${mb ? '' : feetHTML(p)}</p></div>
       <div class="pp-kpis" data-pp="kpis"></div>
       <div class="pp-act">
         <button class="icon-btn star star-btn" data-star="${p.uid}" data-name="${esc(p.name)}" data-club="${p.club_uid ?? ''}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist ${esc(p.name)}" title="Shortlist (s)">★</button>
@@ -1984,8 +1998,10 @@ async function renderProfile() {
         <button class="btn" data-offer="${p.uid}">Make an offer →</button>
       </div>
     </header>
-    <div class="pp-body m-${MODE}">${secs.map(k => `<section class="pp-card" data-pp="${k}" style="grid-area:${k}"></section>`).join('')}</div></article>`;
-  ppPaint(['kpis', ...secs]);
+    <nav class="pp-tabs" role="tablist" aria-label="Profile pages"><button role="tab" data-pptab="over" aria-selected="true" aria-controls="ppOver">Overview</button><button role="tab" data-pptab="more" aria-selected="false" aria-controls="ppMore">Contract, price &amp; more</button></nav>
+    <div class="pp-body m-${MODE}" id="ppOver" role="tabpanel">${secs.map(k => `<section class="pp-card" data-pp="${k}" style="grid-area:${k}"></section>`).join('')}</div>
+    <div class="pp-body pp-more" id="ppMore" role="tabpanel" data-pp="side" data-m="${MODE}" hidden></div></article>`;
+  ppPaint(['kpis', ...secs, 'side']);
   $('#ppName', box).focus({ preventScroll: true });
   ppBench(p, grp).then(b => { if (!alive()) return; ppx.bench = b; ppPaint(mb ? ['canvas', 'swarm', 'pizza', 'side'] : MODE === 'fair' ? ['role', 'canvas', 'sg', 'side'] : ['deal', 'sg', 'side']); });
   if (MODE === 'full') ppAbility(p, grp).then(a => { if (!alive()) return; ppx.abil = a; ppPaint(['kpis', 'hero', 'side']); });
@@ -1995,19 +2011,16 @@ async function renderProfile() {
     api('/api/players', { start: 0, end: 9, positions: [grp], gender: p.gender || null, mode: MODE, similar_to: p.uid, filters: mb ? { s_minutes: num('greaterThanOrEqual', 600) } : {} }).then(j).catch(() => null)])
     .then(([crit, res]) => { if (!alive()) return; ppx.sim = { crit, rows: (res?.rows || []).filter(r => r.uid !== p.uid).slice(0, 8) }; ppPaint(mb ? ['swarm', 'side'] : ['side']); });
 }
-// Side tabs (click, arrows, Home/End), role picker, scatter points.
+// Page tabs (click, arrows), role picker, scatter points.
 $('#player').addEventListener('click', e => {
-  const t = e.target.closest('[data-ppside]'); if (t) { ppSide = t.dataset.ppside; ppPaint(['side']); $('#pps-' + ppSide)?.focus(); return; }
+  const t = e.target.closest('[data-pptab]'); if (t) { setPpTab(t.dataset.pptab); return; }
   const rl = e.target.closest('[data-pprole]'); if (rl) { ppRole = rl.dataset.pprole; ppPaint(['role']); $(`[data-pprole="${ppRole}"]`)?.focus(); return; }
   const pt = e.target.closest('[data-pp-uid]'); if (pt) openProfile(+pt.dataset.ppUid);
 });
 $('#player').addEventListener('change', e => { if (e.target.id === 'ppRole') { ppRole = e.target.value; ppPaint(['role']); $('#ppRole')?.focus(); } });
 $('#player').addEventListener('keydown', e => {
-  if (!e.target.matches('[data-ppside]')) return;
-  const ks = PP_SIDE[MODE] || PP_SIDE.full, i = ks.indexOf(e.target.dataset.ppside);
-  const n = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: ks.length - 1 }[e.key];
-  if (n == null) return;
-  e.preventDefault(); ppSide = ks[(n + ks.length) % ks.length]; ppPaint(['side']); $('#pps-' + ppSide)?.focus();
+  if (!e.target.matches('[data-pptab]') || !['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+  e.preventDefault(); setPpTab(ppTab === 'over' ? 'more' : 'over'); $(`[data-pptab="${ppTab}"]`)?.focus();
 });
 
 function closeDrawer() {
