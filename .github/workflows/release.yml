@@ -15,17 +15,37 @@ jobs:
           - os: windows-latest
             asset: FM26-Scout-windows.zip
     runs-on: ${{ matrix.os }}
+    env:
+      APPLE_CERT_P12: ${{ secrets.APPLE_CERT_P12 }}  # all Apple secrets optional: without them the Mac build stays unsigned
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install -r requirements.txt -r requirements-dev.txt
       - run: pytest
+      - name: Import Apple certificate
+        if: runner.os == 'macOS' && env.APPLE_CERT_P12 != ''
+        run: |
+          echo "$APPLE_CERT_P12" | base64 --decode > cert.p12
+          security create-keychain -p ci build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p ci build.keychain
+          security import cert.p12 -k build.keychain -P "${{ secrets.APPLE_CERT_PASSWORD }}" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci build.keychain
+          rm cert.p12
+          echo "CODESIGN_IDENTITY=${{ secrets.APPLE_SIGN_IDENTITY }}" >> "$GITHUB_ENV"
       - run: python build.py
       - if: runner.os == 'macOS'
         run: python tests/smoke.py dist/FM26-Scout.app/Contents/MacOS/FM26-Scout
       - if: runner.os == 'Windows'
         run: python tests/smoke.py dist/FM26-Scout/FM26-Scout.exe
+      - name: Notarize and staple
+        if: runner.os == 'macOS' && env.APPLE_CERT_P12 != ''
+        run: |
+          codesign --verify --deep --strict --verbose=2 dist/FM26-Scout.app
+          ditto -c -k --keepParent dist/FM26-Scout.app notarize.zip
+          xcrun notarytool submit notarize.zip --apple-id "${{ secrets.APPLE_ID }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --wait
+          xcrun stapler staple dist/FM26-Scout.app
       - if: runner.os == 'macOS'
         run: ditto -c -k --keepParent dist/FM26-Scout.app ${{ matrix.asset }}
       - if: runner.os == 'Windows'

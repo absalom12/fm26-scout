@@ -31,7 +31,7 @@ Get up and running in less than two minutes without touching Python or the comma
 2. **Extract & Open:**
    - **macOS:** Unzip and drag `FM26-Scout` to your Applications folder (optional), then double-click it.
    - **Windows:** Extract the `FM26-Scout` folder anywhere (*do not run inside the ZIP archive*) and double-click `FM26-Scout.exe`.
-3. **Scout:** Your default browser will automatically launch `http://localhost:8000`. Select your `.fm` save file from the detected list and allow ~1 minute for parsing.
+3. **Scout:** Your default browser will automatically launch `http://127.0.0.1:8765` (the next free port if that one is taken). Select your `.fm` save file from the detected list and allow ~1 minute for parsing.
 
 > ℹ️ **Auto-Exit & Local Security:** The background server automatically closes a few seconds after you close your browser tab. Your save file is read **100% locally** and never leaves your machine.
 
