@@ -91,7 +91,7 @@ body.mode-fair { --mode: var(--good); } body.mode-moneyball { --mode: var(--gold
 .wage-hi { color: var(--warn); font-weight: 700; }
 .wage-hi { color: var(--warn); font-weight: 700; }
 /* ---------- Page visibility ---------- */
-body[data-page="club"] .only-grid, body[data-page="offers"] .only-grid, body:not([data-page="scout"]) .only-scout, body:not([data-page="deals"]) .only-deals, body:not([data-page="club"]) .only-club, body:not([data-page="offers"]) .only-offers { display: none !important; }
+body[data-page="club"] .only-grid, body[data-page="offers"] .only-grid, body[data-page="player"] .only-grid, body:not([data-page="player"]) .only-player,body:not([data-page="scout"]) .only-scout, body:not([data-page="deals"]) .only-deals, body:not([data-page="club"]) .only-club, body:not([data-page="offers"]) .only-offers { display: none !important; }
 .crit[hidden] { display: none !important; }
 body.no-deals[data-page="deals"] #grid { display: none; }
 body:not(.no-deals) #dealsMissing { display: none; }
@@ -272,6 +272,54 @@ details[open] summary::before { content: "−"; }
 .attrs h4 { margin: 0 0 4px; font: 700 12px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
 .attrs .row { display: flex; justify-content: space-between; font-size: 13px; padding: 1px 0; }
 .attrs .row span:first-child { color: var(--text2); }
+
+/* ---------- Player profile page: the drawer's blocks laid out on two columns, plus the visuals only room allows ---------- */
+.pp { flex: 1; min-height: 0; overflow-y: auto; }
+.pp-in { max-width: 1400px; margin: 0 auto; padding: 0 20px 40px; }
+.pp-head { position: sticky; top: 0; z-index: 4; display: flex; align-items: center; gap: 16px; padding: 16px 0 14px; margin-bottom: 14px; background: var(--bg); border-bottom: 1px solid var(--line); box-shadow: 0 1px 0 color-mix(in srgb, var(--mode) 30%, transparent); }
+.pp-id { flex: 1; min-width: 0; }
+.pp-id h1 { margin: 0; font: 700 34px/1 var(--f-display); letter-spacing: .01em; text-transform: uppercase; outline: none; }
+.pp-id p { margin: 6px 0 8px; color: var(--muted); font-size: 13px; }
+.pp-id .tags { display: inline-flex; margin-left: 6px; vertical-align: middle; }
+.pp-act { display: flex; gap: 8px; align-items: center; }
+.pp-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.pp-card.sec { padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); min-width: 0; }
+.pp-card .sec { padding: 12px 0 0; border: 0; }
+.pp-wide { grid-column: 1 / -1; }
+.pp-card h4 { margin: 14px 0 6px; font: 700 12px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.pp-hero { background: radial-gradient(120% 90% at 30% 0%, color-mix(in srgb, var(--mode) 10%, transparent), transparent 70%), var(--panel) !important; }
+.pp-hero .note { margin-top: 10px; }
+.pp-pos { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 18px; align-items: start; }
+.pp-pos .pitch { width: 170px; }
+.pp-pos .legend { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.pp-pos .legend .tag { font-size: 11px; padding: 2px 7px; }
+.pp-pos .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+.hm { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px 22px; }
+.hm h4 { margin: 0 0 6px; font: 700 12px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.hm-g { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 4px; }
+.hm-c { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; padding: 5px 7px; border-radius: var(--r-sm); background: color-mix(in srgb, currentColor 13%, var(--bg)); font-size: 11px; }
+.hm-c span { color: var(--text2); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hm-c b { font: 700 14px var(--f-mono); }
+.pbar { margin: 4px 0 14px; }
+.pbar-tr { position: relative; height: 14px; border-radius: 7px; background: #1a242d; }
+.pbar-tr i { position: absolute; top: 0; bottom: 0; }
+.pbar-tr .band { border-radius: 7px; background: color-mix(in srgb, var(--accent) 30%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent); transform-origin: left; animation: grow .6s var(--ease) both; }
+.pbar-tr .fair { width: 2px; margin-left: -1px; top: -4px; bottom: -4px; background: var(--accent); }
+.pbar-tr .ask { width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 3px var(--panel), 0 0 14px var(--c); }
+.pbar-lg { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+.pbar-lg b { font-family: var(--f-mono); color: var(--text); }
+.sim-row { display: grid; grid-template-columns: minmax(0, 1fr) auto 70px; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 6px 8px; border-radius: var(--r-sm); text-align: left; }
+.sim-row:hover { background: var(--raise); }
+.sim-row b { font-weight: 600; }
+.sim-row small { display: block; color: var(--muted); font-size: 12px; }
+.sim-row .mono { text-align: right; }
+@media (max-width: 1180px) {
+  .pp-grid { grid-template-columns: minmax(0, 1fr); }
+  .pp-in { padding-bottom: 84px; }
+  .pp-act { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; justify-content: flex-end; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--panel); border-top: 1px solid var(--line); }
+  .pp-id h1 { font-size: 28px; }
+}
+@media (max-width: 560px) { .pp-pos { grid-template-columns: 1fr; } .pp-in { padding: 0 16px 84px; } }
 
 /* ---------- Palette ---------- */
 dialog.pal { width: min(620px, calc(100vw - 32px)); max-height: min(560px, calc(100vh - 120px)); margin: 12vh auto auto; padding: 0; border: 1px solid var(--line2); border-radius: var(--r-lg); background: var(--panel); color: var(--text); box-shadow: var(--shadow); display: none; flex-direction: column; }
@@ -538,6 +586,7 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
   <div id="dealsMissing" class="panel-msg only-deals"></div>
   <div id="club" class="club only-club"></div>
   <div id="offers" class="offers only-offers"></div>
+  <div id="player" class="pp only-player"></div>
 </main>
 
 <aside id="drawer" class="drawer" role="dialog" aria-label="Player detail" aria-hidden="true" tabindex="-1"></aside>
@@ -906,6 +955,7 @@ function setPage(p) {
   if (st.page === p && p !== 'deals') { if (p === 'club') loadClub(); return; }
   st.page = p; document.body.dataset.page = p;
   $$('.nav button').forEach(b => b.dataset.page === p ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
+  if (p === 'player') { renderProfile(); return; }
   if (p === 'club') { loadClub(); return; }
   if (p === 'offers') { renderOffers(); return; }
   if (p === 'deals') { renderLenses(); if (!dealsAvailable()) return; }
@@ -926,8 +976,10 @@ function pickLens(id) { mark(); st.lens = id; if (st.page !== 'deals') setPage('
 // (Find similar, Make an offer) collapse into one entry through a microtask. Each entry also keeps the
 // criteria (F) it was left with, so Back undoes a Find similar. Grid scroll, sort and gender are not kept.
 let navQ = null, navRestoring = false, navTop = 0;
-const navNow = () => ({ page: st.page, lens: st.lens, uid: drawerUid ?? null, offer: of.p?.uid ?? null });
-const navKey = s => [s.page, s.page === 'deals' ? s.lens : '', s.uid ?? '', s.page === 'offers' ? s.offer ?? '' : ''].join('|');
+// The profile page is page 'player' with pp = his uid, and its entry carries the URL ?p=uid (bookmarkable).
+const navNow = () => ({ page: st.page, lens: st.lens, uid: drawerUid ?? null, offer: of.p?.uid ?? null, pp: st.page === 'player' ? st.pp : null });
+const navKey = s => [s.page, s.page === 'deals' ? s.lens : '', s.uid ?? '', s.page === 'offers' ? s.offer ?? '' : '', s.page === 'player' ? s.pp ?? '' : ''].join('|');
+const navUrl = s => s.page === 'player' && s.pp ? '?p=' + s.pp : location.pathname;
 function navArrows() {
   const i = history.state?.i ?? 0;
   $('#navBack').disabled = i <= 0; $('#navFwd').disabled = i >= navTop;
@@ -939,7 +991,7 @@ function mark() {
     const f0 = navQ, h = history.state, s = navNow(); navQ = null;
     if (st.page === '-' || navKey(s) === navKey(h)) return;
     history.replaceState({ ...h, f: f0 }, '');
-    navTop = h.i + 1; history.pushState({ ...s, f: clone(F), i: navTop }, '');
+    navTop = h.i + 1; history.pushState({ ...s, f: clone(F), i: navTop }, '', navUrl(s));
     try { sessionStorage.setItem('fm26_nav_top', navTop); } catch {}
     navArrows();
   });
@@ -952,7 +1004,8 @@ function navGo(s) {
     if (fChanged) { F = clone(s.f); renderSummary(); }
     const page = s.page === 'deals' && !FAIR ? 'scout' : s.page;
     const lz = LENSES.find(l => l.id === s.lens), lensId = lz && lensOk(lz) ? s.lens : 'blend';
-    if (page === 'deals' && (st.page !== 'deals' || st.lens !== lensId)) pickLens(lensId);
+    if (page === 'player') { if (st.page !== 'player' || st.pp !== s.pp) { st.pp = s.pp; st.page === 'player' ? renderProfile() : setPage('player'); } }
+    else if (page === 'deals' && (st.page !== 'deals' || st.lens !== lensId)) pickLens(lensId);
     else if (st.page !== page) setPage(page);
     else if (fChanged && (page === 'scout' || page === 'deals')) { clearSort(); refresh(); }
     if (page === 'offers' && (of.p?.uid ?? null) !== s.offer) {
@@ -1079,6 +1132,184 @@ function dial(name, txt, f, color, sub, aria, ghost) {
   return `<div class="dial" role="img" aria-label="${esc(aria)}"><svg viewBox="0 0 64 64" aria-hidden="true"><circle class="trk" cx="32" cy="32" r="27"/>
     ${ghost ? arc(ghost[0], ghost[1], .3) : ''}${f ? arc(f, color) : ''}</svg><b style="color:${color}" aria-hidden="true">${txt}</b><span aria-hidden="true">${esc(name)}</span><small aria-hidden="true">${sub}</small></div>`;
 }
+// ---------- Player blocks shared by the drawer and the profile page ----------
+const footOf = p => p.left_foot != null && p.right_foot != null ? (p.left_foot > p.right_foot ? 'Left' : p.right_foot > p.left_foot ? 'Right' : 'Either') + ' foot' : '';
+const roleList = p => MODE === 'moneyball' ? [] : Object.keys(META.roles).map(r => [r, p['role_' + r]]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
+const roleBars = roles => roles.map(([r, x]) => `<div class="rolebar"><span>${label('role_' + r)} <span class="muted" style="font-size:11px">${META.roles[r]}</span></span><div class="tr"><i style="width:${x}%;background:${scoreColor(x)}"></i></div><b class="mono" style="color:${scoreColor(x)};text-align:right">${x.toFixed(0)}</b></div>`).join('');
+// The 2-4 rings that matter in this mode.
+function heroDials(p) {
+  const grp = groupOf(p), noAttr = MODE === 'moneyball', showAbility = !hid('ability_current') && p.ability_current != null;
+  return `${showAbility ? dial('Current ability', p.ability_current, p.ability_current / 200, abilityColor(p.ability_current),
+      `PA <b class="mono" style="color:${abilityColor(p.ability_potential)}">${p.ability_potential ?? '–'}</b> · ${p.pa_gap > 0 ? `+${p.pa_gap}` : 'at ceiling'}`,
+      `Current ability ${p.ability_current}, potential ${p.ability_potential ?? 'unknown'}, scale 200`, p.ability_potential != null && [p.ability_potential / 200, abilityColor(p.ability_potential)]) : ''}
+    ${dial('Performance', p.stat_score != null ? Math.round(p.stat_score) : '–', (p.stat_score ?? 0) / 100, p.stat_score != null ? pctColor(p.stat_score) : C.muted,
+      p.stat_score == null ? 'Not enough minutes to rate' : `vs ${esc(p.stat_group || grp)}s, 600+ min`, `Performance index ${p.stat_score != null ? Math.round(p.stat_score) : 'unknown'} of 100`)}
+    ${p.best_role_score != null && !noAttr ? dial('Best role', p.best_role_score.toFixed(0), p.best_role_score / 100, scoreColor(p.best_role_score), esc(label('role_' + p.best_role)),
+      `Best role ${label('role_' + p.best_role)}, score ${p.best_role_score.toFixed(0)} of 100`) : ''}
+    ${p.s_minutes ? dial('Avg rating', p.s_avg_rating ? p.s_avg_rating.toFixed(2) : '–', p.s_avg_rating ? (p.s_avg_rating - 5.5) / 2.5 : 0, p.s_avg_rating ? ratingColor(p.s_avg_rating) : C.muted,
+      `${p.s_apps ?? 0} apps · ${p.s_minutes.toLocaleString()} min`, p.s_avg_rating ? `Average rating ${p.s_avg_rating.toFixed(2)} this season` : 'No rating this season') : ''}`;
+}
+function verdictSec(p, grp) {
+  const v = verdict(p, grp), noAttr = MODE === 'moneyball';
+  return !noAttr || v.flags.length ? `<section class="sec"><h3>Scouting verdict</h3>
+    ${noAttr ? '' : v.strong.length ? `<div class="tags">${v.strong.map(([k, x]) => `<span class="tag good">${label(k)}<b>${x}</b></span>`).join('')}</div>` : '<p class="note" style="margin:0">No standout attributes (15+).</p>'}
+    ${v.weak.length ? `<div class="tags" style="margin-top:6px">${v.weak.map(([k, x]) => `<span class="tag bad">${label(k)}<b>${x}</b></span>`).join('')}</div>` : ''}
+    ${v.flags.length ? `<div class="tags" style="margin-top:6px">${v.flags.map(([c, t]) => `<span class="tag ${c}">${esc(t)}</span>`).join('')}</div>` : ''}
+  </section>` : '';
+}
+// Fee and wage tickets; with fair prices on, the fair values, deal % and per-lens fair fees.
+function priceBody(p) {
+  const noAttr = MODE === 'moneyball';
+  // Deal % = fee vs fair fee (wage vs fair wage for free agents): the badge sits in the cell it compares.
+  const deal = FAIR ? dealBadge(p.deal_score) : '';
+  return `<div class="ticket">
+      <div class="kv"><span class="kv-h">Fee${p.free_agent ? '' : deal}</span><b>${feeHTML(p)}</b>${FAIR ? valueVsFair(p.free_agent ? 0 : p.transfer_value, p.fair_fee) : ''}</div>
+      <div class="kv"><span class="kv-h">Wage${p.free_agent ? deal : ''}</span><b>${wage(p.contract_wage)}</b>${FAIR ? valueVsFair(p.contract_wage, p.fair_wage, wage) : ''}</div>
+    </div>
+    ${FAIR ? `${p.transfer_value == null && !p.free_agent ? '<p class="note">Not for sale, so it cannot be a deal.</p>' : ''}
+      ${noAttr && (p.s_minutes ?? 0) < 900 ? '<p class="note">No fair fee under 900 min.</p>' : ''}
+      ${p.fair_fee != null ? `<div class="lens-mini">${LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] != null).map(l => `<div>${l.label}<b class="mono">${money(p[l.ffee])}</b>${p[l.deal] != null ? `<span style="color:${dealColor(p[l.deal])}">${pctTxt(p[l.deal])}</span>` : ''}</div>`).join('')}</div>` : ''}` : ''}`;
+}
+// Attribute radar (Full / Fair play); Moneyball gets a placeholder that renderSeason turns into a percentile radar.
+function profileInner(p) {
+  if (MODE === 'moneyball') return '<h3>Performance profile</h3><span class="sk" style="height:200px;width:100%"></span>';
+  const avg = keys => { const xs = keys.map(k => p['attributes_' + k]).filter(x => x != null); return xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0; };
+  const axes = (groupOf(p) === 'GK' ? AXES_GK : AXES_OUT).map(([n, ks]) => [n, avg(ks)]);
+  return `<h3>Profile <small>avg of attribute groups, scale 20 · dashed ring = 15</small></h3>
+    <div class="radar-wrap">${radar(axes)}<div class="axes-list">${axes.map(([n, x]) => `<div><span class="muted">${n}</span><b class="${tier(Math.round(x))}">${x.toFixed(1)}</b></div>`).join('')}</div></div>`;
+}
+
+// ---------- Player profile page (page 'player', st.pp = uid, URL ?p=uid) ----------
+let ppPlayer = null, ppSeq = 0;
+const shown = uid => drawerPlayer?.uid === uid ? drawerPlayer : ppPlayer?.uid === uid ? ppPlayer : null;  // the loaded player a button refers to
+const posKey = k => 'positions_' + (k === 'ST' ? 'stc' : k.toLowerCase());
+const FAMIL = [[18, 'Natural', C.good], [15, 'Accomplished', C.ok], [12, 'Competent', C.warn], [9, 'Unconvincing', C.orange]];  // FM's familiarity bands, 1-20
+const famil = v => FAMIL.find(f => v >= f[0]);
+function pitchMap(p) {
+  const pts = POSITIONS.map(k => [k, p[posKey(k)]]).filter(x => x[1] != null);
+  const known = pts.filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]);
+  const aria = known.length ? 'Position familiarity: ' + known.map(([k, v]) => `${k} ${v} (${famil(v)[1]})`).join(', ') : 'No position familiarity in this save';
+  return `<div class="pitch"><svg viewBox="0 0 68 92" role="img" aria-label="${esc(aria)}">
+      <g fill="none" stroke="rgba(255,255,255,.16)" stroke-width=".5"><rect x="2" y="2" width="64" height="88" rx="1"/><path d="M2 46h64"/><circle cx="34" cy="46" r="8"/><rect x="17" y="2" width="34" height="13"/><rect x="17" y="77" width="34" height="13"/></g>
+      ${pts.map(([k, v]) => { const [x, y] = PITCH[k], f = famil(v), cx = (x * .68).toFixed(1), cy = (y * .92).toFixed(1);
+        return `<circle cx="${cx}" cy="${cy}" r="5.2" fill="${f ? f[2] : 'rgba(255,255,255,.05)'}" stroke="${f ? 'rgba(0,0,0,.35)' : 'rgba(255,255,255,.18)'}" stroke-width=".5"/>
+          <text x="${cx}" y="${+cy + 1.1}" text-anchor="middle" font-size="3.1" font-weight="700" font-family="var(--f-display)" fill="${f ? '#04110a' : 'rgba(255,255,255,.5)'}">${k}</text>`; }).join('')}
+    </svg></div>
+    <div class="legend" aria-hidden="true">${FAMIL.map(([, n, c]) => `<span class="tag"><i style="background:${c}"></i>${n}</span>`).join('')}</div>`;
+}
+const PERS_SHORT = { adaptability: 'Adapt', ambition: 'Amb', loyalty: 'Loyal', pressure: 'Press', professionalism: 'Prof', sportsmanship: 'Sport', temperament: 'Temp', controversy: 'Contr' };
+function heatMap(p) {
+  const groups = [groupOf(p) === 'GK' ? ['Goalkeeping', ATTR.goalkeeping] : ['Technical', ATTR.technical], ['Mental', ATTR.mental], ['Physical', ATTR.physical],
+    ...(MODE === 'full' ? [['Hidden', ATTR.hidden], ['Personality', PERS, 'personality_']] : [])];
+  return `<div class="hm">${groups.map(([t, keys, pre = 'attributes_']) => `<div><h4>${t}</h4><div class="hm-g">${keys.filter(k => p[pre + k] != null).map(k => { const c = pre + k, v = p[c];
+    return `<div class="hm-c ${tier(v, BAD.has(c))}" title="${esc(label(c))} ${v}"><span aria-hidden="true">${pre === 'attributes_' ? ABBR[k] : PERS_SHORT[k]}</span><span class="sr">${esc(label(c))}</span><b>${v}</b></div>`; }).join('')}</div></div>`).join('')}</div>`;
+}
+// Asking fee against the fair fee and the spread of the per-lens fair fees (fair prices on only).
+function priceBar(p) {
+  if (!FAIR || p.fair_fee == null) return '';
+  // Range = where half of comparable players' real fees fall around the fair fee (server model band), not the lens spread.
+  const [lo, hi] = p.fair_fee_range || [p.fair_fee, p.fair_fee], ask = p.free_agent ? 0 : p.transfer_value;
+  const max = Math.max(hi, ask ?? 0) * 1.12 || 1, at = x => (x / max * 100).toFixed(1) + '%';
+  const col = ask == null ? null : ask <= p.fair_fee ? C.good : ask <= hi ? C.warn : C.bad;
+  return `<div class="pbar" role="img" aria-label="${esc(`Fair range ${money(lo)} to ${money(hi)}, fair fee ${money(p.fair_fee)}, ${ask == null ? 'not for sale' : 'asking ' + money(ask)}`)}">
+    <div class="pbar-tr" aria-hidden="true"><i class="band" style="left:${at(lo)};width:calc(${at(hi - lo)} + 2px)"></i><i class="fair" style="left:${at(p.fair_fee)}"></i>${col ? `<i class="ask" style="left:${at(ask)};--c:${col}"></i>` : ''}</div>
+    <div class="pbar-lg" aria-hidden="true"><span>Fair range <b>${money(lo)}–${money(hi)}</b></span><span>Asking <b${col ? ` style="color:${col}"` : ''}>${ask == null ? 'Not for sale' : p.free_agent ? 'Free' : money(ask)}</b></span></div></div>`;
+}
+// What it takes to sign him. Undecoded traits and clause kinds ("unknown") are left out.
+function contractFacts(p) {
+  const rep = v => v == null ? '–' : (v / 1000).toFixed(1), pc = x => x == null ? '–' : Math.round(x / 100) + '%';
+  const js = s => { try { return JSON.parse(s || '[]') || []; } catch { return []; } };
+  const clauses = js(p.contract_clauses).filter(c => c.kind && c.kind !== 'unknown'), chain = js(p.contract_chain);
+  const traits = (p.traits || '').split(';').filter(t => t && t !== 'unknown');
+  const rows = [
+    ['Club', esc(p.club_name || 'Free agent') + (p.club_join_date ? ` <span class="muted">since ${esc(p.club_join_date)}</span>` : '')],
+    ['Squad status', esc((p.contract_squad_status || '–').replaceAll('_', ' '))],
+    ['Contract', `${esc(p.contract_start || '?')} → <b class="${p.months_left != null && p.months_left <= 6 ? 'a2' : ''}">${esc(p.contract_end || '–')}</b>${p.months_left != null ? ` · ${p.months_left}m left` : ''}`],
+    p.contract_kind && ['Type', esc(p.contract_kind.replaceAll('_', ' '))],
+    ['Wage', wage(p.contract_wage)],
+    p.on_loan && ['On loan', `from ${esc(p.loan_parent_club_name || '?')}${p.loan_end ? ' until ' + esc(p.loan_end) : ''}`],
+    chain.length > 1 && ['Contract chain', chain.map(c => esc(c.club_name)).join(' → ')],
+    p.home_grown_club_names && ['Home-grown at', esc(p.home_grown_club_names.replaceAll(';', ', '))],
+    (p.reputation_world ?? p.reputation_current) != null && ['Reputation', `world ${rep(p.reputation_world)} · current ${rep(p.reputation_current)} · home ${rep(p.reputation_home)} <span class="muted">/ 10</span>`],
+    p.club_reputation != null && ['Club reputation', `${rep(p.club_reputation)} <span class="muted">/ 10</span>`],
+    p.raw_condition != null && ['Condition · sharpness', `${pc(p.raw_condition)} · ${pc(p.raw_match_sharpness)}`],
+  ].filter(Boolean);
+  return `<dl class="facts" style="margin-top:0">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
+    ${clauses.length ? `<h4>Clauses</h4><div class="tags">${clauses.map(c => `<span class="tag">${esc(label(c.kind))}${c.value != null ? `<b>${money(c.value)}</b>` : ''}</span>`).join('')}</div>` : ''}
+    ${traits.length ? `<h4>Traits</h4><div class="tags">${traits.map(t => `<span class="tag">${esc(label(t))}</span>`).join('')}</div>` : ''}
+    ${p.suspensions ? '<div class="tags" style="margin-top:10px"><span class="tag bad">Suspended</span></div>' : ''}`;
+}
+// Closest players by the same signals as Find similar (/api/similar shows which), first 8.
+async function renderSimilar(p, alive) {
+  const sec = $('#player [data-sec="similar"]'); if (!sec) return;
+  const mb = MODE === 'moneyball';
+  const head = `<h3>Similar players <small>same position · ${mb ? 'closest on his best in-game stats' : 'closest on his 6 best attributes'}</small></h3>`;
+  sec.innerHTML = head + '<span class="sk" style="height:40px;width:100%;margin-top:6px"></span>'.repeat(4);
+  const j = r => r.ok ? r.json() : null;
+  const [crit, res] = await Promise.all([api(`/api/similar/${p.uid}${mq()}`).then(j).catch(() => null),
+    api('/api/players', { start: 0, end: 9, positions: [groupOf(p)], gender: p.gender || null, mode: MODE, similar_to: p.uid,
+      filters: mb ? { s_minutes: num('greaterThanOrEqual', 600) } : {} }).then(j).catch(() => null)]);
+  if (!alive()) return;
+  const chips = [...(crit?.attributes || []).map(x => `<span class="ac" title="${esc(label(x.col))}">${ABBR[x.col.slice(11)] || esc(label(x.col))}<b class="${tier(x.value)}">${x.value}</b></span>`),
+    ...(crit?.stats || []).map(x => `<span class="ac st" title="${esc(label(x.col))}: better than ${x.pct}% of peers">${esc(label(x.col))}<b style="color:${pctColor(x.pct)}">${x.value}</b></span>`)];
+  const rows = (res?.rows || []).filter(r => r.uid !== p.uid).slice(0, 8);
+  const metric = r => mb ? ['Performance', r.stat_score != null ? Math.round(r.stat_score) : '–', r.stat_score != null ? pctColor(r.stat_score) : C.muted]
+    : !hid('ability_current') && r.ability_current != null ? ['CA', r.ability_current, abilityColor(r.ability_current)]
+    : ['Best role', r.best_role_score != null ? r.best_role_score.toFixed(0) : '–', r.best_role_score != null ? scoreColor(r.best_role_score) : C.muted];
+  sec.innerHTML = head + (chips.length ? `<div class="kchips" style="margin-bottom:8px" aria-label="Compared on">${chips.join('')}</div>` : '')
+    + (rows.length ? rows.map(r => { const [t, v, c] = metric(r);
+      return `<button class="sim-row" data-profile="${r.uid}"><span><b>${natHTML(r, false)} ${esc(r.name)}</b><small>${r.age} yrs · ${esc(r.club_name || 'Free agent')}</small></span>
+        <span class="mono" style="font-size:12px">${feeHTML(r)}</span><span class="mono" style="color:${c};font-weight:700" title="${t}"><span class="sr">${t} </span>${v}</span></button>`; }).join('')
+      : `<p class="note" style="margin:0">${mb && !p.s_minutes ? 'Needs league minutes to compare on numbers.' : 'No close match found.'}</p>`)
+    + `<button class="link" data-similar="${p.uid}" style="margin-top:6px">Open the full list in Scout →</button>`;
+}
+function openProfile(uid) {
+  if (!uid) return;
+  mark(); st.pp = uid; closeDrawer();
+  if (st.page === 'player') renderProfile(); else setPage('player');
+}
+async function renderProfile() {
+  const box = $('#player'), uid = st.pp, seq = ++ppSeq, alive = () => seq === ppSeq && st.page === 'player';
+  ppPlayer = null; box.scrollTop = 0;
+  box.innerHTML = `<div class="pp-in"><div class="pp-head"><div class="pp-id"><span class="sk" style="height:30px;width:40%"></span><span class="sk" style="margin-top:10px;width:30%"></span></div></div>
+    <div class="pp-grid">${'<div class="sec pp-card"><span class="sk" style="width:30%"></span><span class="sk" style="margin-top:12px;height:120px;width:100%"></span></div>'.repeat(4)}</div></div>`;
+  let p;
+  try { const r = await api('/api/player/' + uid + mq()); if (!r.ok) throw r.status; p = await r.json(); }
+  catch { if (alive()) box.innerHTML = emptyState('Player not found', 'The server could not load this player: it may be restarting, or this save does not have him. Go back or try again in a moment.'); return; }
+  if (!alive()) return;
+  ppPlayer = p;
+  const grp = groupOf(p), noAttr = MODE === 'moneyball', foot = footOf(p), roles = roleList(p);
+  box.innerHTML = `<article class="pp-in" aria-labelledby="ppName">
+    <header class="pp-head">
+      <div class="pp-id"><h1 id="ppName" tabindex="-1">${esc(p.name)}</h1>
+        <p>${natHTML(p) || 'Unknown nation'}${p.second_nationalities ? ` <span class="muted">(+${esc(p.second_nationalities)})</span>` : ''} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.birth_date ? ` <span class="muted">(${esc(p.birth_date)})</span>` : ''}${p.height_cm ? ` · ${p.height_cm} cm` : ''}${foot ? ' · ' + foot : ''}</p>
+        <div>${posChips(p.natural_positions)}${p.accomplished_positions ? `<span class="muted" style="font-size:12px;margin:0 6px 0 3px">also</span>${posChips(p.accomplished_positions)}` : ''}<span class="tags">
+          <span class="tag${p.months_left != null && p.months_left <= 6 ? ' warn' : ''}">Contract <b>${esc(p.contract_end || '–')}${p.months_left != null ? ` · ${p.months_left}m` : ''}</b></span>
+          <span class="tag">${esc((p.contract_squad_status || 'Squad status unknown').replaceAll('_', ' '))}</span></span></div></div>
+      <div class="pp-act">
+        <button class="icon-btn star star-btn" data-star="${p.uid}" data-name="${esc(p.name)}" data-club="${p.club_uid ?? ''}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist ${esc(p.name)}" title="Shortlist (s)">★</button>
+        <button class="btn" data-similar="${p.uid}">Find similar players</button>
+        <button class="btn primary" data-offer="${p.uid}">Make an offer →</button>
+      </div>
+    </header>
+    <div class="pp-grid">
+      <section class="sec pp-card pp-hero" aria-label="Key numbers"><div class="dials">${heroDials(p)}</div>
+        ${noAttr ? '<p class="note">Moneyball: judged on numbers only, no attributes.</p>' : ''}${verdictSec(p, grp)}</section>
+      <section class="sec pp-card"><h3>Price${FAIR && p.fair_fee != null ? ' <small>dot = asking · line = fair fee · band = fair range</small>' : ''}</h3>${priceBar(p)}${priceBody(p)}</section>
+      <section class="sec pp-card" data-sec="profile">${profileInner(p)}</section>
+      <section class="sec pp-card"><h3>Where he plays <small>${noAttr ? 'position familiarity' : 'familiarity · role fit 0-100'}</small></h3>
+        <div class="pp-pos"><div>${pitchMap(p)}</div><div>${roles.length ? roleBars(roles) : '<p class="note" style="margin:0">Moneyball shows where he plays, not how well each role suits him.</p>'}</div></div></section>
+      ${noAttr ? '' : `<section class="sec pp-card pp-wide"><h3>Attributes <small>scale 20${MODE === 'full' ? ' · hidden and personality included' : ''}</small></h3>${heatMap(p)}</section>`}
+      <section class="sec pp-card" data-sec="season"></section>
+      <section class="sec pp-card"><h3>Contract &amp; signability</h3>${contractFacts(p)}</section>
+      <section class="sec pp-card" data-sec="similar"></section>
+      ${seasonAll(p, 'sec pp-card')}
+    </div></article>`;
+  $('#ppName', box).focus({ preventScroll: true });
+  renderSeason(p, grp, box, alive);
+  renderSimilar(p, alive);
+}
+
 function closeDrawer() {
   if (!$('#drawer').classList.contains('open')) return;
   mark();
@@ -1097,51 +1328,24 @@ async function openPlayer(uid) {
   catch { if (drawerUid === uid) dr.innerHTML = `<div class="dr-head dr-row"><div class="dr-id"></div><button class="icon-btn" data-close aria-label="Close">×</button></div>${emptyState('Player not found', 'The server could not load this player. It may be restarting, so try again in a moment.')}`; return; }
   if (drawerUid !== uid) return;
   drawerPlayer = p;
-  const grp = groupOf(p), isGK = grp === 'GK', v = verdict(p, grp), noAttr = MODE === 'moneyball';
-  const avg = keys => { const xs = keys.map(k => p['attributes_' + k]).filter(x => x != null); return xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0; };
-  const axes = (isGK ? AXES_GK : AXES_OUT).map(([n, ks]) => [n, avg(ks)]);
-  const roles = noAttr ? [] : Object.keys(META.roles).map(r => [r, p['role_' + r]]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 4);
-  const hasDeal = p.fair_fee != null;
-  // Deal % = fee vs fair fee (wage vs fair wage for free agents): the badge sits in the cell it compares.
-  const deal = FAIR ? dealBadge(p.deal_score) : '';
+  const grp = groupOf(p), isGK = grp === 'GK', noAttr = MODE === 'moneyball', roles = roleList(p).slice(0, 4);
   const block = (title, keys, pre = 'attributes_') => `<div><h4>${title}</h4>${keys.map(k => `<div class="row"><span>${label(k)}</span><span class="mono ${tier(p[pre + k], BAD.has(pre + k))}">${p[pre + k] ?? '–'}</span></div>`).join('')}</div>`;
-  const foot = p.left_foot != null && p.right_foot != null ? (p.left_foot > p.right_foot ? 'Left' : p.right_foot > p.left_foot ? 'Right' : 'Either') + ' foot' : '';
-  const showAbility = !hid('ability_current') && p.ability_current != null;
+  const foot = footOf(p);
   dr.innerHTML = `
     <div class="dr-head">
       <div class="dr-row">
         <div class="dr-id"><h2 id="drName">${esc(p.name)}</h2>
           <p>${natHTML(p) || 'Unknown nation'}${p.second_nationalities ? ` <span class="muted">(+${esc(p.second_nationalities)})</span>` : ''} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${p.height_cm} cm` : ''}${foot ? ' · ' + foot : ''}</p>
-          <div>${posChips(p.natural_positions)}</div></div>
+          <div>${posChips(p.natural_positions)}<button class="link" data-profile="${p.uid}" title="Full profile (Shift+click a player)" style="margin-left:6px">Full profile →</button></div></div>
         <button class="icon-btn star star-btn" data-star="${p.uid}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist" title="Shortlist (s)">★</button>
         <button class="icon-btn" data-close aria-label="Close player detail" title="Close (Esc)">×</button>
       </div>
     </div>
     <div class="dr-body">
-      <div class="hero"><div class="dials">
-        ${showAbility ? dial('Current ability', p.ability_current, p.ability_current / 200, abilityColor(p.ability_current),
-          `PA <b class="mono" style="color:${abilityColor(p.ability_potential)}">${p.ability_potential ?? '–'}</b> · ${p.pa_gap > 0 ? `+${p.pa_gap}` : 'at ceiling'}`,
-          `Current ability ${p.ability_current}, potential ${p.ability_potential ?? 'unknown'}, scale 200`, p.ability_potential != null && [p.ability_potential / 200, abilityColor(p.ability_potential)]) : ''}
-        ${dial('Performance', p.stat_score != null ? Math.round(p.stat_score) : '–', (p.stat_score ?? 0) / 100, p.stat_score != null ? pctColor(p.stat_score) : C.muted,
-          p.stat_score == null ? 'Not enough minutes to rate' : `vs ${esc(p.stat_group || grp)}s, 600+ min`, `Performance index ${p.stat_score != null ? Math.round(p.stat_score) : 'unknown'} of 100`)}
-        ${p.best_role_score != null && !noAttr ? dial('Best role', p.best_role_score.toFixed(0), p.best_role_score / 100, scoreColor(p.best_role_score), esc(label('role_' + p.best_role)),
-          `Best role ${label('role_' + p.best_role)}, score ${p.best_role_score.toFixed(0)} of 100`) : ''}
-        ${p.s_minutes ? dial('Avg rating', p.s_avg_rating ? p.s_avg_rating.toFixed(2) : '–', p.s_avg_rating ? (p.s_avg_rating - 5.5) / 2.5 : 0, p.s_avg_rating ? ratingColor(p.s_avg_rating) : C.muted,
-          `${p.s_apps ?? 0} apps · ${p.s_minutes.toLocaleString()} min`, p.s_avg_rating ? `Average rating ${p.s_avg_rating.toFixed(2)} this season` : 'No rating this season') : ''}
-      </div>${noAttr ? '<p class="note">Moneyball: judged on numbers only, no attributes.</p>' : ''}</div>
-      ${!noAttr || v.flags.length ? `<section class="sec"><h3>Scouting verdict</h3>
-        ${noAttr ? '' : v.strong.length ? `<div class="tags">${v.strong.map(([k, x]) => `<span class="tag good">${label(k)}<b>${x}</b></span>`).join('')}</div>` : '<p class="note" style="margin:0">No standout attributes (15+).</p>'}
-        ${v.weak.length ? `<div class="tags" style="margin-top:6px">${v.weak.map(([k, x]) => `<span class="tag bad">${label(k)}<b>${x}</b></span>`).join('')}</div>` : ''}
-        ${v.flags.length ? `<div class="tags" style="margin-top:6px">${v.flags.map(([c, t]) => `<span class="tag ${c}">${esc(t)}</span>`).join('')}</div>` : ''}
-      </section>` : ''}
+      <div class="hero"><div class="dials">${heroDials(p)}</div>${noAttr ? '<p class="note">Moneyball: judged on numbers only, no attributes.</p>' : ''}</div>
+      ${verdictSec(p, grp)}
       <section class="sec"><h3>Price</h3>
-        <div class="ticket">
-          <div class="kv"><span class="kv-h">Fee${p.free_agent ? '' : deal}</span><b>${feeHTML(p)}</b>${FAIR ? valueVsFair(p.free_agent ? 0 : p.transfer_value, p.fair_fee) : ''}</div>
-          <div class="kv"><span class="kv-h">Wage${p.free_agent ? deal : ''}</span><b>${wage(p.contract_wage)}</b>${FAIR ? valueVsFair(p.contract_wage, p.fair_wage, wage) : ''}</div>
-        </div>
-        ${FAIR ? `${p.transfer_value == null && !p.free_agent ? '<p class="note">Not for sale, so it cannot be a deal.</p>' : ''}
-          ${noAttr && (p.s_minutes ?? 0) < 900 ? '<p class="note">No fair fee under 900 min.</p>' : ''}
-        ${hasDeal ? `<div class="lens-mini">${LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] != null).map(l => `<div>${l.label}<b class="mono">${money(p[l.ffee])}</b>${p[l.deal] != null ? `<span style="color:${dealColor(p[l.deal])}">${pctTxt(p[l.deal])}</span>` : ''}</div>`).join('')}</div>` : ''}` : ''}
+        ${priceBody(p)}
         <div class="tags terms">
           <span class="tag${p.months_left != null && p.months_left <= 6 ? ' warn' : ''}" title="Contract end">Contract <b>${esc(p.contract_end || '–')}${p.months_left != null ? ` · ${p.months_left}m` : ''}</b></span>
           <span class="tag" title="Squad status">${esc((p.contract_squad_status || 'Squad status unknown').replaceAll('_', ' '))}</span>
@@ -1151,15 +1355,10 @@ async function openPlayer(uid) {
           <button class="btn primary" style="justify-content:center" data-offer="${p.uid}">Make an offer →</button>
         </div>
       </section>
-      <section class="sec" id="profileSec">${noAttr ? '<h3>Performance profile</h3><span class="sk" style="height:200px;width:100%"></span>'
-        : `<h3>Profile <small>avg of attribute groups, scale 20 · dashed ring = 15</small></h3>
-        <div class="radar-wrap">${radar(axes)}<div class="axes-list">${axes.map(([n, x]) => `<div><span class="muted">${n}</span><b class="${tier(Math.round(x))}">${x.toFixed(1)}</b></div>`).join('')}</div></div>`}
-      </section>
-      <section class="sec" id="seasonSec"></section>
+      <section class="sec" data-sec="profile">${profileInner(p)}</section>
+      <section class="sec" data-sec="season"></section>
       ${seasonAll(p)}
-      ${roles.length ? `<section class="sec"><h3>Best roles</h3>
-        ${roles.map(([r, x]) => `<div class="rolebar"><span>${label('role_' + r)} <span class="muted" style="font-size:11px">${META.roles[r]}</span></span><div class="tr"><i style="width:${x}%;background:${scoreColor(x)}"></i></div><b class="mono" style="color:${scoreColor(x)};text-align:right">${x.toFixed(0)}</b></div>`).join('')}
-      </section>` : ''}
+      ${roles.length ? `<section class="sec"><h3>Best roles</h3>${roleBars(roles)}</section>` : ''}
       ${noAttr ? '' : `<section class="sec"><details><summary>All attributes</summary>
         <div class="attrs">
           ${isGK ? block('Goalkeeping', ATTR.goalkeeping) : block('Technical', ATTR.technical)}
@@ -1167,21 +1366,22 @@ async function openPlayer(uid) {
           ${MODE === 'full' ? `<div style="display:grid;gap:14px">${block('Hidden', ATTR.hidden)}${block('Personality', PERS, 'personality_')}</div>` : ''}
         </div></details></section>`}
     </div>`;
-  renderSeason(p, grp);
+  renderSeason(p, grp, dr, () => drawerUid === p.uid);
   $('[data-close]', dr).focus({ preventScroll: true });
 }
 // Every season total and rate the save holds, folded away like "All attributes".
-function seasonAll(p) {
+function seasonAll(p, cls = 'sec') {
   const skip = new Set(['s_league_rep', 's_league_id']);
   const ks = Object.keys(p).filter(k => k.startsWith('s_') && !skip.has(k) && typeof p[k] === 'number');
   if (!ks.length) return '';
   const name = k => k.slice(2).replace(/_p90$/, ' / 90').replace('_pct', ' %').replace(/^xg|^xa/, m => m.toUpperCase()).replaceAll('_', ' ').replace(/^\w/, m => m.toUpperCase());
-  return `<section class="sec"><details><summary>All season stats</summary><dl class="facts" style="margin-top:10px">
+  return `<section class="${cls}"><details><summary>All season stats</summary><dl class="facts" style="margin-top:10px">
     ${ks.map(k => `<dt>${esc(name(k))}</dt><dd class="mono">${Number.isInteger(p[k]) ? p[k].toLocaleString() : p[k].toFixed(2)}</dd>`).join('')}</dl></details></section>`;
 }
-async function renderSeason(p, grp) {
-  const sec = $('#seasonSec'); if (!sec) return;
-  const prof = MODE === 'moneyball' && $('#profileSec');
+// Fills root's [data-sec=season] (and, in Moneyball, the percentile radar in [data-sec=profile]); alive() = still on screen.
+async function renderSeason(p, grp, root, alive) {
+  const sec = $('[data-sec="season"]', root); if (!sec) return;
+  const prof = MODE === 'moneyball' && $('[data-sec="profile"]', root);
   const head = `<h3>This season <small>per 90 · percentile vs ${grp}s with 900+ min</small></h3>`;
   if (!p.s_minutes) {
     sec.innerHTML = `<h3>This season</h3><p class="note" style="margin:0">No league minutes logged this season, so there is nothing to benchmark yet.</p>`;
@@ -1197,7 +1397,7 @@ async function renderSeason(p, grp) {
   const small = p.s_minutes < 900;  // per-90 rates on a few matches swing wildly: no percentiles until 900 min
   let pool = null;
   if (!small) try { pool = await peers(grp, p.gender); } catch { pool = null; }
-  if (drawerUid !== p.uid) return;
+  if (!alive()) return;
   const pcs = {};
   const rows = keys.map(k => {
     const [name, fn, dec = 2, unit = '', lower] = M[k], val = fn(p);
@@ -1533,7 +1733,7 @@ function renderOfPlayer() {
   const p = of.p, el = $('#ofPlayer'); if (!el) return;
   el.innerHTML = p ? `<div class="of-card"><div style="display:flex;justify-content:space-between;gap:8px"><div><h3>${esc(p.name)}</h3>
       <div class="muted" style="font-size:13px;margin-top:4px">${natHTML(p)} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs</div><div style="margin-top:6px">${posChips(p.natural_positions)}</div></div>
-      <button class="link" data-player="${p.uid}">Profile</button></div>
+      <button class="link" data-profile="${p.uid}">Profile</button></div>
       <div class="of-grid" style="grid-template-columns:repeat(3,1fr)"><div class="kv">Game value<b>${feeHTML(p)}</b></div><div class="kv">Wage<b>${wage(p.contract_wage)}</b></div><div class="kv">Contract<b>${p.months_left != null ? p.months_left + 'm' : '–'}</b></div></div></div>` : '';
 }
 function pickOfferPlayer(p) {
@@ -1645,6 +1845,7 @@ function setMode(m, initial) {
   refresh();
   CLUB = null; if (st.page === 'club') loadClub();
   if (st.page === 'offers') renderOffers();
+  if (st.page === 'player') renderProfile();
   if (drawerUid) openPlayer(drawerUid);
   toast({ full: 'Full mode: everything visible', fair: 'Fair play: no CA/PA, hidden attributes or personality', moneyball: 'Moneyball: statistics and money only' }[m], 'good');
 }
@@ -1658,6 +1859,7 @@ function setFair(on) {
   else if (st.page === 'scout' || st.page === 'deals') { applyColumns(); refresh(); }
   if (st.page === 'club' && CLUB) { loadRecos(); renderScope(); }
   if (st.page === 'offers') renderOffers();
+  if (st.page === 'player') renderProfile();
   if (drawerUid) openPlayer(drawerUid);
   toast(on ? 'Fair prices on: fair fee, fair wage and deal %' : 'Fair prices off: real fees and wages only', 'good');
 }
@@ -1777,8 +1979,9 @@ async function init() {
     onPaginationChanged: e => { if (e.newPageSize) try { localStorage.setItem('fm26_page_size', grid.paginationGetPageSize()); } catch {} }, headerHeight: 36, floatingFiltersHeight: 34,
     getRowId: p => String(p.data.uid),
     overlayNoRowsTemplate: emptyState('Nobody on the teamsheet', 'No players match these filters. Loosen one or reset.', '<button class="btn" onclick="resetAll()">Reset filters</button>'),
-    onCellClicked: p => p.colDef.colId !== 'star' && p.data && openPlayer(p.data.uid),
-    onCellKeyDown: p => p.event.key === 'Enter' && p.data && (p.colDef.colId === 'star' ? toggleStar(p.data.uid, p.data.name, p.data.club_uid) : openPlayer(p.data.uid)),
+    // Click / Enter = quick view (drawer); with Shift = full profile page (middle-click too, see auxclick).
+    onCellClicked: p => p.colDef.colId !== 'star' && p.data && (p.event?.shiftKey ? openProfile(p.data.uid) : openPlayer(p.data.uid)),
+    onCellKeyDown: p => p.event.key === 'Enter' && p.data && (p.colDef.colId === 'star' ? toggleStar(p.data.uid, p.data.name, p.data.club_uid) : p.event.shiftKey ? openProfile(p.data.uid) : openPlayer(p.data.uid)),
     onFilterChanged: renderSummary,
     datasource: { getRows: async p => {
       try {
@@ -1793,6 +1996,8 @@ async function init() {
   });
   renderViews(); renderLists(); renderLenses(); applyColumns(); renderSummary();
   // Back / forward: this tab's entry index survives a reload; the view itself starts fresh.
+  const pq = +new URLSearchParams(location.search).get('p');  // a bookmarked or reloaded profile
+  if (pq) { navRestoring = true; st.pp = pq; setPage('player'); navRestoring = false; }
   const hi = history.state?.i;
   try { navTop = hi == null ? 0 : Math.max(hi, +sessionStorage.getItem('fm26_nav_top') || 0); } catch {}
   history.replaceState({ ...navNow(), f: clone(F), i: hi ?? 0 }, ''); navArrows();
@@ -1806,7 +2011,7 @@ async function init() {
 
 let qt;
 const debounced = (fn, ms = 300) => { clearTimeout(qt); qt = setTimeout(fn, ms); };
-$('#search').addEventListener('input', () => { if (st.page === 'club' || st.page === 'offers') setPage('scout'); debounced(() => { refresh(); renderSummary(); }, 250); });
+$('#search').addEventListener('input', () => { if (st.page === 'club' || st.page === 'offers' || st.page === 'player') setPage('scout'); debounced(() => { refresh(); renderSummary(); }, 250); });
 $$('.qf').forEach(el => el.addEventListener('input', () => { F[el.dataset.q] = el.value === '' ? null : Number(el.value); debounced(() => { renderSummary(); refresh(); }); }));
 $('#reset').onclick = resetAll;
 $('#exportBtn').onclick = exportCSV;
@@ -1851,18 +2056,28 @@ document.addEventListener('click', e => {
   else if (d.i != null && t.closest('#palList')) runPal(+d.i);
   else if (d.star && !t.closest('.ag-cell')) { const p = drawerPlayer && drawerPlayer.uid === +d.star ? drawerPlayer : null;
     toggleStar(+d.star, p ? p.name : d.name, p ? p.club_uid : (d.club === '' ? null : +d.club)); }
-  else if (d.offer) { const p = drawerPlayer; closeDrawer(); setPage('offers'); pickOfferPlayer(p); }
-  else if (d.similar) findSimilar(drawerPlayer);
+  else if (d.offer) { const p = shown(+d.offer); closeDrawer(); setPage('offers'); pickOfferPlayer(p); }
+  else if (d.similar) { const p = shown(+d.similar); if (p) findSimilar(p); }
+  else if (d.profile) openProfile(+d.profile);
   else if (d.ofi != null) pickOfferPlayer(of.list[+d.ofi]);
   else if (d.offee) { $('#ofFee').value = money(+d.offee).replace('£', ''); evalOffer(); }
   else if (d.ofwage) { $('#ofWage').value = wage(+d.ofwage).replace(/^£|\/w$/g, ''); evalOffer(); }
-  else if (d.player) openPlayer(+d.player);
+  else if (d.player) e.shiftKey ? openProfile(+d.player) : openPlayer(+d.player);
   else if (d.slot != null) selectSlot(+d.slot);
   else if (d.clearSlot != null) selectSlot(null);
   else if (d.posEdit != null) { posEdit = !posEdit; renderSlotCard(); }
   else if (d.setpos) { if (formation[slotSel] === d.setpos) return; formation[slotSel] = d.setpos; renderClub(); refetchClub(); }
   else if (d.reco) { recoTab = d.reco; $$('[data-reco]').forEach(b => b.setAttribute('aria-pressed', b === t)); renderScope(); loadRecos(); }
   else if (t.id === 'clubRetry') { CLUB = null; loadClub(true); }
+});
+// Middle-click on a player (grid row, My Club, Offers, similar list) opens his full profile page.
+const PLAYER_SEL = '[data-player], [data-profile], #grid .ag-row[row-id]';
+document.addEventListener('mousedown', e => { if (e.button === 1 && e.target.closest(PLAYER_SEL)) e.preventDefault(); });  // no autoscroll
+document.addEventListener('auxclick', e => {
+  if (e.button !== 1) return;
+  const t = e.target.closest(PLAYER_SEL); if (!t) return;
+  const uid = +(t.dataset.player || t.dataset.profile || t.getAttribute('row-id'));
+  if (uid) { e.preventDefault(); openProfile(uid); }
 });
 document.addEventListener('change', e => {
   if (e.target.id === 'cShape') { formation = [...shapes()[e.target.value]]; slotSel = null; renderClub(); refetchClub(); }
@@ -1944,7 +2159,7 @@ document.addEventListener('keydown', e => {
   if (e.key === '/') { e.preventDefault(); $('#search').focus(); }
   else if (e.key === '1') setPage('scout'); else if (e.key === '2') { if (FAIR) setPage('deals'); } else if (e.key === '3') setPage('club'); else if (e.key === '4') setPage('offers');
   else if (e.key === 'e') { e.preventDefault(); openES(); }
-  else if (e.key === 's' && drawerPlayer) toggleStar(drawerPlayer.uid, drawerPlayer.name, drawerPlayer.club_uid);
+  else if (e.key === 's' && (drawerPlayer || st.page === 'player' && ppPlayer)) { const p = drawerPlayer || ppPlayer; toggleStar(p.uid, p.name, p.club_uid); }
 });
 
 let depth = 0;

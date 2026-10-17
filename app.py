@@ -809,7 +809,9 @@ def _player(uid, mode):
 
 @app.get("/api/player/{uid}")
 def player(uid: int, mode: str = "full", fair_play: bool = False):
-    return _player(uid, _mode(mode, fair_play))
+    mode = _mode(mode, fair_play)
+    p = _player(uid, mode)
+    return {**p, "fair_fee_range": fair_range(p.get("fair_fee"), p.get("gender"), mode)}
 
 
 @app.get("/api/meta")
