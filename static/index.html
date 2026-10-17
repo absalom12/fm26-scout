@@ -295,6 +295,18 @@ details[open] summary::before { content: "−"; }
 .sim-mini .sim-row { min-height: 0; padding: 3px 6px; grid-template-columns: minmax(0, 1fr) auto 34px; gap: 8px; } .sim-mini .sim-row b, .sim-mini .sim-row small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sim-mini .sim-row .tag { font-size: 11px; padding: 0 6px; } .pp-card .link[data-ppgo] { align-self: flex-start; margin-top: 4px; }
 .pp-card[data-pp="radar"] .radar-wrap { grid-template-columns: minmax(0, 180px) 1fr; gap: 40px; padding-left: 34px; } .pp-card[data-pp="radar"] .radar { width: 100%; height: auto; max-height: 100%; }
+.scat .ax.t { font: 600 10.5px var(--f-body); fill: var(--text2); }
+.sim-hd { min-height: 0 !important; padding-top: 0; padding-bottom: 2px; font: 600 10px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); pointer-events: none; } .sim-hd span:not(:first-child) { text-align: right; }
+.sd-sim.pa .sim-row { grid-template-columns: minmax(0, 1fr) auto 44px 44px; }
+.ast-r.ast-hd { height: 14px; font: 600 9.5px var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); } .ast-r.ast-hd b, .ast-r.ast-hd em { font: inherit; color: inherit; } .ast-r.ast-hd span:last-child { text-align: center; }
+/* Contract page: the whole page is available, so bigger type and air. */
+.pg-contract { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, .8fr); }
+.pg-contract .pp-card { padding: 16px 20px; } .pg-contract .pp-card h3 { font-size: 15px; margin-bottom: 14px; }
+.pg-contract .facts-t { gap: 8px; margin-bottom: 14px; } .pg-contract .facts-t div { padding: 10px 14px; } .pg-contract .facts-t span { font-size: 11.5px; margin-bottom: 3px; } .pg-contract .facts-t b { font-size: 16px; }
+.pg-contract h4 { margin: 18px 0 8px; font-size: 13px; } .pg-contract .tag { font-size: 13.5px; padding: 4px 10px; } .pg-contract .tag b { font-size: 13.5px; }
+.pg-contract table.reg { font-size: 14px; } .pg-contract table.reg th { font-size: 11.5px; padding: 6px 8px; } .pg-contract table.reg td { padding: 9px 8px; }
+.pg-contract .fbs { gap: 14px; } .pg-contract .fb { font-size: 15px; grid-template-columns: 90px minmax(0, 1fr) 44px; } .pg-contract .fb > i { height: 10px; } .pg-contract .fb b { font-size: 16px; }
+.pg-contract .tl-lg { font-size: 13px; } .pg-contract .tl-lg b { font-size: 16px; } .pg-contract .tl-tr em { font-size: 12.5px; } .pg-contract .note { font-size: 13px; }
 .svg-tip { position: fixed; z-index: 100; pointer-events: none; padding: 4px 9px; border-radius: var(--r-sm); border: 1px solid var(--line2); background: var(--raise); color: var(--text); font: 600 12px var(--f-body); white-space: nowrap; box-shadow: var(--shadow); }
 .hm-c { position: relative; } .hm-c[data-n]:hover::after { content: attr(data-n); position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); z-index: 20; padding: 3px 8px; border-radius: var(--r-sm); border: 1px solid var(--line2); background: var(--raise); color: var(--text); font: 600 12px var(--f-body); white-space: nowrap; pointer-events: none; }
 .pp-kpis { display: flex; gap: 6px; flex: none; }
@@ -479,7 +491,7 @@ table.reg td { padding: 4px 6px; border-bottom: 1px solid var(--line); color: va
 .sg-b > i { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
 .sg-r b { font: 700 12.5px var(--f-mono); text-align: right; } .sg-r em { font: 500 11px var(--f-mono); font-style: normal; color: var(--muted); text-align: right; }
 .apx { width: 100%; height: auto; }
-.apx text { font: 600 10.5px var(--f-body); fill: var(--gold); } .apx .ax { font: 500 9.5px var(--f-mono); fill: var(--muted); } .apx .me { fill: var(--mode); font-weight: 700; }
+.apx text { font: 600 9.5px var(--f-body); fill: var(--gold); } .apx .ax { font: 500 9.5px var(--f-mono); fill: var(--muted); } .apx .me { fill: var(--mode); font-weight: 700; }
 .apx .pt { cursor: pointer; } .apx .pt:hover circle { stroke-width: 3; }
 .cnv { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(90px, .7fr) minmax(0, 1fr); gap: 8px; align-items: stretch; }
 .cnv-s { display: grid; grid-template-rows: auto auto; align-content: space-between; gap: 8px; min-height: 0; }
@@ -1651,9 +1663,9 @@ function simMetric(r) {
 }
 
 // Similar players placed by fee (log x) and level (y); free agents and players not for sale sit in side gutters.
-function scatter(p, rows, H = 250) {
+function scatter(p, rows, H = 250, W = 540) {
   if ([p, ...rows].filter(r => simMetric(r)[1] != null).length < 2) return '<p class="note" style="margin:0">Not enough rated players to plot.</p>';
-  const all = [p, ...rows], near = new Set(rows.slice(0, 8).map(r => r.uid)), [, , , , ymax] = simMetric(p), W = 540, L = 96, Rr = 70, T = 12, B = 30;
+  const all = [p, ...rows], near = new Set(rows.slice(0, 8).map(r => r.uid)), [, , , , ymax] = simMetric(p), L = 96, Rr = 70, T = 12, B = 42;
   const fees = all.map(r => r.transfer_value).filter(x => x > 0), lo = Math.log(Math.min(...fees, 1e5) * .8), hi = Math.log(Math.max(...fees, 1e6) * 1.25);
   const ys = all.map(r => simMetric(r)[1]).filter(x => x != null), y0 = Math.max(0, Math.floor((Math.min(...ys) - ymax * .06) / 10) * 10), y1 = Math.min(ymax, Math.ceil((Math.max(...ys) + ymax * .04) / 10) * 10);
   const X = r => r.free_agent ? L - 34 : r.transfer_value == null ? W - Rr + 34 : L + (Math.log(r.transfer_value) - lo) / (hi - lo) * (W - L - Rr);
@@ -1662,13 +1674,14 @@ function scatter(p, rows, H = 250) {
   const pts = all.filter(r => simMetric(r)[1] != null);
   return `<svg class="scat" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc('Fee against ' + simMetric(p)[0] + ': ' + pts.map(r => `${r.name} ${feeHTML(r).replace(/<[^>]+>/g, '')} ${simMetric(r)[2]}`).join('; '))}">
     <rect x="${L - 50}" y="${T}" width="32" height="${H - T - B}" rx="4" fill="#151e27"/><rect x="${W - Rr + 18}" y="${T}" width="32" height="${H - T - B}" rx="4" fill="#151e27"/>
-    <text class="ax" x="${L - 34}" y="${H - 12}" text-anchor="middle">Free</text><text class="ax" x="${W - Rr + 34}" y="${H - 12}" text-anchor="middle">NFS</text>
-    ${ticks.map(t => { const x = L + (Math.log(t) - lo) / (hi - lo) * (W - L - Rr); return `<line x1="${x}" x2="${x}" y1="${T}" y2="${H - B}" stroke="#1a242d"/><text class="ax" x="${x}" y="${H - 12}" text-anchor="middle">${money(t)}</text>`; }).join('')}
+    <text class="ax" x="${L - 34}" y="${H - 26}" text-anchor="middle">Free</text><text class="ax" x="${W - Rr + 34}" y="${H - 26}" text-anchor="middle">Not for sale</text>
+    <text class="ax t" x="${(L + W - Rr) / 2}" y="${H - 4}" text-anchor="middle">Asking fee (log scale) →</text><text class="ax t" transform="rotate(-90)" x="${-(T + H - B) / 2}" y="12" text-anchor="middle">${esc(simMetric(p)[0])} →</text>
+    ${ticks.map(t => { const x = L + (Math.log(t) - lo) / (hi - lo) * (W - L - Rr); return `<line x1="${x}" x2="${x}" y1="${T}" y2="${H - B}" stroke="#1a242d"/><text class="ax" x="${x}" y="${H - 26}" text-anchor="middle">${money(t)}</text>`; }).join('')}
     ${[y0, (y0 + y1) / 2, y1].map(v => `<line x1="${L - 10}" x2="${W - Rr + 10}" y1="${Y(v)}" y2="${Y(v)}" stroke="#1a242d"/><text class="ax" x="${L - 58}" y="${Y(v) + 3}" text-anchor="end">${Math.round(v)}</text>`).join('')}
     ${pts.map(r => { const [, v, txt, c] = simMetric(r), me = r.uid === p.uid, x = X(r).toFixed(1), y = Y(v).toFixed(1);
       return `<g class="pt${me ? ' me' : ''}"${me ? '' : ` data-pp-uid="${r.uid}"`}><title>${esc(r.name)} · ${feeHTML(r).replace(/<[^>]+>/g, '')} · ${txt}</title>
-        <circle cx="${x}" cy="${y}" r="${me ? 7 : 5}" fill="${me ? 'none' : c}" stroke="${me ? 'var(--mode)' : 'rgba(0,0,0,.4)'}" stroke-width="${me ? 3 : 1}"/>
-        ${me || (near.has(r.uid) && !r.free_agent && r.transfer_value != null) ? `<text x="${+x + (me ? 11 : 8)}" y="${+y + 3}">${esc(me ? 'Him' : r.name.split(' ').slice(-1)[0])}</text>` : ''}</g>`; }).join('')}
+        <circle cx="${x}" cy="${y}" r="${me ? 5.5 : 3.5}" fill="${me ? 'none' : c}" stroke="${me ? 'var(--mode)' : 'rgba(0,0,0,.4)'}" stroke-width="${me ? 2.5 : .8}"/>
+        ${me || (near.has(r.uid) && !r.free_agent && r.transfer_value != null) ? `<text x="${+x + (me ? 9 : 6)}" y="${+y + 3}">${esc(me ? 'Him' : r.name.split(' ').slice(-1)[0])}</text>` : ''}</g>`; }).join('')}
   </svg>`;
 }
 
@@ -1762,7 +1775,7 @@ const lvlWord = ca => ca >= 160 ? 'an elite' : ca >= 130 ? 'a strong' : ca >= 10
 PP_ICON.risk = '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17.5v.01"/>';
 // Report card: the same facts as reportLines(), one block per section, numbers as coloured chips. Same thresholds (verdict, devOutlook, valRead).
 function secReport() {
-  const { p, grp, abil } = ppx, v = verdict(p, grp), o = devOutlook(p), val = valRead(p, grp, abil), ca = p.ability_current;
+  const { p, grp, abil } = ppx, v = verdict(p, grp), o = devOutlook(p), ca = p.ability_current;
   const chip = (t, c, tip) => `<span class="rp-c"${c ? ` style="--c:${c}"` : ''}${tip ? ` title="${esc(tip)}"` : ''}>${t}</span>`;
   const attrC = x => x >= 15 ? C.good : x <= 5 ? C.bad : x <= 10 ? C.warn : null;  // 1-20 scale: 15+ green, 5- red
   const blk = (ic, t, head, chips, sub = '', tone = '') => `<section class="rp-b${tone}"><h4>${ppIcon(ic)}${t}</h4>${head ? `<div class="rp-h">${head}</div>` : ''}${chips.length ? `<div class="rp-cs">${chips.join('')}</div>` : ''}${sub ? `<p>${sub}</p>` : ''}</section>`;
@@ -1780,17 +1793,7 @@ function secReport() {
   const dev = blk('dev', 'Development', o.gap <= 0 ? big('At his potential', C.muted) : big(`+${o.gap}`, o.c, esc(o.txt)),
     o.gap <= 0 ? [] : [chip(`PA <b>${p.ability_potential}</b>`, abilityColor(p.ability_potential)), chip(`age <b>${p.age}</b> · window ${o.win}`, null, 'Growth window: 21 or younger wide, 24 open, 27 narrow, then closing'),
       o.d != null && chip(`drive <b>${o.d.toFixed(1)}</b>/20`, o.d >= 15 ? C.good : o.d >= 11 ? C.ok : C.warn, 'Average of professionalism, determination and ambition')].filter(Boolean));
-  const vc = val.fp == null ? C.muted : val.fp <= 35 ? C.good : val.fp >= 65 ? C.warn : C.muted;
-  const value = blk('cost', 'Value', big(p.free_agent ? 'Free' : p.transfer_value == null ? 'Not for sale' : money(p.transfer_value), p.free_agent ? C.good : 'var(--text)', val.word ? `<em style="color:${vc}">${esc(val.word)}</em>` : ''),
-    [val.fp != null && chip(`fee above <b>${val.fp}%</b>`, vc, `Fee higher than ${val.fp}% of ${val.n} ${plural(grp)} within 8 CA${val.of}`),
-     FAIR && p.deal_score != null && chip(`<b>${Math.abs(Math.round(p.deal_score))}%</b> ${p.deal_score >= 0 ? 'under' : 'over'} fair`, p.deal_score >= 0 ? C.good : C.bad, `Fair-fee model: fair fee ${money(p.fair_fee)}`),
-     p.months_left != null && chip(`contract <b>${leftTxt(p.months_left)}</b>`, p.months_left <= 6 ? C.warn : null, `Contract until ${p.contract_end}`)].filter(Boolean),
-    val.fp == null && !p.free_agent && p.transfer_value != null ? 'Not enough comparable fees.' : '');
-  const ps = p.stat_score != null ? Math.round(p.stat_score) : null;
-  const season = blk('level', 'This season', ps != null ? big(ps, pctColor(ps), `/100 performance vs ${plural(p.stat_group || grp)}`) : '',
-    ps != null ? [p.s_avg_rating && chip(`rating <b>${p.s_avg_rating.toFixed(2)}</b>`, ratingColor(p.s_avg_rating)), chip(`<b>${(p.s_minutes || 0).toLocaleString()}</b> min`)].filter(Boolean) : [],
-    ps != null ? '' : p.s_minutes ? `Only ${p.s_minutes} league minutes: too few to judge.` : 'No league minutes this season.');
-  return `<div class="rp">${level}${dev}${strong}${risk}${value}${season}</div><p class="note rp-rule" title="${esc(REPORT_RULES(grp))}">Written by fixed rules from his own numbers · hover for the rules</p>`;
+  return `<div class="rp">${level}${dev}${strong}${risk}</div><p class="note rp-rule" title="${esc(REPORT_RULES(grp))}">Written by fixed rules from his own numbers · hover for the rules</p>`;
 }
 
 function secRole() {
@@ -1853,7 +1856,7 @@ function secHero() {
 function secDeal() {
   const { p, grp, bench } = ppx, ask = p.free_agent ? 0 : p.transfer_value;
   if (!FAIR || p.fair_fee == null) {
-    return `${h3i('cost', 'Fees of similar players', FAIR ? 'no fair fee for him · him = ring · click a dot' : 'fair prices off · him = ring · click a dot')}${sideBody('map').replace(/^<p class="note"[^>]*>.*?<\/p>/, '')}`;
+    return `${h3i('cost', 'What similar players cost', `${FAIR ? 'no fair fee for him' : 'fair prices off'} · each dot = a similar player · ring = him`)}${sideBody('map').replace(/^<p class="note"[^>]*>.*?<\/p>/, '')}`;
   }
   const lens = LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] != null).map(l => [l.label, p[l.ffee]]);
   const [lo, hi] = p.fair_fee_range || [p.fair_fee, p.fair_fee], vals = [...lens.map(x => x[1]), lo, hi, p.fair_fee, ...(ask > 0 ? [ask] : [])].filter(x => x > 0);
@@ -1890,16 +1893,16 @@ function apxScatter() {
   if (rows.length < 20) return abil ? '<p class="note">Not enough fees in this save to plot.</p>' : '<span class="sk" style="height:200px;width:100%"></span>';
   const fees = [...rows, ...sims].map(r => r.transfer_value).filter(x => x > 0).concat(p.transfer_value > 0 ? [p.transfer_value] : []);
   const c0 = Math.max(40, Math.min(p.ability_current, ...sims.map(r => r.ability_current)) - 35), c1 = 200, inX = r => r.ability_current >= c0;
-  const fz = fees.filter((f, i) => i >= rows.length || inX(rows[i])), lo = Math.log(Math.min(...fz) * .8), hi = Math.log(Math.max(...fz) * 1.3), W = 420, H = 250, L = 46, B = 18, T = 8, R = 8;
+  const fz = fees.filter((f, i) => i >= rows.length || inX(rows[i])), lo = Math.log(Math.min(...fz) * .8), hi = Math.log(Math.max(...fz) * 1.3), W = 640, H = 400, L = 50, B = 18, T = 8, R = 8;
   const X = v => (L + (v - c0) / (c1 - c0) * (W - L - R)).toFixed(1), Y = f => f > 0 ? (T + (1 - (Math.log(f) - lo) / (hi - lo)) * (H - T - B)).toFixed(1) : T;
   const nm = r => esc(r.name.split(' ').slice(-1)[0]);
   return `<svg class="apx" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Fee against current ability for ${rows.length} ${plural(ppx.grp)}; similar players: ${sims.map(r => `${r.name} CA ${r.ability_current} ${feeHTML(r).replace(/<[^>]+>/g, '')}`).join('; ')}`)}">
     ${[1e5, 1e6, 1e7, 1e8].filter(t => Math.log(t) > lo && Math.log(t) < hi).map(t => `<line x1="${L}" x2="${W - R}" y1="${Y(t)}" y2="${Y(t)}" stroke="#1a242d"/><text class="ax" x="${L - 5}" y="${+Y(t) + 3}" text-anchor="end">${money(t)}</text>`).join('')}
-    ${[c0, 100, 150, 200].filter(v => v >= c0).map(v => `<text class="ax" x="${X(v)}" y="${H - 4}" text-anchor="middle">CA ${Math.round(v)}</text>`).join('')}
+    ${[c0, 100, 150, 200].filter(v => v >= c0).map(v => `<text class="ax" x="${X(v)}" y="${H - 4}" text-anchor="${v === 200 ? 'end' : 'middle'}">CA ${Math.round(v)}</text>`).join('')}
     ${rows.filter(inX).map(r => `<circle cx="${X(r.ability_current)}" cy="${Y(r.transfer_value)}" r="2.2" fill="var(--muted)" opacity=".35"/>`).join('')}
-    ${sims.filter(inX).map((r, i) => `<g class="pt" data-pp-uid="${r.uid}"><title>${esc(r.name)} · CA ${r.ability_current} · ${feeHTML(r).replace(/<[^>]+>/g, '')}</title><circle cx="${X(r.ability_current)}" cy="${r.transfer_value > 0 ? Y(r.transfer_value) : T + 2}" r="5" fill="none" stroke="var(--gold)" stroke-width="2"/>
+    ${sims.filter(inX).map((r, i) => `<g class="pt" data-pp-uid="${r.uid}"><title>${esc(r.name)} · CA ${r.ability_current} · ${feeHTML(r).replace(/<[^>]+>/g, '')}</title><circle cx="${X(r.ability_current)}" cy="${r.transfer_value > 0 ? Y(r.transfer_value) : T + 2}" r="3.5" fill="none" stroke="var(--gold)" stroke-width="1.4"/>
       <text x="${+X(r.ability_current) + (i % 2 ? 8 : -8)}" y="${(r.transfer_value > 0 ? +Y(r.transfer_value) : T + 2) + 3 + (i % 4 > 1 ? 9 : 0)}" text-anchor="${i % 2 ? 'start' : 'end'}">${nm(r)}${r.transfer_value > 0 ? '' : ' (NFS)'}</text></g>`).join('')}
-    <circle cx="${X(p.ability_current)}" cy="${p.transfer_value > 0 ? Y(p.transfer_value) : T + 2}" r="7" fill="var(--mode)"/><text class="me" x="${+X(p.ability_current) - 10}" y="${(p.transfer_value > 0 ? +Y(p.transfer_value) : T + 2) + 4}" text-anchor="end">${esc(p.name.split(' ').slice(-1)[0])}${p.transfer_value > 0 ? '' : ' (not for sale)'}</text>
+    <circle cx="${X(p.ability_current)}" cy="${p.transfer_value > 0 ? Y(p.transfer_value) : T + 2}" r="5.5" fill="var(--mode)"/><text class="me" x="${+X(p.ability_current) - 10}" y="${(p.transfer_value > 0 ? +Y(p.transfer_value) : T + 2) + 4}" text-anchor="end">${esc(p.name.split(' ').slice(-1)[0])}${p.transfer_value > 0 ? '' : ' (not for sale)'}</text>
   </svg><p class="note">Grey = ${rows.length} ${plural(ppx.grp)} with a fee (sample) · gold rings = similar players (click) · not for sale = top edge.</p>`;
 }
 // Fair play pitch canvas: familiarity on the pitch, and what he brings in each phase from his attributes (vs peer average).
@@ -1968,7 +1971,7 @@ function allStats() {
   const groups = phases.map(([t, rows]) => {
     if (rows.every(r => !r.T && !r.N)) return '';  // phase empty for him (keepers' saves for an outfielder, etc.)
     const ps = rows.map(r => r.pc).filter(x => x != null), md = ps.length ? median(ps) : null;
-    return `<section class="ast-p"><h5>${t}${md != null ? `<b style="--c:${pctColor(md)}" title="Median percentile of this phase">${Math.round(md)}</b>` : ''}</h5>${rows.map(r => {
+    return `<section class="ast-p"><h5>${t}${md != null ? `<b style="--c:${pctColor(md)}" title="Median percentile of this phase">${Math.round(md)}</b>` : ''}</h5><div class="ast-r ast-hd" aria-hidden="true"><span>Stat</span><b>Season</b><em>Per 90</em><span title="Percentile vs his position">Rank</span></div>${rows.map(r => {
       const cls = top.includes(r) ? ' hi' : low.includes(r) ? ' lo' : '';
       const tip = `${r.l}: ${fmtT(r.T, r.kind)}${r.N != null ? ` · ${r.N.toFixed(2)} per 90` : ''}${r.pc != null ? ` · better than ${r.pc}% of ${plural(grp)}` : ''}${r.lower ? ' (fewer is better)' : ''}`;
       return `<div class="ast-r${cls}" title="${esc(tip)}"${r.pc != null ? ` style="--c:${pctColor(r.pc)}"` : ''}><span>${r.l}</span><b>${r.T == null && r.N != null ? '' : r.show ? r.show(p) : fmtT(r.T, r.kind)}</b><em>${r.N == null ? '' : r.N.toFixed(r.kind === 1 && r.N >= 10 ? 1 : 2)}</em>${r.pc == null ? (small || r.kind === 'x' ? '<i></i>' : '<i class="pill">–</i>') : `<i class="pill">${r.pc}</i>`}</div>`; }).join('')}</section>`; }).join('');
@@ -2029,9 +2032,12 @@ function secSwarm() {
 // Moneyball phase panels from in-game stats, each line with percentile vs position and vs all positions.
 const REPORT_RULES = grp => `Strengths = attributes at 15+, risks = key attributes for his position at 10 or less plus hidden flags (injury proneness 14+, consistency or big-match 8 or less, professionalism 8 or less). Ranks count every ${grp} in this save. Development uses PA gap, age and the average of professionalism, determination and ambition. Value compares his fee with players of his position within 8 CA.`;
 // One similar player: flag, name, age and club, fee, and the number he was matched on.
-const simRow = r => { const [t, , v, c] = simMetric(r);
+const simRow = (r, pa) => { const [t, , v, c] = simMetric(r);
   return `<button class="sim-row" data-profile="${r.uid}"><span><b>${natHTML(r)} ${esc(r.name)}</b><small>${r.age} yrs · ${esc(r.club_name || 'Free agent')}</small></span>
-    <span class="mono" style="font-size:12px">${feeHTML(r)}</span><span class="mono" style="color:${c};font-weight:700" title="${t}"><span class="sr">${t} </span>${v}</span></button>`; };
+    <span class="mono" style="font-size:12px">${feeHTML(r)}</span><span class="mono" style="color:${c};font-weight:700" title="${t}"><span class="sr">${t} </span>${v}</span>${pa ? `<span class="mono" style="color:${abilityColor(r.ability_potential)};font-weight:700" title="Potential ability"><span class="sr">Potential ability </span>${r.ability_potential ?? '–'}</span>` : ''}</button>`; };
+// Column names over a similar-players list (CA and PA in Full).
+const SIM_SHORT = { 'Current ability': 'CA', Performance: 'Performance', 'Best role': 'Best role' };
+const simHead = (p, pa) => `<div class="sim-row sim-hd" aria-hidden="true"><span>Player</span><span>Value</span><span>${SIM_SHORT[simMetric(p)[0]]}</span>${pa ? '<span>PA</span>' : ''}</div>`;
 // Cards of the non-overview pages.
 function sideBody(k) {
   const { p, grp, bench, sim } = ppx, mb = MODE === 'moneyball', pool = bench?.pool || [];
@@ -2039,10 +2045,10 @@ function sideBody(k) {
     if (!sim) return '<span class="sk" style="height:200px;width:100%"></span>';
     const chips = [...(sim.crit?.attributes || []).map(x => `<span class="ac" title="${esc(label(x.col))}">${ABBR[x.col.slice(11)] || esc(label(x.col))}<b class="${tier(x.value)}">${x.value}</b></span>`),
       ...(sim.crit?.stats || []).map(x => `<span class="ac st" title="${esc(label(x.col))}: better than ${x.pct}% of peers">${esc(label(x.col))}<b style="color:${pctColor(x.pct)}">${x.value}</b></span>`)];
-    const list = sim.rows.map(simRow).join('');
-    return `<div class="sd-sim${MODE !== 'full' ? ' wide' : ''}"><div>${chips.length ? `<div class="kchips" aria-label="Compared on">${chips.join('')}</div>` : ''}
+    const pa = simMetric(p)[0] === 'Current ability' && !hid('ability_potential'), list = sim.rows.length ? simHead(p, pa) + sim.rows.map(r => simRow(r, pa)).join('') : '';
+    return `<div class="sd-sim${MODE !== 'full' ? ' wide' : ''}${pa ? ' pa' : ''}"><div>${chips.length ? `<div class="kchips" aria-label="Compared on">${chips.join('')}</div>` : ''}
       ${list || `<p class="note">${mb && !p.s_minutes ? 'Needs league minutes to compare on numbers.' : 'No close match found.'}</p>`}
-      <button class="link" data-similar="${p.uid}">Open the full list in Scout →</button></div>${MODE === 'full' || !sim.rows.length ? '' : `<div><p class="note" style="margin:0 0 6px">Fee (log) against ${simMetric(p)[0].toLowerCase()} · him = ring · hover or click a dot</p>${scatter(p, sim.rows, 380)}</div>`}</div>`;
+      <button class="link" data-similar="${p.uid}">Open the full list in Scout →</button></div>${MODE === 'full' || !sim.rows.length ? '' : `<div><p class="note" style="margin:0 0 6px">Each dot = a similar player · ring = him · hover for the name, click to open</p>${scatter(p, sim.rows, 520, 900)}</div>`}</div>`;
   }
   if (k === 'price') return `${priceBar(p)}${priceBody(p)}${bench ? strip('Asking fee', pool.map(r => r.transfer_value), p.free_agent ? 0 : p.transfer_value, money, grp) + strip('Wage', pool.map(r => r.contract_wage), p.contract_wage, wage, grp) : ''}
     ${!FAIR ? '<p class="note">Fair prices are off: fee and wage against his peers only.</p>' : ''}`;
@@ -2070,7 +2076,7 @@ function sideBody(k) {
   if (k === 'apx') return apxScatter();
   if (k === 'report') return secReport();
   if (k === 'attrs') return heatMap(p, false);
-  if (k === 'map') return !sim ? '<span class="sk" style="height:200px;width:100%"></span>' : sim.rows.length ? `<p class="note" style="margin:0 0 6px">Similar players: fee (log) against ${simMetric(p)[0].toLowerCase()} · him = ring · click a dot.</p>${scatter(p, sim.rows)}` : '<p class="note">No close match found.</p>';
+  if (k === 'map') return !sim ? '<span class="sk" style="height:200px;width:100%"></span>' : sim.rows.length ? `<p class="note" style="margin:0 0 6px">Similar players: fee (log) against ${simMetric(p)[0].toLowerCase()} · him = ring · click a dot.</p>${scatter(p, sim.rows, 480, 760)}` : '<p class="note">No close match found.</p>';
   if (k === 'season') return '<div data-sec="season"></div>';
   if (k === 'position') {
     const fam = POSITIONS.map(x => [x, p[posKey(x)]]).filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]);
@@ -2093,7 +2099,7 @@ const ppCards = () => ppPages().flatMap(x => x[2]);
 // Short list of similar players (Overview), the full one lives on the Similar page.
 function simMini(n) {
   const s = ppx.sim; if (!s) return '<span class="sk" style="height:120px;width:100%"></span>';
-  return s.rows.length ? `<div class="sim-mini">${s.rows.slice(0, n).map(simRow).join('')}</div><button class="link" data-ppgo="similar">All similar players →</button>` : '<p class="note">No close match found.</p>';
+  return s.rows.length ? `<div class="sim-mini">${s.rows.slice(0, n).map(r => simRow(r)).join('')}</div><button class="link" data-ppgo="similar">All similar players →</button>` : '<p class="note">No close match found.</p>';
 }
 const PP_FN = { kpis: secKpis, hero: secHero, deal: secDeal, sg: secSG, dev: secDev, attr: secAttr, role: secRole, canvas: secCanvas, swarm: secSwarm, pizza: secPizza,
   radar: () => profileInner(ppx.p), simmini: () => h3i('role', 'Similar players') + simMini(4) };
