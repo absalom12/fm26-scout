@@ -500,6 +500,7 @@ table.reg td { padding: 4px 6px; border-bottom: 1px solid var(--line); color: va
 .cnv-p { display: flex; flex-direction: column; min-height: 0; align-items: center; }
 .cnv-p .lane { flex: 1 1 0; min-height: 0; width: 100%; }
 .cnv .phz { overflow: visible; }
+.cnv:not(.mb) { grid-template-columns: minmax(140px, .72fr) minmax(0, 1.6fr) minmax(140px, .72fr); } .cnv:not(.mb) .phz { padding: 5px 8px; font-size: 11.5px; } .cnv:not(.mb) .phz > div > b { font-size: 12px; } .cnv:not(.mb) .phz h5 { font-size: 10.5px; }
 .cnv-lg { flex: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 6px; } .cnv-lg span { font-size: 11px; padding: 1px 7px; border-radius: var(--r-pill); background: rgba(0,0,0,.35); color: var(--text2); } .cnv-lg i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
 .cnv-p .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-top: 6px; } .cnv-p .legend .tag { font-size: 10.5px; padding: 1px 6px; } .cnv-p .legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
 .phz { min-width: 0; min-height: 0; overflow: hidden; padding: 7px 10px; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); display: grid; align-content: start; gap: 2px; font-size: 12px; }
@@ -1983,12 +1984,12 @@ function allStats() {
 const PHASE_ATTR = { out: [['Finishing', ['finishing', 'composure', 'off_the_ball', 'long_shots']], ['Creating', ['passing', 'vision', 'technique', 'crossing']], ['Carrying', ['dribbling', 'pace', 'acceleration', 'agility']], ['Defending', ['tackling', 'marking', 'positioning', 'work_rate']]],
   gk: [['Shot stopping', ['reflexes', 'one_on_ones', 'handling']], ['Aerial', ['aerial_reach', 'command_of_area', 'punching']], ['Distribution', ['kicking', 'throwing', 'passing']], ['Sweeping', ['rushing_out', 'acceleration', 'anticipation']]] };
 // Pitch-canvas lane (proposal 3): positions as bubbles sized and coloured by familiarity, on a narrow vertical lane between the panels.
-function bigPitch(p) {
+function bigPitch(p, wide = true) {  // wide: Fair play / Full lane; narrow: Moneyball, whose stat panels need the width
   const pts = POSITIONS.map(k => [k, p[posKey(k)]]).filter(x => x[1] != null);
   const known = pts.filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]);
-  return `<svg class="lane" viewBox="0 0 56 124" role="img" aria-label="${esc(known.length ? 'Position familiarity: ' + known.map(([k, v]) => `${k} ${v} (${famil(v)[1]})`).join(', ') : 'No position familiarity in this save')}">
-    ${pts.map(([k, v]) => { const [x0, y0] = PITCH[k], f = v >= 9 ? famil(v) : null, cx = (28 + (x0 - 50) * .7).toFixed(1), cy = (y0 * 1.24 + 3.5).toFixed(1), r = f ? (5.6 + (v - 9) * .3).toFixed(1) : 3.2;
-      return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${f ? f[2] : 'rgba(255,255,255,.05)'}" stroke="rgba(255,255,255,.18)" stroke-width=".3"><title>${k} · ${f ? f[1] : 'Unfamiliar'}</title></circle><text x="${cx}" y="${+cy + 1.3}" text-anchor="middle" font-size="${f ? 3.8 : 2.4}" font-weight="700" font-family="var(--f-display)" fill="${f ? '#04110a' : 'rgba(255,255,255,.45)'}" pointer-events="none">${k}</text>`; }).join('')}
+  return `<svg class="lane" viewBox="0 0 ${wide ? 140 : 70} 124" role="img" aria-label="${esc(known.length ? 'Position familiarity: ' + known.map(([k, v]) => `${k} ${v} (${famil(v)[1]})`).join(', ') : 'No position familiarity in this save')}">
+    ${pts.map(([k, v]) => { const [x0, y0] = PITCH[k], f = v >= 9 ? famil(v) : null, cx = (wide ? 70 + (x0 - 50) * 1.35 : 35 + (x0 - 50) * .6).toFixed(1), cy = (y0 * 1.18 + 5).toFixed(1), r = f ? (7.6 + (v - 9) * .35).toFixed(1) : 4;
+      return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${f ? f[2] : 'rgba(255,255,255,.05)'}" stroke="rgba(255,255,255,.18)" stroke-width=".3"><title>${k} · ${f ? f[1] : 'Unfamiliar'}</title></circle><text x="${cx}" y="${+cy + 1.8}" text-anchor="middle" font-size="${f ? 5.2 : 3}" font-weight="700" font-family="var(--f-display)" fill="${f ? '#04110a' : 'rgba(255,255,255,.45)'}" pointer-events="none">${k}</text>`; }).join('')}
   </svg>`;
 }
 const famLegend = () => `<div class="cnv-lg" aria-hidden="true">${FAMIL.map(([, n, c]) => `<span><i style="background:${c}"></i>${n}</span>`).join('')}</div>`;
@@ -1997,7 +1998,7 @@ function secCanvas() {
   if (MODE === 'moneyball') {
     const o = PHASE_ORDER[grp] || PHASE_ORDER.CM;
     return `${h3i('where', 'Where he plays and what he does there', `bubble colour = familiarity · pill = percentile vs ${plural(grp)} · tick in the pill = vs all positions`)}
-      <div class="cnv mb"><div class="cnv-s">${statPanel(o[0])}${statPanel(o[2])}</div><div class="cnv-p">${bigPitch(p)}</div><div class="cnv-s">${statPanel(o[1])}${statPanel(o[3])}</div>${grp === 'GK' ? '' : `<div class="cnv-w">${statPanel('wrk')}</div>`}</div>${famLegend()}`;
+      <div class="cnv mb"><div class="cnv-s">${statPanel(o[0])}${statPanel(o[2])}</div><div class="cnv-p">${bigPitch(p, false)}</div><div class="cnv-s">${statPanel(o[1])}${statPanel(o[3])}</div>${grp === 'GK' ? '' : `<div class="cnv-w">${statPanel('wrk')}</div>`}</div>${famLegend()}`;
   }
   const ph = PHASE_ATTR[grp === 'GK' ? 'gk' : 'out'];
   const hl = v => v >= 15 ? C.good : v <= 5 ? C.bad : 'var(--text)';  // FM's own colouring: 15+ green, 5 or less red
