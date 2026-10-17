@@ -244,6 +244,7 @@ STAT_SUMS = ["starts", "substitute_appearances", "minutes", "goals", "assists", 
              "clear_cut_chances_created", "crosses_attempted", "crosses_completed", "dribbles", "tackles_attempted",
              "tackles_completed", "interceptions", "possession_won", "possession_lost", "pressures_completed", "aerial_challenges_attempted",
              "headers_won", "clearances", "blocks", "distance_km", "yellow_cards", "red_cards", "player_of_the_match",
+             "mistakes_leading_to_goal", "fouls_made", "fouls_against", "offsides",
              "clean_sheets", "goals_allowed", "shots_on_target_faced", "saves_held", "saves_parried", "saves_tipped", "expected_goals_prevented"]
 
 

@@ -327,7 +327,7 @@ details[open] summary::before { content: "−"; }
 .pp-card { position: relative; min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }
 .pp-card h3 { flex: none; margin: 0 0 8px; font: 700 13px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 7px; }
 .pp-card h3 .ico { color: var(--mode); }
-.pp-card h3 small { font: 400 12px var(--f-body); letter-spacing: 0; text-transform: none; color: var(--faint); margin-left: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pp-card h3 small { font: 400 12px/1.25 var(--f-body); letter-spacing: 0; text-transform: none; color: var(--faint); margin-left: auto; text-align: right; min-width: 0; }  /* wraps rather than cut with … */
 .pp-card h4 { margin: 10px 0 5px; font: 700 12px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
 .pp-card .note { margin: 6px 0 0; }
 .ico { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -524,7 +524,7 @@ table.reg td { padding: 4px 6px; border-bottom: 1px solid var(--line); color: va
   .lds { gap: 5px; margin-top: 6px; } .ld small { font-size: 10.5px; }
   .rp { gap: 6px; } .rp-b { padding: 5px 9px 6px; gap: 3px; } .rp-h b { font-size: 21px; } .rp-c { padding: 1px 7px; } .rp-b p { font-size: 11.5px; }
   .mt-r { min-height: 19px; font-size: 12px; } .fbs { gap: 3px; } .fb { font-size: 12px; }
-  .cnv-w { display: none; } .pp-card .hm-c { padding: 2px 6px; } .pp-card .hm-g + h4 { margin-top: 5px; } .phz > div { line-height: 1.2; } .phz h5 { margin-bottom: 1px; } .pp-verdict { font-size: 12px; line-height: 1.35; } .vsc { max-height: 120px; } .sg { gap: 1px; } .sg + .note { display: none; } .phz { padding: 5px 8px; gap: 1px; } .tix b { font-size: 13.5px; } .hero-n b { font-size: 64px; } .pp-card h4 { margin: 7px 0 4px; } .tot b { font-size: 13px; } .tot div, .facts-t div { padding: 3px 7px; }
+  .pp-card .hm-c { padding: 2px 6px; } .pp-card .hm-g + h4 { margin-top: 5px; } .phz > div { line-height: 1.2; } .phz h5 { margin-bottom: 1px; } .pp-verdict { font-size: 12px; line-height: 1.35; } .vsc { max-height: 120px; } .sg { gap: 1px; } .sg + .note { display: none; } .phz { padding: 5px 8px; gap: 1px; } .tix b { font-size: 13.5px; } .hero-n b { font-size: 64px; } .pp-card h4 { margin: 7px 0 4px; } .tot b { font-size: 13px; } .tot div, .facts-t div { padding: 3px 7px; }
 }
 @media (max-height: 700px) { .pp-card .hm-c { padding: 1px 6px; } .pp-card .hm h4 { margin-bottom: 2px; } .pp-card .hm-g { gap: 2px; } .cnv-lg { display: none; } }
 @media (max-height: 700px), (max-width: 1100px) {
@@ -1141,6 +1141,7 @@ const M = {
   crs: ['Crosses completed', per90('s_crosses_completed'), 2, '', false, 'Crs'], xgp: ['xG prevented', per90('s_expected_goals_prevented'), 2, '', false, 'xGP'],
   conc: ['Goals conceded', per90('s_goals_allowed'), 2, '', true, 'Conc'],
   saves: ['Saves', p => p.s_minutes ? ((p.s_saves_held || 0) + (p.s_saves_parried || 0) + (p.s_saves_tipped || 0)) * 90 / p.s_minutes : null, 2, '', false, 'Sav'],
+  lost: ['Possession lost ↓', per90('s_possession_lost'), 2, '', true, 'Lost'], foul: ['Fouls made ↓', per90('s_fouls_made'), 2, '', true, 'Fls'], off: ['Offsides ↓', per90('s_offsides'), 2, '', true, 'Off'],
   cs: ['Clean sheet rate', p => p.s_apps ? (p.s_clean_sheets || 0) / p.s_apps * 100 : null, 0, '%', false, 'CS'],
 };
 const METRICS = { GK: ['rating','xgp','saves','conc','cs','passpct'], CB: ['rating','tck','int','hdr','hdrpct','tckpct','clr','blk','prog','passpct'],
@@ -1587,7 +1588,9 @@ const PP_ICON = {
   similar: '<circle cx="8" cy="9" r="3"/><circle cx="16.5" cy="9" r="3"/><path d="M2.5 20a5.5 5.5 0 0 1 11 0M11 20a5.5 5.5 0 0 1 11 0"/>',
 };
 const ppIcon = k => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${PP_ICON[k]}</svg>`;
-const pctOf = (xs, v, lower) => { const b = xs.filter(x => x < v).length, e = xs.filter(x => x === v).length, pc = Math.round((b + e / 2) / xs.length * 100); return lower ? 100 - pc : pc; };
+// Share of the pool he beats (ties count half). For lower-is-better stats a tie counts as a win: 0 errors when most have 0 is the best mark, not the median.
+const pctOf = (xs, v, lower) => { const e = xs.filter(x => x === v).length;
+  return lower ? Math.round((xs.filter(x => x > v).length + e) / xs.length * 100) : Math.round((xs.filter(x => x < v).length + e / 2) / xs.length * 100); };
 const median = xs => { const s = xs.filter(x => x != null).sort((a, b) => a - b); return s.length ? s[s.length >> 1] : null; };
 const clamp01 = x => Math.max(0, Math.min(1, x));
 const pctW = x => (clamp01(x) * 100).toFixed(1) + '%';
@@ -1922,13 +1925,19 @@ const PHASES = {
   gka: ['Goals against', [['Conceded / 90', M.conc[1], null, true], ['Clean sheet rate', M.cs[1], p => pctS(M.cs[1](p))], ['Clean sheets', p => p.s_clean_sheets, p => p.s_clean_sheets ?? 0]]],
   gkd: ['Distribution', [['Pass completion', M.passpct[1], p => pctS(p.s_pass_pct)], ['Progressive passes / 90', M.prog[1]]]],
 };
+// Negative stats (lower is better, percentile inverted), the ones that matter for his position.
+const NEG_L = { lost: ['Possession lost / 90', per90('s_possession_lost'), null, true], mist: ['Errors leading to goal', per90('s_mistakes_leading_to_goal'), p => p.s_mistakes_leading_to_goal ?? 0, true],
+  foul: ['Fouls / 90', per90('s_fouls_made'), null, true], off: ['Offsides / 90', per90('s_offsides'), null, true], card: ['Yellow · red cards', per90('s_yellow_cards'), p => `${p.s_yellow_cards ?? 0} · ${p.s_red_cards ?? 0}`, true] };
+// Possession lost sits in the Carrying panel; the keeper's panel has no carrying, so it lists it here.
+const NEG = { ST: ['off', 'mist', 'foul', 'card'], W: ['off', 'mist', 'foul', 'card'], AM: ['mist', 'foul', 'card'], CM: ['mist', 'foul', 'card'],
+  DM: ['mist', 'foul', 'card'], FB: ['mist', 'foul', 'card'], CB: ['mist', 'foul', 'card'], GK: ['mist', 'card', 'lost'] };
 // Which job comes first depends on his position: attackers start with finishing, defenders with defending, keepers with shot stopping.
 const PHASE_ORDER = { ST: ['fin', 'cre', 'car', 'def'], W: ['fin', 'cre', 'car', 'def'], AM: ['cre', 'fin', 'car', 'def'], CM: ['cre', 'car', 'def', 'fin'],
-  DM: ['def', 'car', 'cre', 'fin'], FB: ['def', 'cre', 'car', 'fin'], CB: ['def', 'car', 'cre', 'fin'], GK: ['gks', 'gka', 'gkd', 'wrk'] };
+  DM: ['def', 'car', 'cre', 'fin'], FB: ['def', 'cre', 'car', 'fin'], CB: ['def', 'car', 'cre', 'fin'], GK: ['gks', 'gka', 'gkd', 'neg'] };
 function statPanel(key) {
   const { p, grp, bench, all } = ppx, small = (p.s_minutes || 0) < 900, pos = bench?.pool || [], ap = all?.rows || [];
   const pc = (rows, fn, v, lower) => { const xs = rows.map(fn).filter(x => x != null); return small || v == null || xs.length < 20 ? null : pctOf(xs, v, lower); };
-  const [t, lines] = PHASES[key];
+  const [t, lines] = key === 'neg' ? ['Mistakes & discipline', (NEG[grp] || NEG.CM).map(k => NEG_L[k])] : PHASES[key];
   return `<div class="phz st"><h5>${t}</h5>${lines.map(([n, fn, fmt, lower]) => { const v = fn(p), a = pc(pos, fn, v, lower), b = pc(ap, fn, v, lower);
     const tip = a == null ? (small ? `Percentiles need 900 min (${p.s_minutes || 0})` : 'No peer data') : `Better than ${a}% of ${plural(grp)}${b != null ? ` and ${b}% of all positions` : ''}`;
     return `<div title="${esc(n + ': ' + tip)}"><span>${n}</span><b>${fmt ? fmt(p) : f2(v)}</b>${a == null ? '<span class="pill">–</span>' : `<span class="pill" style="--c:${pctColor(a)}">${a}${b != null ? `<i style="left:${b}%" aria-hidden="true"></i>` : ''}</span>`}</div>`; }).join('')}</div>`;
@@ -1950,7 +1959,8 @@ const ALL_STATS = {
     cntS('Possession won', 's_possession_won'), cntS('Pressures', 's_pressures_completed'), ['Defensive actions', () => null, p => p.s_def_actions_p90],
     cntS('Headers won', 's_headers_won'), cntS('Aerial duels', 's_aerial_challenges_attempted'), rateS('Aerial success', p => p.s_header_pct), cntS('Clearances', 's_clearances'), cntS('Blocks', 's_blocks')]],
   wrk: ['Workload & discipline', [['Starts · sub', p => p.s_starts, null, false, 'x', p => `${p.s_starts ?? 0} · ${p.s_substitute_appearances ?? 0}`], cntS('Distance (km)', 's_distance_km', false, 1), cntS('Player of the match', 's_player_of_the_match'),
-    cntS('Yellow cards', 's_yellow_cards', true), cntS('Red cards', 's_red_cards', true)]],
+    cntS('Yellow cards', 's_yellow_cards', true), cntS('Red cards', 's_red_cards', true), cntS('Errors leading to goal', 's_mistakes_leading_to_goal', true),
+    cntS('Fouls made', 's_fouls_made', true), cntS('Fouls won', 's_fouls_against'), cntS('Offsides', 's_offsides', true)]],
   gks: ['Shot stopping', [['Saves', gkSaves, p => p.s_minutes && gkSaves(p) != null ? gkSaves(p) * 90 / p.s_minutes : null], cntS('Saves held', 's_saves_held'), cntS('Saves parried', 's_saves_parried'),
     cntS('Saves tipped', 's_saves_tipped'), cntS('Shots on target faced', 's_shots_on_target_faced'), cntS('xG prevented', 's_expected_goals_prevented', false, 1)]],
   gka: ['Goals against', [cntS('Conceded', 's_goals_allowed', true), cntS('Clean sheets', 's_clean_sheets'), rateS('Clean sheet rate', ratio('s_clean_sheets', 's_apps'))]],
@@ -1998,8 +2008,8 @@ function secCanvas() {
   const { p, grp, bench } = ppx, pool = bench?.pool || [];
   if (MODE === 'moneyball') {
     const o = PHASE_ORDER[grp] || PHASE_ORDER.CM;
-    return `${h3i('where', 'Where he plays and what he does there', `bubble colour = familiarity · pill = percentile vs ${plural(grp)} · tick in the pill = vs all positions`)}
-      <div class="cnv mb"><div class="cnv-s">${statPanel(o[0])}${statPanel(o[2])}</div><div class="cnv-p">${bigPitch(p)}</div><div class="cnv-s">${statPanel(o[1])}${statPanel(o[3])}</div>${grp === 'GK' ? '' : `<div class="cnv-w">${statPanel('wrk')}</div>`}</div>${famLegend()}`;
+    return `${h3i('where', 'Where he plays and what he does', `pill = percentile vs ${plural(grp)} · tick = vs all`)}
+      <div class="cnv mb"><div class="cnv-s">${statPanel(o[0])}${statPanel(o[2])}</div><div class="cnv-p">${bigPitch(p)}</div><div class="cnv-s">${statPanel(o[1])}${statPanel(o[3])}</div>${grp === 'GK' ? '' : `<div class="cnv-w">${statPanel('neg')}</div>`}</div>${famLegend()}`;
   }
   const ph = PHASE_ATTR[grp === 'GK' ? 'gk' : 'out'];
   const hl = v => v >= 15 ? C.good : v <= 5 ? C.bad : 'var(--text)';  // FM's own colouring: 15+ green, 5 or less red
@@ -2011,8 +2021,9 @@ function secCanvas() {
 // Moneyball beeswarm: every peer a grey dot per metric, dashed median, similar players gold rings, him a coloured dot.
 function secSwarm() {
   const { p, grp, bench, sim } = ppx, small = (p.s_minutes || 0) < 900, base = METRICS[grp] || METRICS.CM;
-  const keys = grp === 'GK' ? base : [...base, ...['xa', 'prog', 'won', 'crs', 'int'].filter(k => !base.includes(k))].slice(0, 12);
-  const head = h3i('table', `Where he sits among ${bench ? bench.pool.length : 300} ${plural(grp)}`, `per 90 · grey = peers (900+ min) · colour = his percentile${small ? ` · his dot and percentiles appear at 900 min (${p.s_minutes || 0})` : ''}`);
+  const neg = grp === 'GK' ? [] : ['ST', 'W'].includes(grp) ? ['lost', 'off'] : ['lost', 'foul'];  // stats where less is better, ↓ in the label
+  const keys = grp === 'GK' ? base : [...[...base, ...['xa', 'prog', 'won', 'crs', 'int'].filter(k => !base.includes(k))].slice(0, 12 - neg.length), ...neg];
+  const head = h3i('table', `Among ${bench ? bench.pool.length : 300} ${plural(grp)}`, `per 90 · peers with 900+ min${small ? ` · his dot from 900 min (${p.s_minutes || 0})` : ''}`);
   if (!bench) return head + '<span class="sk" style="height:300px;width:100%"></span>';
   const W = 560, L = 128, R = 92, rowH = 42, H = keys.length * rowH + 6, pool = bench.pool, sims = (sim?.rows || []).slice(0, 8);
   const rowsSvg = keys.map((k, i) => {
@@ -2027,7 +2038,7 @@ function secSwarm() {
       ${!small && v != null ? `<circle cx="${X(v)}" cy="${y}" r="6" fill="${pc != null ? pctColor(pc) : 'var(--mode)'}" stroke="var(--panel)" stroke-width="2"/>` : ''}
       <text class="vl" x="${W - R + 8}" y="${y + 4}">${v != null ? v.toFixed(dec) + unit : '–'}</text>
       ${pc != null ? `<rect x="${W - 34}" y="${y - 8}" width="32" height="16" rx="8" fill="color-mix(in srgb, ${pctColor(pc)} 18%, transparent)"/><text class="pc" x="${W - 18}" y="${y + 4}" text-anchor="middle" fill="${pctColor(pc)}">${pc}</text>` : `<text class="pc" x="${W - 18}" y="${y + 4}" text-anchor="middle" fill="var(--muted)">–</text>`}</g>`; }).join('');
-  const lg = `<div class="sw-lg" aria-hidden="true"><span><i class="me"></i>${esc(p.name.split(' ').slice(-1)[0])}</span><span><i class="sim"></i>${sims.length} most similar players · hover for the name</span><span><i class="pe"></i>other ${plural(grp)}</span><span><i class="md"></i>median</span></div>`;
+  const lg = `<div class="sw-lg" aria-hidden="true"><span><i class="me"></i>${esc(p.name.split(' ').slice(-1)[0])}</span><span><i class="sim"></i>${sims.length} most similar players · hover for the name</span><span><i class="pe"></i>other ${plural(grp)}</span><span><i class="md"></i>median</span>${neg.length ? '<span>↓ = fewer is better</span>' : ''}</div>`;
   return `${head}${lg}<svg class="swarm" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Per-90 stats of ${p.name} among ${pool.length} ${plural(grp)}: ` + keys.map(k => `${M[k][0]} ${M[k][1](p)?.toFixed(M[k][2] ?? 2) ?? 'none'}${!small && bench.pcs[k] != null ? `, percentile ${bench.pcs[k]}` : ''}`).join('; '))}">${rowsSvg}</svg>`;
 }
 // Moneyball phase panels from in-game stats, each line with percentile vs position and vs all positions.
