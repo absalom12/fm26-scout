@@ -141,10 +141,15 @@ def test_fair_range_uses_model_band(scout, monkeypatch):
 
 
 def test_similar_order_scales_terms_per_mode(scout, monkeypatch):
-    ref = {"stat_group": "ST", "stat_score": 80.0, "s_avg_rating": 7.0, "s_goals_p90": 0.8, "s_xg_p90": None,
-           "best_role": "advanced_forward", "role_advanced_forward": 70.0, "attr_avg": 12.0, "ability_current": 140}
+    attrs = {f"attributes_{a}": 10 for a in scout._ATTR_TECH + scout._ATTR_MENTAL + scout._ATTR_PHYS}
+    attrs.update(attributes_pace=19, attributes_acceleration=18, attributes_dribbling=17, attributes_finishing=16,
+                 attributes_flair=15, attributes_agility=15)
+    ref = {"stat_group": "ST", "natural_positions": "STC", "stat_score": 80.0, "s_avg_rating": 7.0, "s_goals_p90": 0.8,
+           "s_xg_p90": None, "ability_current": 140, **attrs}
     monkeypatch.setattr(scout, "_player", lambda uid, mode: ref)
     mb = scout.similar_order(1, "moneyball")
-    assert "stat_score" in mb and "s_goals_p90" in mb and "s_xg_p90" not in mb and "role_" not in mb
-    fair, full = scout.similar_order(1, "fair"), scout.similar_order(1, "full")
-    assert "role_advanced_forward" in fair and "ability_current" not in fair and "ability_current" in full
+    assert "stat_score" in mb and "s_goals_p90" in mb and "s_xg_p90" not in mb and "attributes_" not in mb
+    for mode in ("fair", "full"):  # his six strengths, nothing else (no CA, no average)
+        sql = scout.similar_order(1, mode)
+        assert sql.count("attributes_") == 6 and "attributes_pace" in sql and "attributes_flair" in sql
+        assert "ability_current" not in sql and "attributes_corners" not in sql

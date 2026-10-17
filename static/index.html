@@ -1083,7 +1083,7 @@ async function openPlayer(uid) {
           <span class="tag" title="Squad status">${esc((p.contract_squad_status || 'Squad status unknown').replaceAll('_', ' '))}</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
-          <button class="btn" style="justify-content:center" data-similar="${p.uid}" title="${{ full: 'Same position, age ±3, closest on CA, best role and attributes', fair: 'Same position, age ±3, closest on best role and attributes', moneyball: 'Same position, age ±3, closest on performance index, rating and key stats per 90' }[MODE]}">Find similar players</button>
+          <button class="btn" style="justify-content:center" data-similar="${p.uid}" title="${{ full: 'Same position, age ±3, closest on his 6 best attributes', fair: 'Same position, age ±3, closest on his 6 best attributes', moneyball: 'Same position, age ±3, closest on performance index, rating and key stats per 90' }[MODE]}">Find similar players</button>
           <button class="btn primary" style="justify-content:center" data-offer="${p.uid}">Make an offer →</button>
         </div>
       </section>

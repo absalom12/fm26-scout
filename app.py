@@ -739,10 +739,10 @@ SIMILAR_STATS = {"ST": ["s_goals_p90", "s_xg_p90"], "W": ["s_dribbles_p90", "s_x
 
 
 def similar_order(uid, mode):
-    """SQL distance to a reference player, on what the mode may see (0 = himself). Each term is scaled so one unit
-    is a meaningful gap: Full = CA + best role + attribute average; Fair play = best role + attribute average;
-    Moneyball = performance index, rating and the position's key per-90 stats. Values are the reference's own
-    numbers, inlined as floats (no user text reaches the SQL)."""
+    """SQL distance to a reference player, on what the mode may see (0 = himself). Full and Fair play: his strengths,
+    i.e. his 6 best visible attributes (2 points apart = 1 unit), so a pacy dribbler finds pacy dribblers whatever
+    their CA. Moneyball: performance index, rating and the position's key per-90 stats. Values are the reference's
+    own numbers, inlined as floats (no user text reaches the SQL)."""
     p = _player(uid, mode)
     terms = []
 
@@ -756,11 +756,9 @@ def similar_order(uid, mode):
             if p.get(k) is not None:
                 t(k, max(abs(float(p[k])) * 0.25, 0.05))
     else:
-        if p.get("best_role") in ROLES:
-            t(f"role_{p['best_role']}", 4)
-        t("attr_avg", 0.6)
-        if mode == "full":
-            t("ability_current", 6)
+        pool = (_ATTR_GK if (p.get("natural_positions") or "").startswith("GK") else _ATTR_TECH) + _ATTR_MENTAL + _ATTR_PHYS
+        for a in sorted((a for a in pool if p.get(f"attributes_{a}") is not None), key=lambda a: -p[f"attributes_{a}"])[:6]:
+            t(f"attributes_{a}", 2)
     return " + ".join(terms) or "0"
 
 
