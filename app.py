@@ -345,7 +345,7 @@ CONTEXT = ["age", "age * age AS age2",
            "least(greatest(coalesce(months_left, 0), 0), 72) / 12.0 AS yrs", "coalesce(s_minutes, 0) / 1000.0 AS mins"] + [
            f"(contract_squad_status = '{s}')::INT AS st_{s}" for s in
            ("star_player", "important_player", "regular_starter", "squad_player", "fringe_player", "youngster", "breakthrough_prospect")]
-# The player's personal reputation is a hidden number the game never shows the manager: only Full mode may price on it.
+# The player's personal reputation: market context Full and Fair play may price on; Moneyball judges numbers only.
 REP_FEATURES = {"age_late_rep", "prep"}
 LENS_FEATURES = {
     "ability": ["ability_current AS ca", "ability_potential AS pa", "ability_potential * (age <= 23)::INT AS pa_young",
@@ -398,7 +398,7 @@ def add_deals():
     n = len(data["uid"])
     num = lambda c: np.asarray(data[c], dtype=float) if not hasattr(data[c], "mask") else np.where(data[c].mask, np.nan, data[c].data).astype(float)
     ctx_X = np.column_stack([num(_alias(c)) for c in ctx])
-    ctx_open = ctx_X[:, [i for i, c in enumerate(ctx) if _alias(c) not in REP_FEATURES]]  # what Fair play / Moneyball may see
+    ctx_open = ctx_X[:, [i for i, c in enumerate(ctx) if _alias(c) not in REP_FEATURES]]  # what Moneyball may see
     lens_X = {k: np.column_stack([num(_alias(f)) for f in LENS_FEATURES[k]]) for k in lenses}
     gender = np.array([g if isinstance(g, str) else "" for g in data["gender"]])
     y = {"fee": num("y_fee"), "wage": num("y_wage")}
@@ -421,9 +421,9 @@ def add_deals():
 
     ctx_ok = ~np.isnan(ctx_X).any(1)
     for k in lenses:  # one lens alone: only rows that have that lens's quality signal
-        run(k, np.column_stack([ctx_X if k == "ability" else ctx_open, lens_X[k]]), ctx_ok & ~np.isnan(lens_X[k]).any(1))
+        run(k, np.column_stack([ctx_X if k in ("ability", "attributes") else ctx_open, lens_X[k]]), ctx_ok & ~np.isnan(lens_X[k]).any(1))
     for m, ks in MODES.items():  # a mode: every lens it may see; missing signals -> 0 plus a "has" flag
-        parts = [ctx_X if m == "full" else ctx_open]
+        parts = [ctx_open if m == "moneyball" else ctx_X]
         for k in (k for k in ks if k in lenses):
             has = ~np.isnan(lens_X[k]).any(1)
             parts += [np.where(has[:, None], lens_X[k], 0), has[:, None].astype(float)]
