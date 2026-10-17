@@ -517,6 +517,42 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .rg:hover { border-color: var(--line2); }
 .es-roles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0 14px; }
 .es-roles .es-tiles { grid-template-columns: 1fr; }
+/* Hidden & ability: gate tiles colour the zone of players KEPT and hatch the zone LEFT OUT (left of a minimum, right of a maximum) */
+.rg.gate { height: 58px; }
+.rg.gate::before { transform: none; transition: none; left: calc(var(--v) * 100%); right: 0; width: auto; border-left: 2px solid var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
+.rg.gate.cap::before { left: 0; right: calc((1 - var(--v)) * 100%); border-left: 0; border-right: 2px solid var(--c); }
+.rg.gate:not(.on)::before { display: none; }
+.rg.gate.on { background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--bad) 20%, transparent) 0 3px, transparent 3px 7px); background-repeat: no-repeat; background-size: calc(var(--v) * 100%) 100%; }
+.rg.gate.cap.on { background-position: right top; background-size: calc((1 - var(--v)) * 100%) 100%; }
+.rg.gate.on output::before { content: '≥ '; font-size: .6em; }
+.rg.gate.cap.on output::before { content: '≤ '; }
+.hd-top { display: grid; grid-template-columns: 1fr 1fr minmax(240px, .9fr); gap: 10px; margin-bottom: 18px; }
+.rg.gate.big { height: 84px; padding: 10px 12px; }
+.rg.gate.big span { font: 700 14px var(--f-display); letter-spacing: .08em; text-transform: uppercase; }
+.rg.gate.big output { font-size: 30px; }
+.hd-stars { position: absolute; left: 12px; bottom: 12px; font: normal 15px/1 var(--f-body); letter-spacing: 2px; pointer-events: none; }
+.hd-stars::before { content: '★★★★★'; color: var(--line2); }
+.hd-stars::after { content: '★★★★★'; position: absolute; left: 0; top: 0; color: var(--gold); clip-path: inset(0 calc((1 - var(--v)) * 100%) 0 0); }
+.hd-safe { display: grid; grid-template-columns: auto 26px 1fr; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--bg); cursor: pointer; transition: border-color var(--t-fast), background var(--t-fast); }
+.hd-safe svg { width: 26px; height: 26px; color: var(--faint); transition: color var(--t-fast), transform var(--t) var(--ease); }
+.hd-safe b { display: block; font: 700 15px var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
+.hd-safe small { display: block; font-size: 12px; color: var(--muted); line-height: 1.35; margin-top: 2px; }
+.hd-safe input { appearance: none; -webkit-appearance: none; margin: 0; width: 40px; height: 24px; border-radius: var(--r-pill); background: var(--line2); position: relative; cursor: pointer; transition: background var(--t-fast); }
+.hd-safe input::before { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--text); transition: transform var(--t) var(--ease); }
+.hd-safe input:checked { background: var(--good); }
+.hd-safe input:checked::before { transform: translateX(16px); }
+.hd-safe:has(:checked) { border-color: color-mix(in srgb, var(--good) 60%, transparent); background: var(--good-soft); }
+.hd-safe:has(:checked) svg { color: var(--good); transform: scale(1.1); }
+.hd-safe input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hd-lanes { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; margin-bottom: 6px; }
+.hd-lane { padding: 12px; border-radius: var(--r); border: 1px solid var(--line); border-top: 3px solid var(--lc); background: linear-gradient(180deg, color-mix(in srgb, var(--lc) 7%, transparent), transparent 70px); }
+.hd-lane.up { --lc: var(--good); } .hd-lane.down { --lc: var(--warn); }
+.hd-lane h4 { margin: 0 0 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font: 700 15px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--lc); }
+.hd-lane h4 svg { width: 16px; height: 16px; }
+.hd-lane h4 small { font: 400 12px var(--f-body); letter-spacing: 0; text-transform: none; color: var(--muted); }
+.hd-lane .es-tiles { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+@media (max-width: 1180px) { .hd-top { grid-template-columns: 1fr 1fr; } .hd-safe { grid-column: 1 / -1; } }
+@media (max-width: 900px) { .hd-lanes { grid-template-columns: 1fr; } }
 .es-legend { display: inline-flex; gap: 10px; }
 .es-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
 /* footer */
@@ -1549,8 +1585,15 @@ const STATS_F = [['s_minutes', 'Minutes'], ['s_apps', 'Appearances'], ['s_avg_ra
 const HID_A = ['attributes_consistency', 'attributes_important_matches', 'attributes_versatility', 'attributes_injury_proneness', 'attributes_dirtiness'];
 const tierOf = (v, max, bad) => tier(Math.max(1, Math.round(v * 20 / max)), bad).slice(1);
 // A tile that IS a slider: a native range stretched over it (arrows, Home = any, End = max). Fill + tier colour show the minimum (or maximum).
-const rangeRow = (col, name, max = 20, isMax = false) => { const v = (isMax ? D.max : D.min)[col], on = v != null, x = on ? v : isMax ? max : 0;
-  return `<label class="rg${on ? ' on' : ''}${on && !isMax && v >= max ? ' top' : ''}" data-t="${on ? tierOf(v, max, isMax) : ''}" style="--v:${x / max}"><span title="${esc(name)}">${esc(name)}</span><output>${on ? v : '–'}</output><input type="range" min="0" max="${max}" step="1" value="${x}" ${isMax ? 'data-rmax' : 'data-rmin'}="${col}" aria-label="${esc(name)} ${isMax ? 'maximum' : 'minimum'}" aria-valuetext="${on ? v : 'any'}"></label>`; };
+const rangeRow = (col, name, max = 20, isMax = false, cls = '') => { const v = (isMax ? D.max : D.min)[col], on = v != null, x = on ? v : isMax ? max : 0;
+  return `<label class="rg${cls}${on ? ' on' : ''}${on && !isMax && v >= max ? ' top' : ''}" data-t="${on ? tierOf(v, max, isMax) : ''}" style="--v:${x / max}"><span title="${esc(name)}">${esc(name)}</span><output>${on ? v : '–'}</output><input type="range" min="0" max="${max}" step="1" value="${x}" ${isMax ? 'data-rmax' : 'data-rmin'}="${col}" aria-label="${esc(name)} ${isMax ? 'maximum' : 'minimum'}" aria-valuetext="${on ? v : 'any'}"></label>`; };
+// Hidden section: the two lanes and the CA / PA gauges (a gate tile on the 0-200 ability scale writing D.ca_min / D.pa_min).
+const HD_UP = [['attributes_consistency', 'Consistency'], ['attributes_important_matches', 'Important matches'], ['attributes_versatility', 'Versatility'],
+  ['personality_professionalism', 'Professionalism'], ['personality_ambition', 'Ambition'], ['personality_pressure', 'Pressure']];
+const HD_DOWN = [['attributes_injury_proneness', 'Injury proneness'], ['attributes_dirtiness', 'Dirtiness'], ['personality_controversy', 'Controversy']];
+const abil = (k, name) => { const v = D[k], on = v != null && v > 0;
+  return `<label class="rg gate big${on ? ' on' : ''}" data-t="${on ? tierOf(v, 200) : ''}" style="--v:${on ? Math.min(v, 200) / 200 : 0}"><span>${name}</span><output>${on ? v : '–'}</output>
+    <i class="hd-stars" aria-hidden="true"></i><input type="range" min="0" max="200" step="1" value="${on ? v : 0}" data-esab="${k}" aria-label="${name} minimum, scale 1 to 200" aria-valuetext="${on ? v : 'any'}"></label>`; };
 // Dual-thumb ranges: [low key, high key, scale min, scale max, unit]; a thumb at the end of the scale means "any".
 const DUAL = { age: ['age_min', 'age_max', 14, 45, ''], height: ['min.height_cm', 'max.height_cm', 150, 210, ' cm'] };
 const dget = k => { const [a, b] = k.split('.'); return b ? D[a][b] : D[a]; };
@@ -1626,15 +1669,18 @@ function renderES() {
         <button type="button" class="btn" data-esshift="1" title="Raise every attribute minimum you set by 1">+1</button></span>`),
     sec('stats', n.stats, 'Statistics', 'this season, minimums', sgrp.filter(([, l]) => l.length).map(([t, l]) => `<div class="es-sub">${t}</div><div class="es-fields">${l.map(statIn).join('')}</div>`).join('')),
     noAttr ? '' : sec('roles', n.roles, 'Roles', 'minimum role score 0–100, grouped by position', `<div class="es-roles">${rgrp.map(gp => `<div><div class="es-sub">${gp} <small>${PZN[gp] || ''}</small></div><div class="es-tiles">${roles.filter(([, x]) => x === gp).map(([r]) => rangeRow('role_' + r, label('role_' + r), 100)).join('')}</div></div>`).join('')}</div>`),
-    full ? sec('hidden', n.hidden, 'Hidden &amp; ability', 'Full mode only', `<div class="es-fields"><label class="fld">Current ability ≥ ${nf('ca_min', 'any')}</label><label class="fld">Potential ability ≥ ${nf('pa_min', 'any')}</label></div>
-      <div class="es-row"><label class="check"><input type="checkbox" data-esb="risks" ${D.risks ? 'checked' : ''}> Hide hidden-stat risks</label></div>
-      <div class="es-sub">Hidden attributes <small>the last two are maximums: lower is safer</small></div>
-      <div class="es-tiles">${rangeRow('attributes_consistency', 'Consistency ≥')}${rangeRow('attributes_important_matches', 'Important matches ≥')}${rangeRow('attributes_versatility', 'Versatility ≥')}
-      ${rangeRow('attributes_injury_proneness', 'Injury proneness ≤', 20, true)}${rangeRow('attributes_dirtiness', 'Dirtiness ≤', 20, true)}</div>
-      <div class="es-sub">Personality <small>pick several, all must match</small></div>
-      <div class="chips" style="margin-bottom:10px">${PCH.map(([k, x]) => `<button type="button" class="chip" data-espers="${k}" aria-pressed="${persOn(D, k)}" title="${k === 'controversy' ? 'Controversy ≤ 5' : label('personality_' + k) + ' ≥ 15'} (scale 1-20)">${x}</button>`).join('')}</div>
-      <div class="es-tiles">${rangeRow('personality_professionalism', 'Professionalism ≥')}${rangeRow('personality_ambition', 'Ambition ≥')}${rangeRow('personality_pressure', 'Pressure ≥')}
-      ${rangeRow('personality_controversy', 'Controversy ≤', 20, true)}</div>`) : ''];
+    full ? sec('hidden', n.hidden, 'Hidden &amp; ability', 'Full mode only · hatched zone = players left out', `<div class="hd-top">
+        ${abil('ca_min', 'Current ability')}${abil('pa_min', 'Potential ability')}
+        <label class="hd-safe"><input type="checkbox" role="switch" data-esb="risks" ${D.risks ? 'checked' : ''}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6l-8-3Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>
+          <span><b>Safe signings only</b><small>Injury proneness 12 or less, consistency 8+, professionalism 8+</small></span></label></div>
+      <div class="hd-lanes">
+        <div class="hd-lane up"><h4><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>Raise the floor <small>higher is better · at least</small></h4>
+          <div class="es-tiles">${HD_UP.map(([c, x]) => rangeRow(c, x, 20, false, ' gate')).join('')}</div></div>
+        <div class="hd-lane down"><h4><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3.5 8.5 8 13l4.5-4.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>Cap the risk <small>lower is safer · at most</small></h4>
+          <div class="es-tiles">${HD_DOWN.map(([c, x]) => rangeRow(c, x, 20, true, ' gate cap')).join('')}</div></div></div>
+      <div class="es-sub">Personality quick picks <small>each sets the trait to 15+ (Low controversy: 5 or less); all picked must match</small></div>
+      <div class="chips">${PCH.map(([k, x]) => `<button type="button" class="chip" data-espers="${k}" aria-pressed="${persOn(D, k)}" title="${k === 'controversy' ? 'Controversy ≤ 5' : label('personality_' + k) + ' ≥ 15'} (scale 1-20)">${x}</button>`).join('')}</div>`) : ''];
   const ord = s => ES_SECS.findIndex(([k]) => s.includes(`data-sec="${k}"`));  // sections follow ES_SECS order
   $('#esBody').innerHTML = parts.filter(Boolean).sort((a, b) => ord(a) - ord(b)).join('');
   $('#esSaved').innerHTML = saved.length ? '<span class="muted" style="font-size:12px;font-weight:600">Saved</span>' + saved.map((s, i) => `<span class="crit-chip"><button type="button" class="link" style="padding:0" data-esload="${i}">${esc(s.name)}</button><button type="button" data-esdel="${i}" aria-label="Delete saved search ${esc(s.name)}">×</button></span>`).join('') : '';
@@ -2262,6 +2308,11 @@ $('#es').addEventListener('input', e => {
   if (d.esf) D[d.esf] = d.esf === 'squad' || d.esf === 'club_country' ? t.value : esNum(t.value);
   else if (d.esminm) { const v = esNum(t.value); if (v == null) delete D.min[d.esminm]; else D.min[d.esminm] = v; }
   else if (d.esb) D[d.esb] = t.checked;
+  else if (d.esab) {  // CA / PA gauge: 0 = any
+    const v = +t.value, tile = t.closest('.rg'); D[d.esab] = v > 0 ? v : null;
+    tile.querySelector('output').textContent = v || '–'; tile.classList.toggle('on', v > 0); tile.dataset.t = v ? tierOf(v, 200) : '';
+    tile.style.setProperty('--v', v / 200); t.setAttribute('aria-valuetext', v || 'any');
+  }
   else if (d.esnat) { D.nations = t.checked ? [...D.nations, d.esnat] : D.nations.filter(x => x !== d.esnat); }
   else if (d.esmin) { if (t.value === '') delete D.min[d.esmin]; else D.min[d.esmin] = Number(t.value); }
   else if (d.esmax) { if (t.value === '') delete D.max[d.esmax]; else D.max[d.esmax] = Number(t.value); }
