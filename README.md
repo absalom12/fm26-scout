@@ -79,10 +79,10 @@ Windows: %APPDATA%\FM26 Scout\
 
 (Note: Set the FM26_DATA_DIR environment variable to override this storage path.)
 
-#🙏 Credits & Shoutouts
+# 🙏 Credits & Shoutouts
 
 A massive shoutout to Randal S. Olson for creating the fmsave library. This project wouldn't be possible without his incredible work reverse-engineering Football Manager save files! Be sure to check out his other projects on GitHub.
 
-#📄 License
+# 📄 License
 
 Distributed under the MIT License. See LICENSE for details.
