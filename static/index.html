@@ -292,6 +292,7 @@ details[open] summary::before { content: "−"; }
 .pp-body[hidden] { display: none; }
 .pp-body:not(.pg-over) { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); grid-auto-rows: minmax(0, 1fr); }
 .pg-price.m-fair { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }  /* Fair play: fee map full width, price strips under it */
+.pg-stats.m-moneyball { grid-template-columns: minmax(0, .9fr) minmax(0, 1.6fr); grid-template-areas: "swarm stats"; }
 .pg-stats.m-full, .pg-stats.m-fair { grid-template-columns: minmax(0, .95fr) minmax(0, 1.5fr) minmax(0, .8fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "swarm stats pizza"; }
 .pg-stats [data-pp="pizza"] { justify-content: center; } .pg-stats [data-pp="pizza"] > h3 { position: absolute; top: 10px; left: 14px; right: 14px; } .pg-stats [data-pp="pizza"] .pizza { flex: none; height: auto; }
 .sim-mini .sim-row { min-height: 0; padding: 3px 6px; grid-template-columns: minmax(0, 1fr) auto 34px; gap: 8px; } .sim-mini .sim-row b, .sim-mini .sim-row small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -445,7 +446,6 @@ details[open] summary::before { content: "−"; }
 .pg-similar .sd-body { overflow: hidden; } .sd-sim.wide > div:last-child { overflow: hidden; display: flex; flex-direction: column; } .sd-sim.wide .scat { flex: 1; min-height: 0; height: 100%; }
 .sw-lg { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -2px 0 6px; font-size: 11.5px; color: var(--text2); } .sw-lg i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
 .sw-lg .me { background: var(--good, #3ddc84); } .sw-lg .sim { border: 1.6px solid var(--gold); } .sw-lg .pe { width: 5px; height: 5px; background: var(--muted); opacity: .6; } .sw-lg .md { width: 0; height: 10px; border-radius: 0; border-left: 1px dashed var(--text2); }
-.sw-tg { display: inline-flex; gap: 2px; padding: 2px; margin: -2px 0 6px; border-radius: var(--r-pill); background: var(--bg); } .sw-tg button { height: 22px; padding: 0 10px; border-radius: var(--r-pill); font: 600 11px var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); } .sw-tg button[aria-pressed="true"] { background: var(--raise); color: var(--text); }
 .sw-lg .cv { width: 14px; height: 8px; border-radius: 8px 8px 0 0; background: color-mix(in srgb, var(--muted) 35%, transparent); border: 1px solid var(--muted); border-bottom: 0; }
 .swarm .pt { cursor: pointer; } .swarm .pt:hover circle { stroke: var(--text); stroke-width: 2.4; }
 .cnv-p .lane { overflow: visible; }
@@ -1515,9 +1515,8 @@ function priceBody(p) {
       ${noAttr && (p.s_minutes ?? 0) < 900 ? '<p class="note">No fair fee under 900 min.</p>' : ''}
       ${p.fair_fee != null ? `<div class="lens-mini">${LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] != null).map(l => `<div>${l.label}<b class="mono">${money(p[l.ffee])}</b>${p[l.deal] != null ? `<span style="color:${dealColor(p[l.deal])}">${pctTxt(p[l.deal])}</span>` : ''}</div>`).join('')}</div>` : ''}` : ''}`;
 }
-// Attribute radar (Full / Fair play); Moneyball gets a placeholder that renderSeason turns into a percentile radar.
+// Attribute radar (Full / Fair play).
 function profileInner(p) {
-  if (MODE === 'moneyball') return '<h3>Performance profile</h3><span class="sk" style="height:200px;width:100%"></span>';
   const avg = keys => { const xs = keys.map(k => p['attributes_' + k]).filter(x => x != null); return xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0; };
   const axes = (groupOf(p) === 'GK' ? AXES_GK : AXES_OUT).map(([n, ks]) => [n, avg(ks)]);
   return `<h3>Profile <small>avg of attribute groups, scale 20 · dashed ring = 15</small></h3>
@@ -2161,7 +2160,6 @@ const dens = (xs, lo, hi, n = 48) => {
   const ys = Array.from({ length: n + 1 }, (_, i) => { const t = lo + (hi - lo) * i / n; return xs.reduce((a, x) => a + Math.exp(-(((Math.min(x, hi) - t) / bw) ** 2) / 2), 0); });
   const mx = Math.max(...ys) || 1; return ys.map((d, i) => [lo + (hi - lo) * i / n, d / mx]);
 };
-let swView = (() => { try { return localStorage.getItem('fm26_swarm') || 'curve'; } catch { return 'curve'; } })();  // 'curve' or 'dots'
 function secSwarm() {
   const { p, grp, bench, sim } = ppx, small = (p.s_minutes || 0) < 900, base = METRICS[grp] || METRICS.CM;
   const neg = grp === 'GK' ? [] : ['ST', 'W'].includes(grp) ? ['lost', 'off'] : ['lost', 'foul'];  // stats where less is better, ↓ in the label
@@ -2169,23 +2167,21 @@ function secSwarm() {
   const head = h3i('table', `Among ${bench ? bench.pool.length : 300} ${plural(grp)}`, `per 90 · peers with 900+ min${small ? ` · his dot from 900 min (${p.s_minutes || 0})` : ''}`);
   if (!bench) return head + '<span class="sk" style="height:300px;width:100%"></span>';
   const W = 560, L = 128, R = 92, rowH = 42, H = keys.length * rowH + 6, pool = bench.pool, sims = (sim?.rows || []).slice(0, 8);
-  const curve = swView === 'curve', rowsSvg = keys.map((k, i) => {
+  const rowsSvg = keys.map((k, i) => {
     const [name, fn, dec = 2, unit = ''] = M[k], xs = pool.map(fn).filter(x => x != null).sort((a, b) => a - b);
     if (xs.length < 10) return '';
     const lo = xs[0], hi = xs[Math.floor(xs.length * .98)] || xs.at(-1), X = v => (L + clamp01((v - lo) / ((hi - lo) || 1)) * (W - L - R)).toFixed(1), y = i * rowH + rowH / 2 + 3;
     const v = fn(p), pc = small || v == null ? null : pctOf(xs, v, M[k][4]), md = xs[xs.length >> 1];
     return `<g><text class="lb" x="0" y="${y + 4}">${name}</text>
-      ${curve ? (() => { const yb = y + 9, pts = dens(xs, lo, hi).map(([t, d]) => `${X(t)},${(yb - d * 20).toFixed(1)}`);
-          return `<line x1="${L}" x2="${W - R}" y1="${yb}" y2="${yb}" stroke="var(--line)"/><path d="M${X(lo)},${yb} L${pts.join(' L')} L${X(hi)},${yb} Z" fill="color-mix(in srgb, var(--muted) 22%, transparent)" stroke="var(--muted)" stroke-width="1"/>`; })()
-        : pool.map((r, j) => { const x = fn(r); return x == null ? '' : `<circle cx="${X(x)}" cy="${(y + ((j * 7919) % 13) - 6).toFixed(1)}" r="1.8" fill="var(--muted)" opacity=".4"/>`; }).join('')}
-      <line x1="${X(md)}" x2="${X(md)}" y1="${y - 11}" y2="${y + (curve ? 9 : 11)}" stroke="var(--text2)" stroke-dasharray="2 2"/>
-      ${sims.map(r => { const x = fn(r); return x == null ? '' : `<g class="pt" data-pp-uid="${r.uid}"><title>${esc(r.name)}: ${x.toFixed(dec)}${unit} (click to open)</title><circle cx="${X(x)}" cy="${curve ? y + 9 : y}" r="${curve ? 4 : 5}" fill="transparent" stroke="var(--gold)" stroke-width="1.6"/></g>`; }).join('')}
-      ${!small && v != null ? `<circle cx="${X(v)}" cy="${curve ? y + 9 : y}" r="6" fill="${pc != null ? pctColor(pc) : 'var(--mode)'}" stroke="var(--panel)" stroke-width="2"/>` : ''}
+      ${(() => { const yb = y + 9, pts = dens(xs, lo, hi).map(([t, d]) => `${X(t)},${(yb - d * 20).toFixed(1)}`);
+          return `<line x1="${L}" x2="${W - R}" y1="${yb}" y2="${yb}" stroke="var(--line)"/><path d="M${X(lo)},${yb} L${pts.join(' L')} L${X(hi)},${yb} Z" fill="color-mix(in srgb, var(--muted) 22%, transparent)" stroke="var(--muted)" stroke-width="1"/>`; })()}
+      <line x1="${X(md)}" x2="${X(md)}" y1="${y - 11}" y2="${y + 9}" stroke="var(--text2)" stroke-dasharray="2 2"/>
+      ${sims.map(r => { const x = fn(r); return x == null ? '' : `<g class="pt" data-pp-uid="${r.uid}"><title>${esc(r.name)}: ${x.toFixed(dec)}${unit} (click to open)</title><circle cx="${X(x)}" cy="${y + 9}" r="4" fill="transparent" stroke="var(--gold)" stroke-width="1.6"/></g>`; }).join('')}
+      ${!small && v != null ? `<circle cx="${X(v)}" cy="${y + 9}" r="6" fill="${pc != null ? pctColor(pc) : 'var(--mode)'}" stroke="var(--panel)" stroke-width="2"/>` : ''}
       <text class="vl" x="${W - R + 8}" y="${y + 4}">${v != null ? v.toFixed(dec) + unit : '–'}</text>
       ${pc != null ? `<rect x="${W - 34}" y="${y - 8}" width="32" height="16" rx="8" fill="color-mix(in srgb, ${pctColor(pc)} 18%, transparent)"/><text class="pc" x="${W - 18}" y="${y + 4}" text-anchor="middle" fill="${pctColor(pc)}">${pc}</text>` : `<text class="pc" x="${W - 18}" y="${y + 4}" text-anchor="middle" fill="var(--muted)">–</text>`}</g>`; }).join('');
-  const lg = `<div class="sw-lg" aria-hidden="true"><span><i class="me"></i>${esc(p.name.split(' ').slice(-1)[0])}</span><span><i class="sim"></i>${sims.length} most similar players · hover for the name</span><span><i class="${curve ? 'cv' : 'pe'}"></i>${curve ? `how ${plural(grp)} spread` : `other ${plural(grp)}`}</span><span><i class="md"></i>median</span>${neg.length ? '<span>↓ = fewer is better</span>' : ''}</div>`;
-  const tg = `<div class="sw-tg" role="group" aria-label="Peer view">${[['curve', 'Curve'], ['dots', 'Dots']].map(([k, l]) => `<button data-swv="${k}" aria-pressed="${swView === k}">${l}</button>`).join('')}</div>`;
-  return `${head}${tg}${lg}<svg class="swarm" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Per-90 stats of ${p.name} among ${pool.length} ${plural(grp)}: ` + keys.map(k => `${M[k][0]} ${M[k][1](p)?.toFixed(M[k][2] ?? 2) ?? 'none'}${!small && bench.pcs[k] != null ? `, percentile ${bench.pcs[k]}` : ''}`).join('; '))}">${rowsSvg}</svg>`;
+  const lg = `<div class="sw-lg" aria-hidden="true"><span><i class="me"></i>${esc(p.name.split(' ').slice(-1)[0])}</span><span><i class="sim"></i>${sims.length} most similar players · hover for the name</span><span><i class="cv"></i>how ${plural(grp)} spread</span><span><i class="md"></i>median</span>${neg.length ? '<span>↓ = fewer is better</span>' : ''}</div>`;
+  return `${head}${lg}<svg class="swarm" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Per-90 stats of ${p.name} among ${pool.length} ${plural(grp)}: ` + keys.map(k => `${M[k][0]} ${M[k][1](p)?.toFixed(M[k][2] ?? 2) ?? 'none'}${!small && bench.pcs[k] != null ? `, percentile ${bench.pcs[k]}` : ''}`).join('; '))}">${rowsSvg}</svg>`;
 }
 // One similar player: flag, name, age and club, fee, and the number he was matched on.
 const simRow = (r, pa, ak = []) => { const [t, , v, c] = simMetric(r), av = ak.length ? mean(ak.map(k => r[k])) : null;
@@ -2233,7 +2229,6 @@ function sideBody(k) {
   if (k === 'apx') return apxScatter();
   if (k === 'attrs') return heatMap(p, false);
   if (k === 'map') return !sim ? '<span class="sk" style="height:200px;width:100%"></span>' : sim.rows.length ? `<p class="note" style="margin:0 0 6px">Similar players: fee (log) against ${simMetric(p)[0].toLowerCase()} · him = ring · click a dot.</p>${MODE === 'fair' ? scatter(p, sim.rows, 330, 1300) : scatter(p, sim.rows, 480, 760)}` : '<p class="note">No close match found.</p>';
-  if (k === 'season') return '<div data-sec="season"></div>';
   if (k === 'position') {
     const fam = POSITIONS.map(x => [x, p[posKey(x)]]).filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]);
     return `<div class="sd-pos"><div>${pitchMap(p)}</div><div><div class="fbs">${fam.map(([x, v]) => { const f = famil(v); return fbar(x, v, v / 20, f[2], f[1]); }).join('')}</div>
@@ -2248,7 +2243,7 @@ const PP_PAGES = {
   full: [['over', 'Overview', ['role', 'attr', 'canvas', 'sg', 'dev']], ['report', 'Scouting report', ['rarch', 'rvs', 'rfit', 'rmind', 'rrisk', 'ruse']], ['stats', 'Statistics', ['swarm', 'pizza', 'stats']],
     ['similar', 'Similar players', ['similar', 'apx']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'club', 'traits']]],
   fair: [['over', 'Overview', ['role', 'attr', 'canvas', 'sg', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'club', 'traits']]],
-  moneyball: [['over', 'Overview', ['canvas', 'swarm', 'pizza', 'simmini']], ['stats', 'Statistics', ['stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'club', 'traits']]],
+  moneyball: [['over', 'Overview', ['canvas', 'swarm', 'pizza', 'simmini']], ['stats', 'Statistics', ['swarm', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'club', 'traits']]],
 };
 const ppPages = () => PP_PAGES[MODE] || PP_PAGES.full;
 const ppCards = () => ppPages().flatMap(x => x[2]);
@@ -2269,9 +2264,8 @@ function ppPaint(which) {
   if (!ppx || !ppx.alive()) return;
   const box = $('#player'), focus = document.activeElement?.closest?.('[data-pp]')?.dataset.pp, fid = document.activeElement?.id;
   (which || ['kpis', ...ppCards()]).forEach(k => {
-    const el = $(`[data-pp="${k}"]`, box); if (!el) return;
-    el.innerHTML = ppCard(k);
-    if (k === 'season') renderSeason(ppx.p, ppx.grp, el, ppx.alive);
+    const els = $$(`[data-pp="${k}"]`, box); if (!els.length) return;  // a card can sit on two pages (Moneyball's peer chart)
+    const html = ppCard(k); els.forEach(el => { el.innerHTML = html; });
     if (focus === k && fid) $('#' + fid, box)?.focus();
   });
 }
@@ -2309,7 +2303,7 @@ async function renderProfile() {
     ${pages.map(([id, , ks], i) => `<div class="pp-body pg-${id} m-${MODE}" id="ppg-${id}" data-page="${id}" role="tabpanel" aria-labelledby="ppt-${id}"${i ? ' hidden' : ''}>${ks.map(k => `<section class="pp-card" data-pp="${k}"${area(id, ks, k)}></section>`).join('')}</div>`).join('')}</article>`;
   ppPaint();
   $('#ppName', box).focus({ preventScroll: true });
-  const again = () => { if (alive()) ppPaint(['kpis', ...ppCards().filter(k => k !== 'season')]); };  // season fetches its own peers once
+  const again = () => { if (alive()) ppPaint(['kpis', ...ppCards()]); };
   ppBench(p, grp).then(b => { x.bench = b; again(); });
   if (MODE === 'full') ppAbility(p, grp).then(a => { x.abil = a; again(); });
   if (mb) ppAll(p.gender).then(a => { x.all = a; again(); }).catch(() => {});
@@ -2335,7 +2329,6 @@ document.addEventListener('mousemove', e => { if (tipEl.hidden) return; const r 
 // Page tabs (click, arrows), role picker, scatter points.
 $('#player').addEventListener('click', e => {
   const t = e.target.closest('[data-pptab],[data-ppgo]'); if (t) { setPpTab(t.dataset.pptab || t.dataset.ppgo); return; }
-  const sv = e.target.closest('[data-swv]'); if (sv) { swView = sv.dataset.swv; try { localStorage.setItem('fm26_swarm', swView); } catch {} ppPaint(['swarm']); return; }
   const rl = e.target.closest('[data-pprole]'); if (rl) { ppRole = rl.dataset.pprole; ppPaint(['role']); $(`[data-pprole="${ppRole}"]`)?.focus(); return; }
   const pt = e.target.closest('[data-pp-uid]'); if (pt) openProfile(+pt.dataset.ppUid);
 });
@@ -2397,52 +2390,6 @@ async function openPlayer(uid) {
       const rows = (res?.rows || []).filter(r => r.uid !== p.uid).slice(0, 4);
       $('[data-dr="sim"]', dr).innerHTML = h3i('similar', 'Similar players') + (rows.length ? `<div class="dr-sim">${simHead(p)}${rows.map(r => simRow(r)).join('')}</div>` : '<p class="note" style="margin:0">No close match found.</p>');
     });
-}
-// Fills root's [data-sec=season] (and, in Moneyball, the percentile radar in [data-sec=profile]); alive() = still on screen.
-async function renderSeason(p, grp, root, alive) {
-  const sec = $('[data-sec="season"]', root); if (!sec) return;
-  const prof = MODE === 'moneyball' && $('[data-sec="profile"]', root);
-  const head = `<p class="note" style="margin:0 0 6px">Per 90 · percentile vs ${grp}s with 900+ min</p>`;
-  if (!p.s_minutes) {
-    sec.innerHTML = `<p class="note" style="margin:0">No league minutes logged this season, so there is nothing to benchmark yet.</p>`;
-    if (prof) prof.innerHTML = '<h3>Performance profile</h3><p class="note" style="margin:0">Needs league minutes.</p>';
-    return;
-  }
-  // Apps, minutes and rating live in the hero dial; the stat line keeps the counting stats only.
-  const line = [
-    ...(grp === 'GK' ? [['Clean sheets', p.s_clean_sheets], ['Conceded', p.s_goals_allowed]] : [['Goals', p.s_goals], ['Assists', p.s_assists]]), ['PoM', p.s_player_of_the_match]]
-    .map(([l, x, c]) => `<div class="stat">${l}<b style="${c ? 'color:' + c : ''}">${x ?? '–'}</b></div>`).join('');
-  const keys = METRICS[grp] || METRICS.CM;
-  sec.innerHTML = head + `<div class="statline">${line}</div>` + keys.map(() => `<div class="pct"><span class="sk" style="width:80%"></span><span class="sk" style="width:100%"></span><span></span><span></span></div>`).join('');
-  const small = p.s_minutes < 900;  // per-90 rates on a few matches swing wildly: no percentiles until 900 min
-  let pool = null;
-  if (!small) try { pool = await peers(grp, p.gender); } catch { pool = null; }
-  if (!alive()) return;
-  const pcs = {};
-  const rows = keys.map(k => {
-    const [name, fn, dec = 2, unit = '', lower] = M[k], val = fn(p);
-    if (val == null) return [-1, ''];
-    let pc = null;
-    if (pool && pool.length) {
-      const xs = pool.map(fn).filter(x => x != null);
-      const below = xs.filter(x => x < val).length, eq = xs.filter(x => x === val).length;
-      pc = Math.round((below + eq / 2) / xs.length * 100); if (lower) pc = 100 - pc;
-      pcs[k] = pc;
-    }
-    return [pc ?? -1, `<div class="pct" title="${name}: ${val.toFixed(dec)}${unit}${pc != null ? ` · better than ${pc}% of peers` : ''}"><span class="lbl">${name}</span>
-      <div class="tr">${pc != null ? `<i style="width:${Math.max(pc, 2)}%;background:${pctColor(pc)}"></i>` : ''}</div>
-      <span class="v">${val.toFixed(dec)}${unit}</span><span class="p" style="color:${pc != null ? pctColor(pc) : C.muted}">${pc ?? '–'}</span></div>`];
-  }).sort((a, b) => b[0] - a[0]).map(r => r[1]).join('');  // strengths first; stable sort keeps metric order when there are no percentiles
-  sec.innerHTML = head + `<div class="statline">${line}</div>${rows}
-    <p class="note">${small ? `Not enough minutes to compare (${p.s_minutes} of 900).` : pool ? `Benchmarked against ${pool.length} ${grp}s.` : 'Peer benchmark unavailable right now.'}</p>`;
-  if (prof) {
-    const ax = keys.filter(k => k !== 'rating' && pcs[k] != null).map(k => [M[k][5], pcs[k]]);
-    const best = Object.entries(pcs).filter(([k]) => k !== 'rating').sort((a, b) => b[1] - a[1]);
-    prof.innerHTML = ax.length >= 3 ? `<h3>Performance profile <small>percentiles · dashed ring = 75th</small></h3>
-      <div class="radar-wrap">${radar(ax, 100, 75)}<div class="axes-list">${best.slice(0, 3).map(([k, x]) => `<div><span class="muted">${M[k][0]}</span><b style="color:${pctColor(x)}">${x}</b></div>`).join('')}
-      ${best.length > 3 ? `<div style="margin-top:6px"><span class="muted">Weakest: ${M[best.at(-1)[0]][0]}</span><b style="color:${pctColor(best.at(-1)[1])}">${best.at(-1)[1]}</b></div>` : ''}</div></div>`
-      : `<h3>Performance profile</h3><p class="note" style="margin:0">${small ? 'Needs 900 min this season.' : 'Not enough peer data to draw a profile.'}</p>`;
-  }
 }
 
 // ---------- Palette ----------
