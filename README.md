@@ -1,4 +1,4 @@
-<img width="1512" height="826" alt="Capture d’écran 2026-10-16 à 12 35 38" src="https://github.com/user-attachments/assets/5ae00cb3-cfd1-405a-9079-e6c0a2369a64" />
+<img width="1512" height="825" alt="Capture d’écran 2026-10-18 à 01 33 15" src="https://github.com/user-attachments/assets/60973a26-b210-4c2d-83e5-6b84b06d4144" />
 In save data - Decembre 2028.
 
 # ⚽ FM26 Scout
