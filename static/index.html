@@ -198,6 +198,9 @@ body .ag-theme-quartz-dark {
 .icon-btn { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; color: var(--muted); font-size: 20px; }
 .icon-btn:hover { background: var(--raise); color: var(--text); }
 .icon-btn.star[aria-pressed="true"] { color: var(--gold); }
+.hist { display: flex; gap: 2px; margin: 0 -6px; }
+.hist .icon-btn svg { width: 18px; height: 18px; }
+.hist .icon-btn[disabled] { opacity: .3; background: none; color: var(--muted); cursor: default; }
 @keyframes grow { from { transform: scaleX(0); } }
 /* Hero dials: the 2-4 numbers that matter in this mode, as rings under the sticky name */
 .hero { margin: 0 -18px; padding: 16px 18px 14px; border-bottom: 1px solid var(--line); background: radial-gradient(120% 100% at 50% 0%, color-mix(in srgb, var(--mode) 10%, transparent), transparent 70%); }
@@ -452,7 +455,8 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .notes { margin: 6px 0 0; padding-left: 18px; color: var(--text2); font-size: 14px; } .notes li { margin: 4px 0; }
 .show-chip { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 6px 0 12px; border-radius: var(--r-pill); background: var(--accent-soft); border: 1px solid rgba(74,163,255,.45); font-weight: 600; font-size: 13px; }
 @media (max-width: 1600px) { .nav kbd { display: none; } }
-@media (max-width: 1320px) { .top { gap: 10px; } #palBtn kbd { display: none; } .search { min-width: 130px; } }  /* room for the Fair prices toggle */
+@media (max-width: 1320px) { .top { gap: 10px; } #palBtn kbd, .nav kbd { display: none; } .nav button { white-space: nowrap; } .search { min-width: 130px; } }  /* room for the Fair prices toggle */
+@media (max-width: 1240px) { .brand span { display: none; } }  /* the logo alone leaves room for the back / forward arrows */
 @media (max-width: 1180px) { .es-body { grid-template-columns: 1fr 1fr; } .es-grid { grid-template-columns: 1fr 1fr; } .offers { grid-template-columns: 1fr; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js"></script>
@@ -462,6 +466,10 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
   <div class="brand" aria-label="Scout26">
     <svg aria-hidden="true" viewBox="0 0 64 64"><path fill="#3d9bff" d="M19.1 3 47.1 3 53 10 52.4 14 28.4 14 27 22.5 16 22.5Z"/><path fill="#2fe08a" d="M15.4 26.5 50.4 26.5 48.6 37.5 13.6 37.5Z"/><path fill="#ffc93c" d="M37 41.5 48 41.5 44.9 61 9.9 61 10.5 57 18.6 50 35.6 50Z"/></svg>
     <span>Scout<b>26</b></span>
+  </div>
+  <div class="hist" role="group" aria-label="History">
+    <button id="navBack" class="icon-btn" aria-label="Back" title="Back (Alt+←)" disabled><svg fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
+    <button id="navFwd" class="icon-btn" aria-label="Forward" title="Forward (Alt+→)" disabled><svg fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
   </div>
   <nav class="nav" aria-label="Pages">
     <button data-page="scout" aria-current="page">Scout <kbd>1</kbd></button>
@@ -875,28 +883,26 @@ const clearSort = () => grid.applyColumnState({ defaultState: { sort: null } });
 // ---------- Pages ----------
 // Scout list of players like p, as this mode understands "like": same position group and gender, age ±3,
 // then the server sorts by closeness (similar_to). Every criterion stays an editable chip.
-const SIMILAR_STATS = { ST: ['s_goals_p90', 's_xg_p90'], W: ['s_dribbles_p90', 's_xa_p90'], AM: ['s_key_passes_p90', 's_xa_p90'], CM: ['s_prog_passes_p90', 's_key_passes_p90'],
-  DM: ['s_tackles_p90', 's_interceptions_p90'], FB: ['s_crosses_p90', 's_tackles_p90'], CB: ['s_headers_won_p90', 's_interceptions_p90'], GK: [] };
-function findSimilar(p) {
+async function findSimilar(p) {
+  let s;  // his strengths, as the server ranks them for this mode (the same ones it sorts by)
+  try { const r = await api(`/api/similar/${p.uid}?mode=${MODE}`); if (!r.ok) throw r.status; s = await r.json(); }
+  catch { return toast('Could not find similar players. The server may be restarting.', 'bad'); }
+  mark();  // before F changes: the entry we leave keeps the old criteria
   const f = F0();
   f.positions = [groupOf(p)]; f.age_min = Math.max(15, p.age - 3); f.age_max = p.age + 3;
-  // Visible, editable floors on what makes him him (the server sorts by the same signals): his 6 best
-  // attributes (3 below his level) in Full / Fair play; performance and his position's key per-90 stats in Moneyball.
+  // Visible, editable floors: Full / Fair play = his 6 best attributes, 3 below his level; Moneyball = his 5 best
+  // in-game stats for his position (where he ranks highest among peers), at 80% of his output.
   if (MODE === 'moneyball') {
     f.min.s_minutes = 600;  // per-90 numbers need a sample
-    if (p.stat_score != null) f.min.stat_score = Math.max(0, Math.round(p.stat_score - 10));
-    (SIMILAR_STATS[groupOf(p)] || []).forEach(k => { if (p[k] > 0) f.min[k] = +(p[k] * 0.75).toFixed(2); });
-  } else {
-    const pool = (groupOf(p) === 'GK' ? ATTR.goalkeeping : ATTR.technical.filter(a => !['long_throws', 'penalty_taking'].includes(a))).concat(ATTR.mental, ATTR.physical);
-    pool.filter(a => p['attributes_' + a] != null).sort((a, b) => p['attributes_' + b] - p['attributes_' + a]).slice(0, 6)
-      .forEach(a => { if (p['attributes_' + a] > 3) f.min['attributes_' + a] = p['attributes_' + a] - 3; });
-  }
+    (s.stats || []).forEach(x => { f.min[x.col] = +(x.value * 0.8).toFixed(2); });
+  } else (s.attributes || []).forEach(x => { if (x.value > 3) f.min[x.col] = x.value - 3; });
   f.similar = { uid: p.uid, name: p.name };
   F = f; if (p.gender) setGender(p.gender);
   closeDrawer(); setPage('scout'); clearSort(); renderSummary(); refresh();
   toast(`Players most similar to ${p.name} first`);
 }
 function setPage(p) {
+  mark();
   if (st.page === p && p !== 'deals') { if (p === 'club') loadClub(); return; }
   st.page = p; document.body.dataset.page = p;
   $$('.nav button').forEach(b => b.dataset.page === p ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
@@ -913,7 +919,51 @@ function pickList(id) {
   else { applyColumns(); clearSort(); refresh(); }
   renderLists(); renderViews(); renderSummary();
 }
-function pickLens(id) { st.lens = id; if (st.page !== 'deals') setPage('deals'); else { renderLenses(); applyColumns(); clearSort(); refresh(); } renderSummary(); }
+function pickLens(id) { mark(); st.lens = id; if (st.page !== 'deals') setPage('deals'); else { renderLenses(); applyColumns(); clearSort(); refresh(); } renderSummary(); }
+
+// ---------- Back / forward ----------
+// One history entry per view: page, Deal Finder lens, drawer player, Offers player. Compound actions
+// (Find similar, Make an offer) collapse into one entry through a microtask. Each entry also keeps the
+// criteria (F) it was left with, so Back undoes a Find similar. Grid scroll, sort and gender are not kept.
+let navQ = null, navRestoring = false, navTop = 0;
+const navNow = () => ({ page: st.page, lens: st.lens, uid: drawerUid ?? null, offer: of.p?.uid ?? null });
+const navKey = s => [s.page, s.page === 'deals' ? s.lens : '', s.uid ?? '', s.page === 'offers' ? s.offer ?? '' : ''].join('|');
+function navArrows() {
+  const i = history.state?.i ?? 0;
+  $('#navBack').disabled = i <= 0; $('#navFwd').disabled = i >= navTop;
+}
+function mark() {
+  if (navQ || navRestoring || !history.state || history.state.i == null) return;
+  navQ = clone(F);
+  queueMicrotask(() => {
+    const f0 = navQ, h = history.state, s = navNow(); navQ = null;
+    if (st.page === '-' || navKey(s) === navKey(h)) return;
+    history.replaceState({ ...h, f: f0 }, '');
+    navTop = h.i + 1; history.pushState({ ...s, f: clone(F), i: navTop }, '');
+    try { sessionStorage.setItem('fm26_nav_top', navTop); } catch {}
+    navArrows();
+  });
+}
+function navGo(s) {
+  if (!s || s.i == null || !META) return;
+  navRestoring = true;
+  try {
+    const fChanged = s.f && JSON.stringify(s.f) !== JSON.stringify(F);
+    if (fChanged) { F = clone(s.f); renderSummary(); }
+    const page = s.page === 'deals' && !FAIR ? 'scout' : s.page;
+    const lz = LENSES.find(l => l.id === s.lens), lensId = lz && lensOk(lz) ? s.lens : 'blend';
+    if (page === 'deals' && (st.page !== 'deals' || st.lens !== lensId)) pickLens(lensId);
+    else if (st.page !== page) setPage(page);
+    else if (fChanged && (page === 'scout' || page === 'deals')) { clearSort(); refresh(); }
+    if (page === 'offers' && (of.p?.uid ?? null) !== s.offer) {
+      if (s.offer == null) { of.p = null; renderOffers(); }
+      else api('/api/player/' + s.offer + mq()).then(r => r.ok ? r.json() : null).then(p => { if (p && st.page === 'offers') pickOfferPlayer(p); }).catch(() => {});
+    }
+    if (s.uid == null) closeDrawer(); else if (s.uid !== drawerUid) openPlayer(s.uid);
+  } finally { navRestoring = false; }
+  navArrows();
+}
+addEventListener('popstate', e => navGo(e.state));
 
 function renderLists() {
   if (!META) return;
@@ -1031,12 +1081,13 @@ function dial(name, txt, f, color, sub, aria, ghost) {
 }
 function closeDrawer() {
   if (!$('#drawer').classList.contains('open')) return;
+  mark();
   $('#drawer').classList.remove('open'); $('#drawer').setAttribute('aria-hidden', 'true'); drawerUid = null; drawerPlayer = null;
   if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
 }
 async function openPlayer(uid) {
   if (!$('#drawer').classList.contains('open')) lastFocus = document.activeElement;
-  drawerUid = uid;
+  mark(); drawerUid = uid;
   const dr = $('#drawer');
   dr.innerHTML = `<div class="dr-head"><span class="sk" style="height:24px;width:60%"></span><span class="sk" style="margin-top:10px;width:40%"></span><span class="sk" style="margin-top:18px;height:8px;width:100%"></span></div>
     <div class="dr-body">${'<div class="sec"><span class="sk" style="width:30%"></span><span class="sk" style="margin-top:12px;height:60px;width:100%"></span></div>'.repeat(3)}</div>`;
@@ -1096,7 +1147,7 @@ async function openPlayer(uid) {
           <span class="tag" title="Squad status">${esc((p.contract_squad_status || 'Squad status unknown').replaceAll('_', ' '))}</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
-          <button class="btn" style="justify-content:center" data-similar="${p.uid}" title="${{ full: 'Same position, age ±3, closest on his 6 best attributes', fair: 'Same position, age ±3, closest on his 6 best attributes', moneyball: 'Same position, age ±3, closest on performance index, rating and key stats per 90' }[MODE]}">Find similar players</button>
+          <button class="btn" style="justify-content:center" data-similar="${p.uid}" title="${{ full: 'Same position, age ±3, closest on his 6 best attributes', fair: 'Same position, age ±3, closest on his 6 best attributes', moneyball: 'Same position, age ±3, closest on his 5 best in-game stats for his position' }[MODE]}">Find similar players</button>
           <button class="btn primary" style="justify-content:center" data-offer="${p.uid}">Make an offer →</button>
         </div>
       </section>
@@ -1484,7 +1535,7 @@ function renderOfPlayer() {
 }
 function pickOfferPlayer(p) {
   if (!p) return;
-  of.p = p; of.list = [];
+  mark(); of.p = p; of.list = [];
   if (!$('#ofSearch')) renderOffers();
   $('#ofList').innerHTML = ''; $('#ofSearch').value = ''; $('#ofSearch').setAttribute('aria-expanded', 'false');
   const pre = p.free_agent ? 0 : p.transfer_value ?? (FAIR ? p.fair_fee : null);
@@ -1600,7 +1651,8 @@ function setFair(on) {
   if (!META) return;
   const fm = grid.getFilterModel(); Object.keys(fm).forEach(k => hid(k) && delete fm[k]); grid.setFilterModel(fm);
   renderSummary();
-  if (!on && st.page === 'deals') setPage('scout'); else if (st.page === 'scout' || st.page === 'deals') { applyColumns(); refresh(); }
+  if (!on && st.page === 'deals') { navRestoring = true; setPage('scout'); navRestoring = false; history.replaceState({ ...history.state, ...navNow() }, ''); }  // a toggle, not a navigation
+  else if (st.page === 'scout' || st.page === 'deals') { applyColumns(); refresh(); }
   if (st.page === 'club' && CLUB) { loadRecos(); renderScope(); }
   if (st.page === 'offers') renderOffers();
   if (drawerUid) openPlayer(drawerUid);
@@ -1737,6 +1789,10 @@ async function init() {
     } },
   });
   renderViews(); renderLists(); renderLenses(); applyColumns(); renderSummary();
+  // Back / forward: this tab's entry index survives a reload; the view itself starts fresh.
+  const hi = history.state?.i;
+  try { navTop = hi == null ? 0 : Math.max(hi, +sessionStorage.getItem('fm26_nav_top') || 0); } catch {}
+  history.replaceState({ ...navNow(), f: clone(F), i: hi ?? 0 }, ''); navArrows();
   // Load club in the background (after the first grid page: concurrent DuckDB queries can clash server-side).
   await firstPage;
   if (CLUB) return;
@@ -1775,7 +1831,9 @@ $('#esBtn').onclick = () => META && openES();
 document.addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t || t.closest('#es')) return;
   const d = t.dataset;
-  if (d.page && t.closest('.nav')) setPage(d.page);
+  if (t.id === 'navBack') history.back();
+  else if (t.id === 'navFwd') history.forward();
+  else if (d.page && t.closest('.nav')) setPage(d.page);
   else if (t.id === 'fairBtn') setFair(!FAIR);
   else if (d.mode && t.closest('#modes')) { if (META && d.mode !== MODE) setMode(d.mode); }
   else if (d.g != null && t.closest('#gender')) { setGender(d.g); refresh(); if (st.page === 'club' && CLUB) loadRecos(); }
