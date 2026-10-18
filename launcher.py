@@ -71,7 +71,7 @@ def native_window(url, ready) -> bool:
     first, the app once ready() says the server answers. False when no native window can be shown here: the caller
     falls back to the browser."""
     try:
-        unblock_dlls()
+        pass  # control: no unblock
         import webview
         webview.settings["ALLOW_DOWNLOADS"] = True  # CSV export
         webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = True  # update link, GitHub
