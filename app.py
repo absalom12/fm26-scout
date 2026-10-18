@@ -67,6 +67,8 @@ POS = {
     "GK": ["gk"], "CB": ["dc", "sw"], "FB": ["dl", "dr", "wbl", "wbr"], "DM": ["dm"],
     "CM": ["mc"], "W": ["ml", "mr", "aml", "amr"], "AM": ["amc"], "ST": ["stc"],
 }
+# Single positions the search can also filter on (they sit inside a group above).
+EXACT_POS = {"ML": ["ml"], "MR": ["mr"]}
 # Role -> (position group, {attribute: weight}). Key attributes weight 2, preferable 1. Score 0-100.
 ROLES = {
     "sweeper_keeper": ("GK", dict(reflexes=2, one_on_ones=2, rushing_out=2, command_of_area=2, kicking=1, passing=1,
@@ -684,7 +686,7 @@ def build(q: Query):
     if q.search.strip():
         where.append("(name ILIKE ? OR club_name ILIKE ?)"); args += [f"%{q.search.strip()}%"] * 2
     if q.positions:
-        cols = [f"positions_{p}" for g in q.positions for p in POS.get(g, [])]
+        cols = [f"positions_{p}" for g in q.positions for p in POS.get(g) or EXACT_POS.get(g, [])]
         if cols:
             where.append(f"greatest({', '.join(cols)}, 0) >= 15")
     full = mode == "full"

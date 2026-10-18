@@ -2519,8 +2519,8 @@ function dual(id, name) { const [lk, hk, mn, mx, u] = DUAL[id], lo = dget(lk), h
       <input type="range" min="${mn}" max="${mx}" value="${hi ?? mx}" data-dhi="${id}" aria-label="${name} maximum" aria-valuetext="${hi ?? 'any'}" style="z-index:2"></div>
     <div class="dual-s" aria-hidden="true"><span>${mn}${u}</span><span>${mx}${u}</span></div></div>`; }
 // Position groups on a pitch attacking right; FB and W get a mirrored (mouse-only) twin on the other flank.
-const PZ = { GK: [[7, 50]], CB: [[21, 50]], FB: [[25, 14], [25, 86]], DM: [[37, 50]], CM: [[52, 50]], W: [[70, 14], [70, 86]], AM: [[68, 50]], ST: [[87, 50]] };
-const PZN = { GK: 'Goalkeeper', CB: 'Centre-back', FB: 'Full-back / wing-back', DM: 'Defensive midfielder', CM: 'Central midfielder', W: 'Winger', AM: 'Attacking midfielder', ST: 'Striker' };
+const PZ = { GK: [[7, 50]], CB: [[21, 50]], FB: [[25, 14], [25, 86]], DM: [[37, 50]], CM: [[52, 50]], ML: [[55, 14]], MR: [[55, 86]], W: [[74, 14], [74, 86]], AM: [[68, 50]], ST: [[87, 50]] };
+const PZN = { GK: 'Goalkeeper', CB: 'Centre-back', FB: 'Full-back / wing-back', DM: 'Defensive midfielder', CM: 'Central midfielder', W: 'Winger (left or right, midfield or attack)', ML: 'Left midfielder only', MR: 'Right midfielder only', AM: 'Attacking midfielder', ST: 'Striker' };
 const PITCH_SVG = `<svg viewBox="0 0 105 68" preserveAspectRatio="none" fill="none" stroke="rgba(255,255,255,.18)" stroke-width=".4" aria-hidden="true"><rect x="1.5" y="1.5" width="102" height="65" rx=".8"/><path d="M52.5 1.5v65"/><circle cx="52.5" cy="34" r="9.15"/><rect x="1.5" y="13.85" width="16.5" height="40.3"/><rect x="1.5" y="24.85" width="5.5" height="18.3"/><rect x="87" y="13.85" width="16.5" height="40.3"/><rect x="98" y="24.85" width="5.5" height="18.3"/><path d="M18 27.5a8 8 0 0 1 0 13M87 27.5a8 8 0 0 0 0 13"/></svg>`;
 const ES_SECS = [['gen', 'General'], ['attr', 'Attributes'], ['hidden', 'Hidden'], ['stats', 'Statistics'], ['money', 'Contract'], ['nat', 'Nationality'], ['roles', 'Roles']];
 const esSecs = () => ES_SECS.filter(([k]) => MODE === 'moneyball' ? !['attr', 'roles', 'hidden'].includes(k) : k !== 'hidden' || MODE === 'full');
@@ -2545,14 +2545,14 @@ function renderES() {
   const statIn = ([c, n]) => `<label class="fld">${n} <input class="in" data-esmin="${c}" type="number" step="any" min="0" value="${D.min[c] ?? ''}" placeholder="any"></label>`;
   const stats = STATS_F.filter(([c]) => vis(c)), sgrp = [['Volume & form', stats.filter(([c]) => !/_p90|_pct/.test(c))], ['Per 90 minutes', stats.filter(([c]) => c.includes('_p90'))], ['Success rates', stats.filter(([c]) => c.includes('_pct'))]];
   const roles = Object.entries(META.roles).filter(([r]) => cols.has('role_' + r)), rgrp = [...new Set(roles.map(([, gp]) => gp))];
-  const unknownPos = META.positions.filter(p => !PZ[p]);
+  const esPos = [...META.positions, 'ML', 'MR'], unknownPos = esPos.filter(p => !PZ[p]);  // ML / MR: single positions inside W
   const n = {}; esSecs().forEach(([k], i) => n[k] = i + 1);
   $('#esMode').innerHTML = `<span class="mode-chip">${MODES[MODE]}</span>${noAttr ? 'Attributes are off in Moneyball' : full ? '' : 'Hidden info is off in Fair play'}`;
   $('#esRail').innerHTML = esSecs().map(([k, l]) => `<button type="button" data-esgo="${k}" aria-current="false"><i aria-hidden="true">${String(n[k]).padStart(2, '0')}</i>${l}<b></b></button>`).join('')
     + `<p>Every criterion must match. The count below updates as you go.</p>`;
   const parts = [
     sec('gen', n.gen, 'General', 'who and where on the pitch', `<div class="es-gen">
-      <div><div class="es-pitch" role="group" aria-label="Positions">${PITCH_SVG}${META.positions.filter(p => PZ[p]).map(p => PZ[p].map(([x, y], j) =>
+      <div><div class="es-pitch" role="group" aria-label="Positions">${PITCH_SVG}${esPos.filter(p => PZ[p]).map(p => PZ[p].map(([x, y], j) =>
         `<button type="button" class="pz" data-espos="${p}" aria-pressed="${D.positions.includes(p)}" style="left:${x}%;top:${y}%" title="${PZN[p]}"${j ? ' tabindex="-1" aria-hidden="true"' : ` aria-label="${p}, ${PZN[p]}"`}>${p}</button>`).join('')).join('')}</div>
         ${unknownPos.length ? `<div class="chips" style="margin-top:8px">${unknownPos.map(p => `<button type="button" class="chip" data-espos="${p}" aria-pressed="${D.positions.includes(p)}">${p}</button>`).join('')}</div>` : ''}
         <div class="es-note">Pick several: a player qualifies if he can play any of them.</div></div>
