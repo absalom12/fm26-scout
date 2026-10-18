@@ -1,5 +1,6 @@
 import collections, contextlib, csv, io, json, os, re, shutil, sys, tempfile, threading, time, traceback
 import duckdb, fmsave
+import updater
 import numpy as np
 from nations import NATIONS
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
@@ -532,7 +533,7 @@ def load(d=None):
         add_stat_score()
     add_deals()
     global COLS, CLUB, MODE_HIDDEN, VISIBLE
-    CLUB = json.load(open(j("club.json"))) if os.path.exists(j("club.json")) else None
+    CLUB = read_club(j("club.json"))
     COLS = {r[0] for r in con().execute("DESCRIBE players").fetchall()}
     fair = {c for c in COLS if c.startswith(HIDDEN_PREFIXES) or c in HIDDEN_EXACT}
     MODE_HIDDEN = {"full": set(), "fair": fair,
@@ -924,7 +925,19 @@ def load_save(q: SaveReq):
 @app.get("/api/status")
 def status():
     busy = _ingest_lock.locked()
-    return {"app": "fm26-scout", "status": STATUS, "version": VERSION, "progress": dict(PROGRESS) if busy else None}
+    return {"app": "fm26-scout", "status": STATUS, "version": VERSION, "progress": dict(PROGRESS) if busy else None,
+            "can_update": updater.bundle() is not None, "update": dict(updater.STATE)}
+
+
+@app.post("/api/update")
+def update():
+    """Install the latest release in place and relaunch (macOS app only; the page polls /api/status)."""
+    if updater.bundle() is None:
+        raise HTTPException(400, "not_supported")
+    if _ingest_lock.locked() or updater.STATE["state"] in ("downloading", "installing", "restarting"):
+        raise HTTPException(409, "busy")
+    threading.Thread(target=updater.run, args=(VERSION,), daemon=True).start()
+    return {"ok": True}
 
 
 @app.get("/api/saves")
@@ -968,6 +981,18 @@ def fit_sql(pos, mode="full"):
         return f"CASE WHEN positions_{col} >= 15 THEN stat_score END"
     roles = [f"role_{r}" for r, (g, _) in ROLES.items() if g == SLOT_GROUP[pos]]
     return f"CASE WHEN positions_{col} >= 15 THEN greatest({', '.join(roles)}) END"
+
+
+def read_club(path):
+    """club.json, with the default shape if its formation is unusable (written by 0.4.6 and older from saves with
+    little match data, it kept My Club unavailable until the save was loaded again)."""
+    if not os.path.exists(path):
+        return None
+    club = json.load(open(path))
+    f = club.get("formation") or []
+    if len(f) != 11 or any(p not in SLOT_GROUP for p in f):
+        club["formation"] = infer_formation([])
+    return club
 
 
 def _club():

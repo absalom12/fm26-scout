@@ -83,6 +83,7 @@ body.mode-fair { --mode: var(--good); } body.mode-moneyball { --mode: var(--gold
 .crit-chip button { width: 22px; height: 22px; border-radius: 50%; color: var(--muted); }
 .crit-chip button:hover { background: var(--raise); color: var(--text); }
 /* Nationality */
+.nat-n { overflow: hidden; text-overflow: ellipsis; }
 .nat { display: inline-flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .flag { font-size: 15px; line-height: 1; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
 /* Key attribute / stat chips */
@@ -856,7 +857,17 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .ac-wrap input { width: 100%; height: 40px; font-family: var(--f-body); font-size: 15px; }
 .ac-list { position: absolute; left: 0; right: 0; top: calc(100% + 4px); background: var(--raise); border: 1px solid var(--line2); border-radius: var(--r); box-shadow: var(--shadow); z-index: 10; padding: 4px; }
 .ac-list:empty { display: none; }
-.money-set { display: flex; gap: 4px; } .money-set .in { height: 32px; padding: 0 6px; }
+/* Sized by its content, like dialog.pal: a top margin and an auto bottom one (WebKit collapses fit-content here). */
+dialog.es.set { width: min(660px, calc(100vw - 32px)); height: auto; max-height: calc(100vh - 80px); margin: 8vh auto auto; bottom: auto; overflow-y: auto; }
+.set .es-in { display: block; height: auto; }
+.set .es-body { overflow: visible; }
+.set .es-body { padding-bottom: 8px; }
+.set .es-sec:last-child { min-height: 0; }
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 9px 0; }
+.set-row > span { font-weight: 600; }
+.set-row small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+.set-row .seg button { font-variant-numeric: tabular-nums; }
+.set-foot { justify-content: flex-end; }
 .copy-btn { vertical-align: middle; margin-left: 6px; opacity: .7; } .copy-btn:hover { opacity: 1; }
 .ac-item { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; width: 100%; text-align: left; padding: 7px 10px; border-radius: 7px; }
 .ac-item.on, .ac-item:hover { background: var(--accent-soft); }
@@ -970,7 +981,7 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
   <div id="gender" class="seg" role="group" aria-label="Gender">
     <button data-g="" aria-pressed="true">All</button><button data-g="Men" aria-pressed="false">Men</button><button data-g="Women" aria-pressed="false">Women</button>
   </div>
-  <label class="money-set" title="Currency and wage period. € and $ use approximate rates."><select id="curSel" class="in" aria-label="Currency"><option value="GBP">£</option><option value="EUR">€</option><option value="USD">$</option></select><select id="perSel" class="in" aria-label="Wage period"><option value="w">/w</option><option value="m">/mo</option><option value="y">/yr</option></select></label>
+  <button id="setBtn" class="icon-btn" aria-label="Settings" title="Settings"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></button>
   <button id="loadBtn" class="btn primary"><span>Load save</span></button>
   <input id="file" type="file" accept=".fm" hidden>
   <div id="progress" class="progress" aria-hidden="true"></div>
@@ -1018,6 +1029,25 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 
 <aside id="drawer" class="drawer" role="dialog" aria-label="Player detail" aria-hidden="true" tabindex="-1"></aside>
 
+<dialog id="settings" class="es set" aria-labelledby="setTitle">
+  <div class="es-in">
+    <header class="es-head"><h2 id="setTitle">Settings</h2><button type="button" class="icon-btn" data-set-close aria-label="Close">×</button></header>
+    <div class="es-body">
+    <section class="es-sec"><h3 data-n="01">Display <small>applied when you close this window</small></h3>
+      <div class="set-row"><span>Currency<small>€ and $ use approximate rates</small></span><div class="seg" role="group" aria-label="Currency"><button type="button" data-set="cur" data-v="GBP">£ Pound</button><button type="button" data-set="cur" data-v="EUR">€ Euro</button><button type="button" data-set="cur" data-v="USD">$ Dollar</button></div></div>
+      <div class="set-row"><span>Wages<small>Search filters stay in £ per week</small></span><div class="seg" role="group" aria-label="Wages"><button type="button" data-set="per" data-v="w">/week</button><button type="button" data-set="per" data-v="m">/month</button><button type="button" data-set="per" data-v="y">/year</button></div></div>
+      <div class="set-row"><span>Height</span><div class="seg" role="group" aria-label="Height"><button type="button" data-set="height" data-v="cm">188 cm</button><button type="button" data-set="height" data-v="ftin">6'2"</button></div></div>
+      <div class="set-row"><span>Nationality display</span><div class="seg" role="group" aria-label="Nationality"><button type="button" data-set="nat" data-v="flag">🇫🇷</button><button type="button" data-set="nat" data-v="name">🇫🇷 France</button></div></div>
+      <div class="set-row"><span>Player list<small>Compact fits more players on screen</small></span><div class="seg" role="group" aria-label="Player list"><button type="button" data-set="density" data-v="comfy">Comfortable</button><button type="button" data-set="density" data-v="compact">Compact</button></div></div>
+    </section>
+    <section class="es-sec"><h3 data-n="02">Updates</h3>
+      <div class="set-row"><span>Check at launch<small>Asks GitHub for the latest version, nothing else is sent</small></span><div class="seg" role="group" aria-label="Check for updates"><button type="button" data-set="updates" data-v="on">On</button><button type="button" data-set="updates" data-v="off">Off</button></div></div>
+      <div class="set-row"><span>Version <b id="setVer" class="mono"></b><small id="setUpd" aria-live="polite"></small></span><button type="button" id="setCheck" class="btn">Check now</button></div>
+    </section>
+    </div>
+    <footer class="es-foot set-foot"><button type="button" class="btn primary" data-set-close>Done</button></footer>
+  </div>
+</dialog>
 <dialog id="load" class="pal" aria-labelledby="loadTitle">
   <header class="es-head"><h2 id="loadTitle">Load a save</h2><button type="button" class="icon-btn" data-load-close aria-label="Close">×</button></header>
   <div class="load-body">
@@ -1159,8 +1189,13 @@ const P90_EXTRA = [['s_shots_p90', 'Shots / 90'], ['s_xa_p90', 'xA / 90'], ['s_d
 // Other currencies use approximate rates, and wages can show per week, month or year. Inputs convert back.
 const CURRENCIES = { GBP: ['£', 1], EUR: ['€', 1.157], USD: ['$', 1.3] };
 const PERIODS = { w: ['/w', 1], m: ['/m', 52 / 12], y: ['/y', 52] };
-let CUR = 'GBP', PER = 'w';
-try { CUR = CURRENCIES[localStorage.getItem('fm26_cur')] ? localStorage.getItem('fm26_cur') : 'GBP'; PER = PERIODS[localStorage.getItem('fm26_per')] ? localStorage.getItem('fm26_per') : 'w'; } catch {}
+// Settings dialog choices, per browser: [default, allowed values]. A change reloads the page so every label re-renders.
+const SETTINGS = { cur: ['GBP', Object.keys(CURRENCIES)], per: ['w', Object.keys(PERIODS)], height: ['cm', ['cm', 'ftin']],
+  nat: ['flag', ['flag', 'name']], density: ['comfy', ['comfy', 'compact']], updates: ['on', ['on', 'off']] };
+const SET = {};
+for (const [k, [def, ok]] of Object.entries(SETTINGS)) { let v = null; try { v = localStorage.getItem('fm26_' + k); } catch {} SET[k] = ok.includes(v) ? v : def; }
+const CUR = SET.cur, PER = SET.per;
+const height = cm => SET.height === 'cm' ? `${cm} cm` : (i => `${Math.floor(i / 12)}'${i % 12}"`)(Math.round(cm / 2.54));
 const curSym = () => CURRENCIES[CUR][0], wageK = () => CURRENCIES[CUR][1] * PERIODS[PER][1];
 const money = v => { if (v == null) return '–'; v *= CURRENCIES[CUR][1]; return curSym() + (v >= 1e6 ? `${(v / 1e6).toFixed(v >= 1e7 ? 0 : 1)}M` : v >= 1e3 ? `${Math.round(v / 1e3)}k` : Math.round(v)); };
 const wage = v => { if (v == null) return '–'; v *= wageK(); return curSym() + (v >= 1e6 ? `${+(v / 1e6).toFixed(1)}M` : v >= 1e5 ? `${Math.round(v / 1e3)}k` : v >= 1e3 ? `${+(v / 1e3).toFixed(1)}k` : Math.round(v)) + PERIODS[PER][0]; };
@@ -1211,9 +1246,10 @@ const flag = code => {
   return /^[A-Z]{2}$/i.test(code) ? [...code.toUpperCase()].map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('') : '';
 };
 const natCode = name => META.nations?.find(n => n.name === name)?.code || '';
-// Flags only; the country name shows on hover and to screen readers. Second nations only on the full profile (all = true).
+// Flags (names too if set in Settings); the country name shows on hover and to screen readers. Second nations only on the full profile (all = true).
 const natHTML = (p, all = false) => !p || !p.nationality ? '' : `<span class="nat">${[[p.nationality, p.nationality_code], ...(all && p.second_nationalities || '').split(', ').filter(Boolean).map(n => [n, natCode(n)])]
-  .map(([n, c]) => { const f = flag(c); return `<span class="flag" title="${esc(n)}">${f || esc(n)}${f ? `<span class="sr">${esc(n)}</span>` : ''}</span>`; }).join('')}</span>`;
+  .map(([n, c]) => { const f = flag(c); const named = f && SET.nat === 'name';
+    return `<span class="flag" title="${esc(n)}">${f || esc(n)}${f && !named ? `<span class="sr">${esc(n)}</span>` : ''}</span>${named ? `<span class="nat-n">${esc(n)}</span>` : ''}`; }).join('')}</span>`;
 // Contract time left: months up to a year, then years.
 const leftTxt = m => m > 12 ? `${+(m / 12).toFixed(1)} years` : `${m} month${m === 1 ? '' : 's'}`;
 
@@ -1338,6 +1374,7 @@ function colDef(c) {
   if (c === 'contract_end') Object.assign(d, { width: 124, filter: 'agDateColumnFilter', filterParams: { defaultOption: 'lessThan', maxNumConditions: 1 }, cellClass: 'mono' });
   if (c === 'months_left') Object.assign(d, { width: 112, cellRenderer: p => p.value == null ? '' : `<span class="mono" style="${p.value <= 6 ? 'color:var(--gold);font-weight:700' : ''}">${p.value}</span>` });
   if (c === 'age' || c === 'height_cm') Object.assign(d, { width: 84, cellClass: 'mono' });
+  if (c === 'height_cm') d.valueFormatter = p => p.value == null ? '' : height(p.value);
   if (c.startsWith('attributes_') || c.startsWith('personality_')) Object.assign(d, { cellClass: p => 'mono ' + tier(p.value, BAD.has(c)) });
   if (c.startsWith('role_')) Object.assign(d, { width: 112, cellRenderer: p => p.value == null ? '' : `<span class="mono" style="color:${scoreColor(p.value)};font-weight:700">${p.value.toFixed(0)}</span>` });
   if (c.startsWith('s_')) Object.assign(d, { width: 80, cellClass: 'mono' });
@@ -2370,7 +2407,7 @@ async function renderProfile() {
     <header class="pp-head">
       <div class="pp-id"><div class="pp-nm"><h1 id="ppName" tabindex="-1">${esc(p.name)}</h1><button type="button" class="icon-btn copy-btn" data-copy="${esc(p.name)}" aria-label="Copy name" title="Copy name"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
           <span class="pp-pos">${posChips(p.natural_positions)}${p.accomplished_positions ? `<span class="muted">also</span>${posChips(p.accomplished_positions)}` : ''}</span></div>
-        <p>${natHTML(p, true) || 'Unknown nation'} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${p.height_cm} cm` : ''}${mb ? '' : feetHTML(p)}</p></div>
+        <p>${natHTML(p, true) || 'Unknown nation'} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${height(p.height_cm)}` : ''}${mb ? '' : feetHTML(p)}</p></div>
       <div class="pp-kpis" data-pp="kpis"></div>
       <div class="pp-act">
         <button class="icon-btn star star-btn" data-star="${p.uid}" data-name="${esc(p.name)}" data-club="${p.club_uid ?? ''}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist ${esc(p.name)}" title="Shortlist (s)">★</button>
@@ -2450,7 +2487,7 @@ async function openPlayer(uid) {
   dr.innerHTML = `
     <div class="dr-head"><div class="dr-row">
       <div class="dr-id"><div class="dr-nm"><h2 id="drName"><span class="pname" data-profile="${p.uid}" role="link" tabindex="0" title="Full profile">${esc(p.name)}</span></h2><button type="button" class="icon-btn copy-btn" data-copy="${esc(p.name)}" aria-label="Copy name" title="Copy name"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button><span class="dr-pos">${posChips(p.natural_positions)}</span></div>
-        <p>${natHTML(p) || 'Unknown nation'} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${p.height_cm} cm` : ''}${mb ? '' : feetHTML(p)}</p>
+        <p>${natHTML(p) || 'Unknown nation'} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${height(p.height_cm)}` : ''}${mb ? '' : feetHTML(p)}</p>
         <button class="link" data-profile="${p.uid}" title="Full profile (Shift+click a player)">Full profile →</button></div>
       <button class="icon-btn star star-btn" data-star="${p.uid}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist" title="Shortlist (s)">★</button>
       <button class="icon-btn" data-close aria-label="Close player detail" title="Close (Esc)">×</button>
@@ -2530,18 +2567,18 @@ const HD_DOWN = [['attributes_injury_proneness', 'Injury proneness'], ['attribut
 const abil = (k, name) => { const v = D[k], on = v != null && v > 0;
   return `<label class="rg gate big${on ? ' on' : ''}" data-t="${on ? tierOf(v, 200) : ''}" style="--v:${on ? Math.min(v, 200) / 200 : 0}"><span>${name}</span><output>${on ? v : '–'}</output>
     <i class="hd-stars" aria-hidden="true"></i><input type="range" min="0" max="200" step="1" value="${on ? v : 0}" data-esab="${k}" aria-label="${name} minimum, scale 1 to 200" aria-valuetext="${on ? v : 'any'}"></label>`; };
-// Dual-thumb ranges: [low key, high key, scale min, scale max, unit]; a thumb at the end of the scale means "any".
-const DUAL = { age: ['age_min', 'age_max', 14, 45, ''], height: ['min.height_cm', 'max.height_cm', 150, 210, ' cm'] };
+// Dual-thumb ranges: [low key, high key, scale min, scale max, value text]; a thumb at the end of the scale means "any".
+const DUAL = { age: ['age_min', 'age_max', 14, 45, v => v], height: ['min.height_cm', 'max.height_cm', 150, 210, height] };
 const dget = k => { const [a, b] = k.split('.'); return b ? D[a][b] : D[a]; };
 const dset = (k, v) => { const [a, b] = k.split('.'); if (!b) D[a] = v; else if (v == null) delete D[a][b]; else D[a][b] = v; };
-const dualTxt = (lo, hi, u) => lo != null && hi != null ? `${lo}–${hi}${u}` : lo != null ? `${lo}${u}+` : hi != null ? `≤ ${hi}${u}` : 'Any';
+const dualTxt = (lo, hi, u) => lo != null && hi != null ? `${u(lo)}–${u(hi)}` : lo != null ? `${u(lo)}+` : hi != null ? `≤ ${u(hi)}` : 'Any';
 const dualPct = (id, v) => { const [, , mn, mx] = DUAL[id]; return (Math.min(mx, Math.max(mn, v)) - mn) / (mx - mn) * 100 + '%'; };
 function dual(id, name) { const [lk, hk, mn, mx, u] = DUAL[id], lo = dget(lk), hi = dget(hk);
   return `<div class="dual"><div class="dual-h"><span>${name}</span><output class="${lo != null || hi != null ? 'on' : ''}">${dualTxt(lo, hi, u)}</output></div>
     <div class="dual-t" style="--lo:${dualPct(id, lo ?? mn)};--hi:${dualPct(id, hi ?? mx)}">
       <input type="range" min="${mn}" max="${mx}" value="${lo ?? mn}" data-dlo="${id}" aria-label="${name} minimum" aria-valuetext="${lo ?? 'any'}" style="z-index:${(lo ?? mn) > (mn + mx) / 2 ? 3 : 1}">
       <input type="range" min="${mn}" max="${mx}" value="${hi ?? mx}" data-dhi="${id}" aria-label="${name} maximum" aria-valuetext="${hi ?? 'any'}" style="z-index:2"></div>
-    <div class="dual-s" aria-hidden="true"><span>${mn}${u}</span><span>${mx}${u}</span></div></div>`; }
+    <div class="dual-s" aria-hidden="true"><span>${u(mn)}</span><span>${u(mx)}</span></div></div>`; }
 // Position groups on a pitch attacking right; FB and W get a mirrored (mouse-only) twin on the other flank.
 const PZ = { GK: [[7, 50]], CB: [[21, 50]], FB: [[25, 14], [25, 86]], DM: [[37, 50]], CM: [[52, 50]], ML: [[55, 14]], MR: [[55, 86]], W: [[74, 14], [74, 86]], AM: [[68, 50]], ST: [[87, 50]] };
 const PZN = { GK: 'Goalkeeper', CB: 'Centre-back', FB: 'Full-back / wing-back', DM: 'Defensive midfielder', CM: 'Central midfielder', W: 'Winger (left or right, midfield or attack)', ML: 'Left midfielder only', MR: 'Right midfielder only', AM: 'Attacking midfielder', ST: 'Striker' };
@@ -2628,7 +2665,7 @@ function esSync() {
   const c = esCounts(), was = new Set(esCrit.map(([t]) => t));
   $$('#esRail [data-esgo]').forEach(b => { b.querySelector('b').textContent = c[b.dataset.esgo] || ''; });
   const pos = D.positions.map(p => [p, () => { D.positions = D.positions.filter(x => x !== p); }]);
-  esCrit = [...(D.age_min != null || D.age_max != null ? [[`Age ${dualTxt(D.age_min, D.age_max, '')}`, () => { D.age_min = D.age_max = null; }]] : []), ...pos,
+  esCrit = [...(D.age_min != null || D.age_max != null ? [[`Age ${dualTxt(D.age_min, D.age_max, v => v)}`, () => { D.age_min = D.age_max = null; }]] : []), ...pos,
     ...(D.value_max != null ? [[`Value ≤ ${money(D.value_max)}`, () => { D.value_max = null; }]] : []), ...critList(D)];
   $('#esStrip').innerHTML = esCrit.length ? `<span class="muted">${esCrit.length} active</span>` + esCrit.map(([t], i) => `<span class="crit-chip"${was.has(t) ? ' style="animation:none"' : ''}>${t}<button type="button" data-esrm="${i}" aria-label="Remove ${esc(t.replace(/<[^>]+>/g, ''))}">×</button></span>`).join('')
     : '<span class="muted">No criteria yet: every player in the save is in play. Start with a position on the pitch.</span>';
@@ -3060,7 +3097,10 @@ async function waitReady() {
   creep = 0;
   for (;;) {
     let d = {}; try { d = await (await api('/api/status')).json(); } catch {}
-    if (d.status !== 'loading') return location.reload();
+    if (d.status !== 'loading') {  // data ready: reload, but not under the Settings window (opened while loading)
+      if (!$('#settings').open) return location.reload();
+      return $('#settings').addEventListener('close', () => location.reload());
+    }
     const p = shownProgress(d.progress);
     if (p && $('#loadFill')) { $('#loadFill').style.width = p.pct + '%'; $('#loadStep').textContent = `${p.pct}% · ${p.step}`; }
     await sleep(700);
@@ -3078,32 +3118,59 @@ function shownProgress(p) {
 // The app's only call outside this computer: ask GitHub, once per launch, whether a newer release exists.
 async function checkUpdate() {
   try {
-    const { version } = await (await api('/api/status')).json();
-    if (!version || version === 'dev') return;
+    const { version, can_update } = await (await api('/api/status')).json();
+    if (!version || version === 'dev') return 'Version check is off in builds run from source.';
     const r = await fetch('https://api.github.com/repos/absalom12/fm26-scout/releases/latest');
-    if (!r.ok) return;
+    if (!r.ok) return 'GitHub did not answer, try again later.';
     const latest = ((await r.json()).tag_name || '').replace(/^v/, '');
     const n = v => v.split('.').map(x => parseInt(x, 10) || 0);
     const [a, b] = [n(latest), n(version)];
     const i = [0, 1, 2].find(k => a[k] !== b[k]);
-    if (i === undefined || a[i] < b[i]) return;
+    if (i === undefined || a[i] < b[i]) return 'You have the latest version.';
+    $('.update')?.remove();
     const el = document.createElement('a');
     el.className = 'update'; el.href = 'https://fm26-scout-site.bien-vu-server.workers.dev/'; el.target = '_blank'; el.rel = 'noopener';
     el.textContent = `FM26 Scout ${latest} is out (you have ${version}). Download it ↗`;
     document.body.append(el);
-  } catch {}
+    if (can_update) {  // macOS app: install in place, the download link stays as the fallback
+      el.textContent = `FM26 Scout ${latest} is out (you have ${version}). Install and restart`;
+      el.onclick = e => { e.preventDefault(); el.onclick = null; installUpdate(el); };
+    }
+    return `${latest} is out: see the button at the bottom left.`;
+  } catch { return 'No connection to GitHub.'; }
+}
+
+async function installUpdate(el) {
+  const fail = msg => { el.textContent = `Update failed (${msg}). Download it ↗`; };
+  try {
+    const r = await fetch('/api/update', { method: 'POST' });
+    if (!r.ok) return fail((await r.json()).detail);
+    for (;;) {
+      await new Promise(ok => setTimeout(ok, 400));
+      const u = (await (await fetch('/api/status')).json()).update;
+      if (u.state === 'error') return fail(u.error);
+      el.textContent = u.state === 'restarting' ? 'Restarting…' : `${u.state === 'installing' ? 'Installing' : 'Downloading'} update · ${u.pct} %`;
+    }
+  } catch { el.textContent = 'Restarting…'; }  // server gone: the app is relaunching
 }
 
 // ---------- Init & events ----------
-function initMoneySettings() {
-  $('#curSel').value = CUR; $('#perSel').value = PER;
-  const save = (k, v) => { try { localStorage.setItem(k, v); } catch {} location.reload(); };  // every label re-renders on reload
-  $('#curSel').onchange = e => save('fm26_cur', e.target.value);
-  $('#perSel').onchange = e => save('fm26_per', e.target.value);
+function initSettings() {
+  const d = $('#settings');
+  let changed = false;
+  const pressed = () => $$('[data-set]', d).forEach(b => b.setAttribute('aria-pressed', SET[b.dataset.set] === b.dataset.v));
+  pressed();
+  $$('[data-set]', d).forEach(b => b.onclick = () => { const { set: k, v } = b.dataset;
+    if (SET[k] === v) return; SET[k] = v; changed = true; pressed(); try { localStorage.setItem('fm26_' + k, v); } catch {} });
+  d.addEventListener('close', () => { if (changed) location.reload(); });
+  d.onclick = e => { if (e.target === d || e.target.closest('[data-set-close]')) d.close(); };
+  $('#setBtn').onclick = async () => { d.showModal(); $('#setUpd').textContent = '';
+    $('#setVer').textContent = (await (await fetch('/api/status')).json()).version; };
+  $('#setCheck').onclick = async () => { $('#setUpd').textContent = 'Checking…'; $('#setUpd').textContent = await checkUpdate(); };
   $$('[data-q="value_max"] option').forEach(o => { if (+o.value > 0) o.textContent = money(+o.value); });
   $$('.wage-lbl').forEach(l => l.textContent = 'Wage ' + PERIODS[PER][0]);
 }
-initMoneySettings();
+initSettings();
 async function init() {
   let r; try { r = await api('/api/meta', undefined, 8); } catch {}
   if (r && r.status === 409) { EMPTY = true; const d = await r.json().catch(() => ({})); return d.detail === 'loading' ? waitReady() : showWelcome(); }
@@ -3131,7 +3198,7 @@ async function init() {
   try { const n = +localStorage.getItem('fm26_page_size'); if (PAGE_SIZES.includes(n)) PAGE_SIZE = n; } catch {}
   grid = agGrid.createGrid($('#grid'), {
     columnDefs: all.map(colDef), defaultColDef: { sortable: true, resizable: true, floatingFilter: true, suppressHeaderMenuButton: true },
-    rowModelType: 'infinite', cacheBlockSize: 100, maxBlocksInCache: 60, rowHeight: 40,
+    rowModelType: 'infinite', cacheBlockSize: 100, maxBlocksInCache: 60, rowHeight: SET.density === 'compact' ? 30 : 40,
     pagination: true, paginationPageSize: PAGE_SIZE, paginationPageSizeSelector: PAGE_SIZES,
     onPaginationChanged: e => { if (e.newPageSize) try { localStorage.setItem('fm26_page_size', grid.paginationGetPageSize()); } catch {} }, headerHeight: 36, floatingFiltersHeight: 34,
     getRowId: p => String(p.data.uid),
@@ -3367,6 +3434,6 @@ ping(); setInterval(ping, 30000);  // the server quits after 10 min without a pi
 setFair(FAIR);
 addEventListener('pagehide', () => navigator.sendBeacon('/api/bye'));
 init();
-checkUpdate();
+if (SET.updates === 'on') checkUpdate();
 </script>
 </body></html>

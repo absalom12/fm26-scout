@@ -12,6 +12,8 @@ PyInstaller.__main__.run([
     "--collect-all", "fmsave",
     "--collect-submodules", "uvicorn",
     "--hidden-import", "multipart",
+    # Optional extras of duckdb/fmsave the app never imports: fewer files for macOS to scan on first launch.
+    "--exclude-module", "pandas", "--exclude-module", "PIL",
     *sign,
     *(["--add-data", f"VERSION{sep}."] if os.path.exists("VERSION") else []),  # written by CI from the tag
 ])

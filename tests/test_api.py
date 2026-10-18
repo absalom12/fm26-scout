@@ -32,7 +32,8 @@ def test_data_routes_409_loading(scout, client):
 
 
 def test_status_identifies_app(client):
-    assert client.get("/api/status").json() == {"app": "fm26-scout", "status": "empty", "version": "dev", "progress": None}
+    assert client.get("/api/status").json() == {"app": "fm26-scout", "status": "empty", "version": "dev", "progress": None,
+                                                 "can_update": False, "update": {"state": None, "pct": 0, "error": None}}
 
 
 def test_status_reports_progress_while_busy(scout, client):
@@ -204,3 +205,9 @@ def test_formation_falls_back_when_match_data_is_thin(scout):
     full = [M(position=M(raw=raw), minutes=90, date=datetime.date(2040, 4, 1))
             for raw in (1, 4, 16, 16, 8, 1024, 1024, 1024, 2048, 4096, 16384)]
     assert scout.infer_formation(full) == ["GK", "DR", "DC", "DC", "DL", "MC", "MC", "MC", "AMR", "AML", "ST"]
+
+
+def test_bad_formation_in_club_json_is_replaced(scout, tmp_path):
+    (tmp_path / "club.json").write_text(json.dumps({"club_uid": 1, "club_name": "Hoffenheim", "formation": ["GK", "DM"]}))
+    assert scout.read_club(tmp_path / "club.json")["formation"] == scout.infer_formation([])
+    assert scout.read_club(tmp_path / "missing.json") is None
