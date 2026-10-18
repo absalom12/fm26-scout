@@ -11,3 +11,7 @@ dist/
 *.spec
 .superpowers/
 VERSION
+
+# local only
+brand/
+.claude/
