@@ -187,13 +187,15 @@ def infer_formation(matches, last=5):
         if m.position is not None and m.position.raw in MATCH_POS and m.minutes:
             by_date[m.date][MATCH_POS[m.position.raw]] += m.minutes
     dates = sorted(by_date)[-last:]
-    if not dates:
-        return ["GK", "DR", "DC", "DC", "DL", "DM", "DM", "AMR", "AMC", "AML", "ST"]
     share = collections.Counter()
     for d in dates:
         share.update({p: v / 90 / len(dates) for p, v in by_date[d].items()})
-    # Largest-remainder rounding to exactly 11 slots, keeper fixed at one.
     share.pop("GK", None)
+    # Too few minutes to rebuild ten outfield slots (no matches yet, or fmsave reads match rows for only a few
+    # players, as in a 2040 Hoffenheim save): the default shape, which the user can change in My Club.
+    if sum(share.values()) < 9:
+        return ["GK", "DR", "DC", "DC", "DL", "DM", "DM", "AMR", "AMC", "AML", "ST"]
+    # Largest-remainder rounding to exactly 11 slots, keeper fixed at one.
     slots = {p: int(v) for p, v in share.items()}
     for p, _ in sorted(share.items(), key=lambda kv: kv[1] - int(kv[1]), reverse=True)[:max(10 - sum(slots.values()), 0)]:
         slots[p] += 1

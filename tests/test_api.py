@@ -193,3 +193,14 @@ def test_club_pick_when_save_names_no_club(scout, client, tmp_path, monkeypatch)
 
 def test_index_is_never_served_stale(client):
     assert client.get("/").headers["cache-control"] == "no-cache"
+
+
+def test_formation_falls_back_when_match_data_is_thin(scout):
+    # Late saves (Hoffenheim, 2040): fmsave reads match rows for only 2 of 75 players, a few DM minutes a match.
+    from types import SimpleNamespace as M
+    import datetime
+    rows = [M(position=M(raw=128), minutes=10, date=datetime.date(2040, 4, d)) for d in range(1, 6)]
+    assert scout.infer_formation(rows) == scout.infer_formation([])
+    full = [M(position=M(raw=raw), minutes=90, date=datetime.date(2040, 4, 1))
+            for raw in (1, 4, 16, 16, 8, 1024, 1024, 1024, 2048, 4096, 16384)]
+    assert scout.infer_formation(full) == ["GK", "DR", "DC", "DC", "DL", "MC", "MC", "MC", "AMR", "AML", "ST"]
