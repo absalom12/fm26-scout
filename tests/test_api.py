@@ -32,7 +32,14 @@ def test_data_routes_409_loading(scout, client):
 
 
 def test_status_identifies_app(client):
-    assert client.get("/api/status").json() == {"app": "fm26-scout", "status": "empty", "version": "dev"}
+    assert client.get("/api/status").json() == {"app": "fm26-scout", "status": "empty", "version": "dev", "progress": None}
+
+
+def test_status_reports_progress_while_busy(scout, client):
+    scout._start(85, 100)
+    scout._step(.5, 1, "Scoring players")
+    with scout._ingest_lock:
+        assert client.get("/api/status").json()["progress"] == {"pct": 92, "next": 100, "step": "Scoring players"}
 
 
 def test_saves_lists_and_reports_missing_folder(scout, client, tmp_path, monkeypatch):
@@ -182,3 +189,7 @@ def test_club_pick_when_save_names_no_club(scout, client, tmp_path, monkeypatch)
     r = client.post("/api/club/pick", json={"club_uid": 20}).json()
     assert r["club_name"] == "Chelsea U21" and len(r["formation"]) == 11 and scout.CLUB == r
     assert json.loads((tmp_path / "data" / "club.json").read_text()) == r
+
+
+def test_index_is_never_served_stale(client):
+    assert client.get("/").headers["cache-control"] == "no-cache"

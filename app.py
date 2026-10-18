@@ -18,6 +18,15 @@ except OSError:
     VERSION = "dev"
 
 STATUS = "empty"  # empty | loading | ready
+# Progress of the save being extracted or loaded, polled through /api/status. Step weights come from timing a
+# Championship save (players 20 s, season stats 7 s, leagues and clubs 17 s, club and matches 4 s, DuckDB 8 s).
+PROGRESS = {"pct": 0, "next": 0, "step": ""}
+_SPAN = (0, 100)  # the part of the bar the running stage fills: extract then load share it during an ingest
+
+
+def _step(frac, next_frac, step):
+    lo, hi = _SPAN
+    PROGRESS.update(pct=round(lo + frac * (hi - lo)), next=round(lo + next_frac * (hi - lo)), step=step)
 _ingest_lock = threading.Lock()  # one load at a time (startup load or a save load)
 LAST_PING, BYE_AT = time.monotonic(), None
 OPEN_PATHS = {"/", "/api/status", "/api/saves", "/api/load-save", "/api/upload", "/api/ping", "/api/bye"}
@@ -209,13 +218,16 @@ def club_leagues(tables):
 def extract(save_path, out_dir, players=True):
     """Write all_world_players.csv (optional), club_gender.csv, club_league.csv and season_stats.csv from a save."""
     E = fmsave.export
+    _step(0, .42, "Reading players")
     with fmsave.open(save_path) as s:
         if players:
             E.write_csv(E.flat_rows(s.players(), fmsave.Player), E.column_names(fmsave.Player),
                         os.path.join(out_dir, "all_world_players.csv"))
+        _step(.42, .57, "Reading season stats")
         S = fmsave.PlayerSeasonStats
         overall = (r for r in s.player_season_stats() if r.kind == fmsave.SeasonStatsKind.OVERALL)
         E.write_csv(E.flat_rows(overall, S), E.column_names(S), os.path.join(out_dir, "season_stats.csv"))
+        _step(.57, .92, "Reading leagues and clubs")
         tables = list(s.league_tables())
         rules = {r.competition_id: r for r in s.competition_rules()}
         # competition_id is NOT unique to a league (one id covers the Australian league and a Croatian one, regional
@@ -229,6 +241,7 @@ def extract(save_path, out_dir, players=True):
         groups = [[r.team_id for r in t.rows] for t in tables]
         groups += [[f.home_team_id, f.away_team_id] for f in s.fixtures()]
         lab = club_genders(list(s.clubs()), groups)
+        _step(.92, 1, "Finding your club")
         club = next(iter(s.managed_clubs()), None)
         if club:
             squad = {p.uid for p in s.players() if p.club_uid == club.club_uid}
@@ -475,6 +488,7 @@ def load(d=None):
     d = str(d or data_dir())
     roles, best, name = _role_sql()
     j = lambda f: os.path.join(d, f)
+    _step(0, .5, "Building the database")
     con().execute(f"CREATE OR REPLACE TEMP TABLE raw AS SELECT * FROM read_csv_auto('{j('all_world_players.csv')}', sample_size=-1)")
     has_g, has_s = os.path.exists(j("club_gender.csv")), os.path.exists(j("season_stats.csv"))
     con().execute("CREATE OR REPLACE TEMP TABLE cg AS " + (f"SELECT * FROM read_csv_auto('{j('club_gender.csv')}')" if has_g
@@ -511,6 +525,7 @@ def load(d=None):
              LEFT JOIN (SELECT club_uid AS parent_uid, max(club_reputation) AS parent_rep FROM raw GROUP BY 1) pc ON pc.parent_uid = b.loan_parent_club_uid
              LEFT JOIN nat n1 ON n1.id = b.nation_id LEFT JOIN nat n3 ON n3.id = b.club_nation_id""")
     con().execute("DROP TABLE raw; DROP TABLE cg; DROP TABLE st; DROP TABLE nat; DROP TABLE cl")
+    _step(.5, 1, "Scoring players")
     if has_s:
         add_stat_score()
     add_deals()
@@ -561,6 +576,12 @@ if __name__ == "__main__":  # python app.py <save.fm>: write the data files into
     sys.exit()
 
 
+def _start(lo, hi):
+    global _SPAN
+    _SPAN = (lo, hi)
+    _step(0, 0, "")
+
+
 def _load_data_dir():
     """Startup: load the data dir in the background if a previous save was extracted there."""
     global STATUS
@@ -569,6 +590,7 @@ def _load_data_dir():
     with _ingest_lock:
         STATUS = "loading"
         try:
+            _start(0, 100)
             load()
             STATUS = "ready"
         except Exception:
@@ -853,6 +875,7 @@ def ingest(src):
         dd = data_dir()
         tmp = tempfile.mkdtemp(dir=dd)
         try:
+            _start(0, 85)
             extract(str(src), tmp)
             replace_data(tmp, dd)
         except fmsave.FmsaveError as e:
@@ -861,6 +884,7 @@ def ingest(src):
             shutil.rmtree(tmp, ignore_errors=True)
         STATUS = "loading"
         try:
+            _start(85, 100)
             load(dd)
         except Exception:
             STATUS = "empty"
@@ -897,7 +921,8 @@ def load_save(q: SaveReq):
 
 @app.get("/api/status")
 def status():
-    return {"app": "fm26-scout", "status": STATUS, "version": VERSION}
+    busy = _ingest_lock.locked()
+    return {"app": "fm26-scout", "status": STATUS, "version": VERSION, "progress": dict(PROGRESS) if busy else None}
 
 
 @app.get("/api/saves")
@@ -1220,7 +1245,8 @@ def offer(q: OfferQuery):
 
 @app.get("/")
 def index():
-    return FileResponse(os.path.join(RES, "static", "index.html"))
+    # no-cache: the app window keeps a disk cache, which served the previous version's page after an update
+    return FileResponse(os.path.join(RES, "static", "index.html"), headers={"Cache-Control": "no-cache"})
 
 
 # Third-party files shipped with the app (AG Grid, fonts) so it runs offline and contacts no CDN.

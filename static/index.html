@@ -59,6 +59,9 @@ kbd { font: 600 10px var(--f-mono); color: var(--muted); border: 1px solid var(-
 .seg button[aria-pressed="true"] { background: var(--raise); color: var(--text); box-shadow: inset 0 0 0 1px var(--line2); }
 .progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; overflow: hidden; display: none; }
 .progress.on { display: block; }
+.progress.pct::after { width: var(--p, 0%); animation: none; background: var(--accent); transition: width .6s ease; }
+.load-bar { display: block; width: min(360px, 80vw); height: 6px; border-radius: 3px; background: var(--line2); overflow: hidden; margin: 14px auto 6px; }
+.load-bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .6s ease; }
 .progress::after { content: ""; position: absolute; inset: 0; width: 30%; background: linear-gradient(90deg, transparent, var(--accent), transparent); animation: slide 1.2s linear infinite; }
 @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(400%); } }
 .spin { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: rot .8s linear infinite; }
@@ -853,6 +856,8 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .ac-wrap input { width: 100%; height: 40px; font-family: var(--f-body); font-size: 15px; }
 .ac-list { position: absolute; left: 0; right: 0; top: calc(100% + 4px); background: var(--raise); border: 1px solid var(--line2); border-radius: var(--r); box-shadow: var(--shadow); z-index: 10; padding: 4px; }
 .ac-list:empty { display: none; }
+.money-set { display: flex; gap: 4px; } .money-set .in { height: 32px; padding: 0 6px; }
+.copy-btn { vertical-align: middle; margin-left: 6px; opacity: .7; } .copy-btn:hover { opacity: 1; }
 .ac-item { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; width: 100%; text-align: left; padding: 7px 10px; border-radius: 7px; }
 .ac-item.on, .ac-item:hover { background: var(--accent-soft); }
 .ac-item span { font-size: 12px; color: var(--muted); }
@@ -965,6 +970,7 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
   <div id="gender" class="seg" role="group" aria-label="Gender">
     <button data-g="" aria-pressed="true">All</button><button data-g="Men" aria-pressed="false">Men</button><button data-g="Women" aria-pressed="false">Women</button>
   </div>
+  <label class="money-set" title="Currency and wage period. € and $ use approximate rates."><select id="curSel" class="in" aria-label="Currency"><option value="GBP">£</option><option value="EUR">€</option><option value="USD">$</option></select><select id="perSel" class="in" aria-label="Wage period"><option value="w">/w</option><option value="m">/mo</option><option value="y">/yr</option></select></label>
   <button id="loadBtn" class="btn primary"><span>Load save</span></button>
   <input id="file" type="file" accept=".fm" hidden>
   <div id="progress" class="progress" aria-hidden="true"></div>
@@ -1149,17 +1155,27 @@ const mq = (sep = '?') => sep + 'mode=' + MODE;
 const P90_EXTRA = [['s_shots_p90', 'Shots / 90'], ['s_xa_p90', 'xA / 90'], ['s_dribbles_p90', 'Dribbles / 90'], ['s_prog_passes_p90', 'Prog. passes / 90'],
   ['s_ccc_p90', 'Big chances created / 90'], ['s_crosses_p90', 'Crosses / 90'], ['s_tackles_p90', 'Tackles / 90'], ['s_interceptions_p90', 'Interceptions / 90'],
   ['s_headers_won_p90', 'Headers won / 90'], ['s_clearances_p90', 'Clearances / 90'], ['s_possession_won_p90', 'Possession won / 90'], ['s_pressures_p90', 'Pressures / 90']];
+// Display money: the save stores one base unit (~£; fmsave measured the game showing it ×1.157 in €).
+// Other currencies use approximate rates, and wages can show per week, month or year. Inputs convert back.
+const CURRENCIES = { GBP: ['£', 1], EUR: ['€', 1.157], USD: ['$', 1.3] };
+const PERIODS = { w: ['/w', 1], m: ['/m', 52 / 12], y: ['/y', 52] };
+let CUR = 'GBP', PER = 'w';
+try { CUR = CURRENCIES[localStorage.getItem('fm26_cur')] ? localStorage.getItem('fm26_cur') : 'GBP'; PER = PERIODS[localStorage.getItem('fm26_per')] ? localStorage.getItem('fm26_per') : 'w'; } catch {}
+const curSym = () => CURRENCIES[CUR][0], wageK = () => CURRENCIES[CUR][1] * PERIODS[PER][1];
+const money = v => { if (v == null) return '–'; v *= CURRENCIES[CUR][1]; return curSym() + (v >= 1e6 ? `${(v / 1e6).toFixed(v >= 1e7 ? 0 : 1)}M` : v >= 1e3 ? `${Math.round(v / 1e3)}k` : Math.round(v)); };
+const wage = v => { if (v == null) return '–'; v *= wageK(); return curSym() + (v >= 1e6 ? `${+(v / 1e6).toFixed(1)}M` : v >= 1e5 ? `${Math.round(v / 1e3)}k` : v >= 1e3 ? `${+(v / 1e3).toFixed(1)}k` : Math.round(v)) + PERIODS[PER][0]; };
+const feeIn = v => v == null || Number.isNaN(v) ? v : Math.round(v / CURRENCIES[CUR][1]);  // typed amount -> base unit
+const wageIn = v => v == null || Number.isNaN(v) ? v : Math.round(v / wageK());
+const bare = s => s.replace(/^[£€$]|\/[wmy]$/g, '');
 const LABELS = { ability_current: 'CA', ability_potential: 'PA', pa_gap: 'Gap', natural_positions: 'Pos', transfer_value: 'Value',
   months_left: 'Months left', best_role: 'Best role', best_role_score: 'Best role', height_cm: 'Height', nationality: 'Nation',
   club_name: 'Club', contract_squad_status: 'Squad status', contract_end: 'Contract end', deal_ability: 'Ability deal',
   deal_attributes: 'Attr. deal', deal_form: 'Form deal', deal_stats: 'Perf. deal', deal_score: 'Blend deal',
-  contract_wage: 'Wage/w', transfer_value: 'Fee', fair_fee: 'Fair fee', fair_wage: 'Fair wage',
+  contract_wage: 'Wage' + PERIODS[PER][0], transfer_value: 'Fee', fair_fee: 'Fair fee', fair_wage: 'Fair wage',
   fair_fee_ability: 'Fair fee', fair_fee_attributes: 'Fair fee', fair_fee_form: 'Fair fee', fair_fee_stats: 'Fair fee',
   fair_wage_ability: 'Fair wage', fair_wage_attributes: 'Fair wage', fair_wage_form: 'Fair wage', fair_wage_stats: 'Fair wage', stat_score: 'Performance', key_attrs: 'Key attributes', key_stats: 'Key stats (per 90)', ...Object.fromEntries(SEASON), ...Object.fromEntries(P90_EXTRA), owner_club_reputation: 'Owner club rep.', attr_avg: 'Avg attribute' };
 const label = c => LABELS[c] || c.replace(/^(attributes|personality|role|positions)_/, '').replaceAll('_', ' ').replace(/\b\w/g, m => m.toUpperCase());
 const short = c => c.startsWith('attributes_') ? ABBR[c.slice(11)] || label(c) : label(c);
-const money = v => v == null ? '–' : v >= 1e6 ? `£${(v / 1e6).toFixed(v >= 1e7 ? 0 : 1)}M` : v >= 1e3 ? `£${Math.round(v / 1e3)}k` : `£${Math.round(v)}`;
-const wage = v => v == null ? '–' : (v >= 1e5 ? `£${Math.round(v / 1e3)}k` : v >= 1e3 ? `£${+(v / 1e3).toFixed(1)}k` : `£${Math.round(v)}`) + '/w';
 const tier = (v, bad) => { if (v == null) return ''; const t = v <= 5 ? 1 : v <= 10 ? 2 : v <= 15 ? 3 : 4; return 'a' + (bad ? 5 - t : t); };
 const C = { good: '#3fd98a', ok: '#c3d651', warn: '#f2b84b', orange: '#f08a4b', bad: '#ff6f6f', muted: '#8796a5', accent: '#4aa3ff', gold: '#f5c542' };
 const abilityColor = v => v >= 160 ? C.good : v >= 130 ? C.ok : v >= 100 ? C.warn : v >= 70 ? C.orange : C.bad;
@@ -1275,6 +1291,13 @@ function toggleStar(uid, name, clubUid) {
   return on;
 }
 let toastT;
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); }
+  catch {  // no clipboard API (old webview): the textarea route still works
+    const ta = Object.assign(document.createElement('textarea'), { value: text }); document.body.append(ta); ta.select(); document.execCommand('copy'); ta.remove();
+  }
+  toast(`Copied “${text}”`, 'good', 1600);
+}
 function toast(msg, kind = '', ms = 2600) {
   const t = $('#toast'); t.textContent = msg; t.className = 'toast on ' + kind;
   clearTimeout(toastT); if (ms) toastT = setTimeout(() => t.classList.remove('on'), ms);
@@ -2345,7 +2368,7 @@ async function renderProfile() {
   const x = ppx = { p, grp, alive, bench: null, sim: null, abil: null, all: null };
   box.innerHTML = `<article class="pp-in" aria-labelledby="ppName">
     <header class="pp-head">
-      <div class="pp-id"><div class="pp-nm"><h1 id="ppName" tabindex="-1">${esc(p.name)}</h1>
+      <div class="pp-id"><div class="pp-nm"><h1 id="ppName" tabindex="-1">${esc(p.name)}</h1><button type="button" class="icon-btn copy-btn" data-copy="${esc(p.name)}" aria-label="Copy name" title="Copy name"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
           <span class="pp-pos">${posChips(p.natural_positions)}${p.accomplished_positions ? `<span class="muted">also</span>${posChips(p.accomplished_positions)}` : ''}</span></div>
         <p>${natHTML(p, true) || 'Unknown nation'} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${p.height_cm} cm` : ''}${mb ? '' : feetHTML(p)}</p></div>
       <div class="pp-kpis" data-pp="kpis"></div>
@@ -2426,7 +2449,7 @@ async function openPlayer(uid) {
     p.contract_squad_status && `<span class="tag">${esc(p.contract_squad_status.replaceAll('_', ' '))}</span>`].filter(Boolean).join('');
   dr.innerHTML = `
     <div class="dr-head"><div class="dr-row">
-      <div class="dr-id"><div class="dr-nm"><h2 id="drName"><span class="pname" data-profile="${p.uid}" role="link" tabindex="0" title="Full profile">${esc(p.name)}</span></h2><span class="dr-pos">${posChips(p.natural_positions)}</span></div>
+      <div class="dr-id"><div class="dr-nm"><h2 id="drName"><span class="pname" data-profile="${p.uid}" role="link" tabindex="0" title="Full profile">${esc(p.name)}</span></h2><button type="button" class="icon-btn copy-btn" data-copy="${esc(p.name)}" aria-label="Copy name" title="Copy name"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button><span class="dr-pos">${posChips(p.natural_positions)}</span></div>
         <p>${natHTML(p) || 'Unknown nation'} · ${esc(p.club_name || 'Free agent')} · ${p.age} yrs${p.height_cm ? ` · ${p.height_cm} cm` : ''}${mb ? '' : feetHTML(p)}</p>
         <button class="link" data-profile="${p.uid}" title="Full profile (Shift+click a player)">Full profile →</button></div>
       <button class="icon-btn star star-btn" data-star="${p.uid}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist" title="Shortlist (s)">★</button>
@@ -2641,9 +2664,9 @@ const esNum = v => { if (v === '' || v == null) return null; const m = parseMone
 
 // ---------- My Club ----------
 let recoT, recoSeq = 0;
-const parseMoney = s => { const m = String(s).trim().replace(/[£,\s]/g, '').match(/^(\d+(?:\.\d+)?)([kKmM]?)$/); if (!m) return String(s).trim() === '' ? null : NaN; return Math.round(+m[1] * ({ k: 1e3, m: 1e6 }[m[2].toLowerCase()] || 1)); };
+const parseMoney = s => { const m = String(s).trim().replace(/[£€$,\s]/g, '').match(/^(\d+(?:\.\d+)?)([kKmM]?)$/); if (!m) return String(s).trim() === '' ? null : NaN; return Math.round(+m[1] * ({ k: 1e3, m: 1e6 }[m[2].toLowerCase()] || 1)); };
 function clubBody() {
-  const b = parseMoney($('#cBudget')?.value ?? ''), w = parseMoney($('#cWage')?.value ?? ''), a = $('#cAge')?.value;
+  const b = feeIn(parseMoney($('#cBudget')?.value ?? '')), w = wageIn(parseMoney($('#cWage')?.value ?? '')), a = $('#cAge')?.value;
   return { budget: Number.isNaN(b) ? null : b, wage_max: Number.isNaN(w) ? null : w, age_max: a ? Number(a) : null, gender: gender(), formation, mode: MODE, slot_index: slotSel };
 }
 async function loadClub(force) {
@@ -2823,7 +2846,7 @@ function renderOffers() {
       <div id="ofPlayer"></div>
       <div class="of-inputs">
         <label class="fld">Your fee <input id="ofFee" class="in" placeholder="e.g. 2.5M" inputmode="decimal"></label>
-        <label class="fld">Wage /w <input id="ofWage" class="in" placeholder="current" inputmode="decimal"></label>
+        <label class="fld"><span class="wage-lbl">Wage /w</span> <input id="ofWage" class="in" placeholder="current" inputmode="decimal"></label>
       </div>
       <p class="note" id="ofNote"></p>
     </section>
@@ -2847,8 +2870,8 @@ function pickOfferPlayer(p) {
   if (!$('#ofSearch')) renderOffers();
   $('#ofList').innerHTML = ''; $('#ofSearch').value = ''; $('#ofSearch').setAttribute('aria-expanded', 'false');
   const pre = p.free_agent ? 0 : p.transfer_value ?? (FAIR ? p.fair_fee : null);
-  $('#ofFee').value = pre != null ? (pre === 0 ? '0' : money(pre).replace('£', '')) : '';
-  $('#ofWage').value = ''; $('#ofWage').placeholder = p.contract_wage != null ? wage(p.contract_wage).replace(/^£|\/w$/g, '') + ' (current)' : 'current';
+  $('#ofFee').value = pre != null ? (pre === 0 ? '0' : bare(money(pre))) : '';
+  $('#ofWage').value = ''; $('#ofWage').placeholder = p.contract_wage != null ? bare(wage(p.contract_wage)) + ' (current)' : 'current';
   renderOfPlayer(); evalOffer();
 }
 let ofT, ofSeq = 0;
@@ -2856,7 +2879,7 @@ function evalOffer() {
   clearTimeout(ofT);
   ofT = setTimeout(async () => {
     const box = $('#ofResult'); if (!box || !of.p) return;
-    const fee = parseMoney($('#ofFee').value), w = parseMoney($('#ofWage').value);
+    const fee = feeIn(parseMoney($('#ofFee').value)), w = wageIn(parseMoney($('#ofWage').value));
     $('#ofFee').setAttribute('aria-invalid', fee == null || Number.isNaN(fee)); $('#ofWage').setAttribute('aria-invalid', Number.isNaN(w));
     if (fee == null || Number.isNaN(fee) || Number.isNaN(w)) { box.innerHTML = emptyState('Enter a fee', 'Type an amount like 2.5M or 400k.'); return; }
     if (!box.querySelector('.verdict')) box.innerHTML = '<span class="sk" style="height:200px;width:100%"></span>';
@@ -2993,8 +3016,13 @@ async function runLoad(doFetch) {
   uploading = true;
   const btn = $('#loadBtn'), t0 = Date.now();
   btn.disabled = true; $('#progress').classList.add('on');
-  const tick = () => { btn.innerHTML = `<span class="spin" aria-hidden="true"></span><span>Extracting… ${Math.round((Date.now() - t0) / 1000)}s</span>`; };
-  tick(); const iv = setInterval(tick, 1000);
+  const bar = $('#progress'); bar.classList.add('pct'); creep = 0;
+  const tick = async () => {
+    const p = shownProgress(await statusProgress());
+    btn.innerHTML = `<span class="spin" aria-hidden="true"></span><span>${p ? `${p.pct}% · ${esc(p.step)}` : `Extracting… ${Math.round((Date.now() - t0) / 1000)}s`}</span>`;
+    if (p) bar.style.setProperty('--p', p.pct + '%');
+  };
+  tick(); const iv = setInterval(tick, 700);
   toast('Extracting players from your save. This usually takes 40 to 60 seconds.', '', 6000);
   try {
     const r = await doFetch();
@@ -3006,7 +3034,7 @@ async function runLoad(doFetch) {
     refresh(); renderSummary();
     if (CLUB) { CLUB = null; if (st.page === 'club') loadClub(); }
   } catch (e) { toast('Upload failed: ' + e.message, 'bad', 8000); }
-  finally { clearInterval(iv); uploading = false; btn.disabled = false; btn.innerHTML = '<span>Load save</span>'; $('#progress').classList.remove('on'); $('#file').value = ''; }
+  finally { clearInterval(iv); uploading = false; btn.disabled = false; btn.innerHTML = '<span>Load save</span>'; $('#progress').classList.remove('on', 'pct'); $('#file').value = ''; }
 }
 function upload(f) {
   if (!f) return;
@@ -3028,9 +3056,23 @@ async function showWelcome() {
   box.onclick = e => { const b = e.target.closest('[data-save]'); if (b) loadNamed(b.dataset.save); };
 }
 async function waitReady() {
-  $('#grid').innerHTML = emptyState('Loading your data…', 'This takes a few seconds.');
-  while ((await (await api('/api/status')).json()).status === 'loading') await sleep(1000);
-  location.reload();
+  $('#grid').innerHTML = emptyState('Loading your data…', '<span id="loadStep">Starting…</span><span class="load-bar"><i id="loadFill"></i></span>');
+  creep = 0;
+  for (;;) {
+    let d = {}; try { d = await (await api('/api/status')).json(); } catch {}
+    if (d.status !== 'loading') return location.reload();
+    const p = shownProgress(d.progress);
+    if (p && $('#loadFill')) { $('#loadFill').style.width = p.pct + '%'; $('#loadStep').textContent = `${p.pct}% · ${p.step}`; }
+    await sleep(700);
+  }
+}
+// The server reports the current step's start and end; the bar creeps toward the end so a long step still moves.
+let creep = 0;
+async function statusProgress() { try { return (await (await fetch('/api/status')).json()).progress; } catch { return null; } }
+function shownProgress(p) {
+  if (!p || !p.step) return null;
+  creep = Math.max(creep, p.pct); creep += (Math.max(p.next - 1, creep) - creep) * .05;
+  return { pct: Math.min(99, Math.floor(creep)), step: p.step };
 }
 
 // The app's only call outside this computer: ask GitHub, once per launch, whether a newer release exists.
@@ -3053,6 +3095,15 @@ async function checkUpdate() {
 }
 
 // ---------- Init & events ----------
+function initMoneySettings() {
+  $('#curSel').value = CUR; $('#perSel').value = PER;
+  const save = (k, v) => { try { localStorage.setItem(k, v); } catch {} location.reload(); };  // every label re-renders on reload
+  $('#curSel').onchange = e => save('fm26_cur', e.target.value);
+  $('#perSel').onchange = e => save('fm26_per', e.target.value);
+  $$('[data-q="value_max"] option').forEach(o => { if (+o.value > 0) o.textContent = money(+o.value); });
+  $$('.wage-lbl').forEach(l => l.textContent = 'Wage ' + PERIODS[PER][0]);
+}
+initMoneySettings();
 async function init() {
   let r; try { r = await api('/api/meta', undefined, 8); } catch {}
   if (r && r.status === 409) { EMPTY = true; const d = await r.json().catch(() => ({})); return d.detail === 'loading' ? waitReady() : showWelcome(); }
@@ -3170,8 +3221,8 @@ document.addEventListener('click', e => {
   else if (d.similar) { const p = shown(+d.similar); if (p) findSimilar(p); }
   else if (d.profile) openProfile(+d.profile);
   else if (d.ofi != null) pickOfferPlayer(of.list[+d.ofi]);
-  else if (d.offee) { $('#ofFee').value = money(+d.offee).replace('£', ''); evalOffer(); }
-  else if (d.ofwage) { $('#ofWage').value = wage(+d.ofwage).replace(/^£|\/w$/g, ''); evalOffer(); }
+  else if (d.offee) { $('#ofFee').value = bare(money(+d.offee)); evalOffer(); }
+  else if (d.ofwage) { $('#ofWage').value = bare(wage(+d.ofwage)); evalOffer(); }
   else if (d.player) e.shiftKey ? openProfile(+d.player) : openPlayer(+d.player);
   else if (d.slot != null) selectSlot(+d.slot);
   else if (d.clearSlot != null) selectSlot(null);
@@ -3179,6 +3230,7 @@ document.addEventListener('click', e => {
   else if (d.setpos) { if (formation[slotSel] === d.setpos) return; formation[slotSel] = d.setpos; renderClub(); refetchClub(); }
   else if (d.reco) { recoTab = d.reco; $$('[data-reco]').forEach(b => b.setAttribute('aria-pressed', b === t)); renderScope(); loadRecos(); }
   else if (d.pickClub) pickClub(+d.pickClub);
+  else if (d.copy != null) copyText(d.copy);
   else if (t.id === 'clubRetry') { CLUB = null; loadClub(true); }
 });
 // Middle-click on a player (grid row, My Club, Offers, similar list) opens his full profile page.
