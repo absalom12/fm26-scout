@@ -45,6 +45,13 @@ def pick_port(start=PORT) -> int:
     raise RuntimeError("no free port")
 
 
+def log_to_file():
+    """A windowed build has no console (sys.stderr is None on Windows): keep what it prints in launcher.log, next to
+    the data, so a window that falls back to the browser can be explained."""
+    if sys.stderr is None or getattr(sys, "frozen", False):
+        sys.stdout = sys.stderr = open(data_dir() / "launcher.log", "w", encoding="utf-8", buffering=1)
+
+
 def native_window(url, ready) -> bool:
     """Show the app in its own window (WKWebView on macOS, WebView2 on Windows) until it is closed: the splash
     first, the app once ready() says the server answers. False when no native window can be shown here: the caller
@@ -56,7 +63,10 @@ def native_window(url, ready) -> bool:
         w = webview.create_window("FM26 Scout", html=SPLASH, width=1440, height=900, min_size=(1000, 680),
                                   background_color="#0b0f13")
         # Not private: shortlist and saved searches live in localStorage, kept next to the data.
-        webview.start(lambda: w.load_url(url) if ready() else w.load_html(FAILED),
+        def shown():
+            print("native window", flush=True)  # the smoke test waits for this line
+            w.load_url(url) if ready() else w.load_html(FAILED)
+        webview.start(shown,
                       gui="edgechromium" if sys.platform == "win32" else None, private_mode=False,
                       storage_path=str(data_dir() / "webview"))
         return True
@@ -66,6 +76,7 @@ def native_window(url, ready) -> bool:
 
 
 def main():
+    log_to_file()
     if is_scout(PORT):  # already running: just show it
         if not native_window(f"http://127.0.0.1:{PORT}", lambda: True):
             webbrowser.open(f"http://127.0.0.1:{PORT}")

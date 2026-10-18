@@ -908,11 +908,14 @@ dialog.es.set { width: min(660px, calc(100vw - 32px)); height: auto; max-height:
 .lens-tbl td { padding: 6px 0; border-top: 1px solid var(--line); } .lens-tbl td.mono, .lens-tbl th.r { text-align: right; }
 .notes { margin: 6px 0 0; padding-left: 18px; color: var(--text2); font-size: 14px; } .notes li { margin: 4px 0; }
 .show-chip { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 6px 0 12px; border-radius: var(--r-pill); background: var(--accent-soft); border: 1px solid rgba(74,163,255,.45); font-weight: 600; font-size: 13px; }
-@media (max-width: 1600px) { .nav kbd { display: none; } }
-@media (max-width: 1440px) { .top { gap: 10px; } #palBtn kbd, .nav kbd { display: none; } .nav button { white-space: nowrap; } .search { min-width: 130px; } }  /* room for the Fair prices toggle */
-@media (max-width: 1440px) { .top { padding: 0 12px; } .nav button { padding: 0 8px; } .seg button { padding: 0 8px; } .search { min-width: 140px; } }  /* 1280-1440 laptops: one row still */
-@media (max-width: 1240px) { .brand span { display: none; } }  /* the logo alone leaves room for the back / forward arrows */
-@media (max-width: 1180px) {  /* tablets: two rows, pages and search above, data mode and save below */
+#loadBtn { max-width: 210px; } #loadBtn span:last-child { overflow: hidden; text-overflow: ellipsis; }  /* the load progress label ("19% · <step>") never pushes the row off screen */
+/* The header steps follow the width left after the app zoom (--appz), not the screen's: a 16" MacBook (1728 px)
+   is zoomed 1.14x and lays out in 1512 px. fitZoom sets .lw-1720 / .lw-1560 / .lw-1400 on <html>. */
+:where(.lw-1720) .nav kbd { display: none; }
+:where(.lw-1560) .top { gap: 10px; } :where(.lw-1560) #palBtn kbd { display: none; } :where(.lw-1560) .search { min-width: 130px; }  /* room for the Fair prices toggle */
+:where(.lw-1560) .top { padding: 0 12px; } :where(.lw-1560) .nav button { padding: 0 8px; } :where(.lw-1560) .seg button { padding: 0 8px; }  /* 1300-1560 laptops: one row still */
+:where(.lw-1400) .brand span { display: none; }  /* the logo alone leaves room for the back / forward arrows */
+@media (max-width: 1300px) {  /* tablets and small laptops: two rows, pages and search above, data mode and save below */
   :root { --top: 96px; }
   .top { flex-wrap: wrap; align-content: center; row-gap: 8px; } .top .spacer { flex-basis: 100%; height: 0; }
   .nav button { padding: 0 12px; } .search { min-width: 0; max-width: none; }
@@ -3428,6 +3431,7 @@ const ping = () => fetch('/api/ping', { method: 'POST' }).catch(() => {});
 const fitZoom = () => { const f = Math.min(innerWidth / 1512, innerHeight / 827), desk = innerWidth > 1100, r = document.documentElement;
   const z = desk ? Math.min(1.4, Math.max(.8, f)) : 1, app = desk ? Math.min(1.4, Math.max(1, f)) : 1, h = innerHeight / z;
   APPZ = app; r.style.setProperty('--appz', app.toFixed(3)); r.style.setProperty('--ppz', (z / app).toFixed(3));
+  for (const w of [1720, 1560, 1400]) r.classList.toggle('lw-' + w, innerWidth / app <= w);
   r.classList.toggle('pp-short', h < 800); r.classList.toggle('pp-vshort', h < 720); };
 addEventListener('resize', fitZoom); fitZoom();
 ping(); setInterval(ping, 30000);  // the server quits after 10 min without a ping (or 15 s after the tab closes)
