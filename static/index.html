@@ -2653,10 +2653,28 @@ async function loadClub(force) {
   let sv = null; try { sv = JSON.parse(localStorage.getItem('fm26_formation') || 'null'); } catch {}
   const qs = [Array.isArray(sv) && sv.length === 11 ? 'formation=' + sv.join(',') : '', 'mode=' + MODE].filter(Boolean).join('&');
   const r = await api('/api/club?' + qs).catch(() => null);
-  if (!r || !r.ok) { box.innerHTML = `<div class="panel-msg">${emptyState('My Club is not available', r && r.status === 404 ? 'The server does not expose /api/club yet.' : 'The server did not answer. It may be restarting.', '<button class="btn" id="clubRetry">Try again</button>')}</div>`; return; }
+  if (r && r.status === 404) return renderClubPicker(box);  // the save names no managed club: let the user pick it
+  if (!r || !r.ok) { box.innerHTML = `<div class="panel-msg">${emptyState('My Club is not available', 'The server did not answer. It may be restarting.', '<button class="btn" id="clubRetry">Try again</button>')}</div>`; return; }
   CLUB = await r.json(); formation = [...CLUB.formation];
   renderClub(); loadRecos();
   grid?.refreshCells({ columns: ['name'], force: true });
+}
+function renderClubPicker(box) {
+  box.innerHTML = `<div class="panel-msg">${emptyState('Which club do you manage?', 'Your save does not say which club you run (national or B team, several managers…). Pick it by name or club ID.',
+    '<input id="clubSearch" class="in" style="width:280px;margin-top:12px" placeholder="Club name or ID" aria-label="Search your club" autocomplete="off"><div id="clubHits" style="max-width:420px;margin:10px auto 0;text-align:left"></div>')}</div>`;
+  clubSearch(); $('#clubSearch').focus();
+}
+let clubT;
+async function clubSearch() {
+  const q = $('#clubSearch')?.value ?? '';
+  const r = await api('/api/clubs?q=' + encodeURIComponent(q)).catch(() => null);
+  const list = r && r.ok ? await r.json() : [];
+  if (!$('#clubHits') || $('#clubSearch').value !== q) return;  // a newer search is on its way
+  $('#clubHits').innerHTML = list.length ? list.map(c => `<button class="ac-item" data-pick-club="${c.club_uid}"><b>${esc(c.club_name || 'Club ' + c.club_uid)}</b><span class="mono">ID ${c.club_uid}</span><span>${c.players} players</span></button>`).join('') : '<p class="note">No club found.</p>';
+}
+async function pickClub(uid) {
+  const r = await api('/api/club/pick', { club_uid: uid }).catch(() => null);
+  if (r && r.ok) { CLUB = null; loadClub(true); }
 }
 async function refetchClub() {
   try { localStorage.setItem('fm26_formation', JSON.stringify(formation)); } catch {}
@@ -3160,6 +3178,7 @@ document.addEventListener('click', e => {
   else if (d.posEdit != null) { posEdit = !posEdit; renderSlotCard(); }
   else if (d.setpos) { if (formation[slotSel] === d.setpos) return; formation[slotSel] = d.setpos; renderClub(); refetchClub(); }
   else if (d.reco) { recoTab = d.reco; $$('[data-reco]').forEach(b => b.setAttribute('aria-pressed', b === t)); renderScope(); loadRecos(); }
+  else if (d.pickClub) pickClub(+d.pickClub);
   else if (t.id === 'clubRetry') { CLUB = null; loadClub(true); }
 });
 // Middle-click on a player (grid row, My Club, Offers, similar list) opens his full profile page.
@@ -3176,6 +3195,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('input', e => {
   if (['cBudget', 'cWage', 'cAge'].includes(e.target.id)) { clearTimeout(recoT); recoT = setTimeout(loadRecos, 400); }
+  if (e.target.id === 'clubSearch') { clearTimeout(clubT); clubT = setTimeout(clubSearch, 250); }
   if (e.target.id === 'ofSearch') offerSearch();
   if (e.target.id === 'ofFee' || e.target.id === 'ofWage') evalOffer();
 });

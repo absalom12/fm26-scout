@@ -1,3 +1,4 @@
+import json
 import pathlib
 
 import fmsave
@@ -165,3 +166,19 @@ def test_fast_json_matches_fastapi_default(scout):
     assert scout._json(body).body == JSONResponse(jsonable_encoder(body)).body
     with pytest.raises(ValueError):  # NaN is refused exactly like the default response
         scout._json({"x": math.nan})
+
+
+def test_club_pick_when_save_names_no_club(scout, client, tmp_path, monkeypatch):
+    monkeypatch.setattr(scout, "STATUS", "ready")
+    monkeypatch.setattr(scout, "CLUB", None)
+    (tmp_path / "data").mkdir()
+    scout.con().execute("""CREATE OR REPLACE TABLE players AS SELECT * FROM (VALUES
+        (1, 10, 'Chelsea'), (2, 10, 'Chelsea'), (3, 20, 'Chelsea U21'), (4, NULL, NULL)) t(uid, club_uid, club_name)""")
+    assert client.get("/api/club").json()["detail"] == "no_managed_club"
+    assert client.get("/api/clubs", params={"q": "chel"}).json() == [
+        {"club_uid": 10, "club_name": "Chelsea", "players": 2}, {"club_uid": 20, "club_name": "Chelsea U21", "players": 1}]
+    assert [c["club_uid"] for c in client.get("/api/clubs", params={"q": "20"}).json()] == [20]
+    assert client.post("/api/club/pick", json={"club_uid": 99}).status_code == 404
+    r = client.post("/api/club/pick", json={"club_uid": 20}).json()
+    assert r["club_name"] == "Chelsea U21" and len(r["formation"]) == 11 and scout.CLUB == r
+    assert json.loads((tmp_path / "data" / "club.json").read_text()) == r

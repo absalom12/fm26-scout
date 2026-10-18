@@ -496,7 +496,8 @@ def load(d=None):
                ability_potential - ability_current AS pa_gap,
                date_diff('month', DATE '{GAME_DATE}', contract_end) AS months_left,
                {ATTR_AVG} AS attr_avg,
-               (b.club_uid IS NULL) AS free_agent,
+               -- a team without a club is a club fmsave failed to read (FC Vaduz, some MLS sides), not a free agent
+               (b.club_uid IS NULL AND b.team_id IS NULL) AS free_agent,
                -- the club that owns him sets his price: a Man City youngster on loan at Wimbledon is valued as City's
                coalesce(pc.parent_rep, b.club_reputation) AS owner_club_reputation,
                -- current club's label, else the most common label among clubs in the contract chain
@@ -944,7 +945,7 @@ def fit_sql(pos, mode="full"):
 
 def _club():
     if not CLUB:
-        raise HTTPException(404, "no managed club in this save (re-upload the .fm save)")
+        raise HTTPException(404, "no_managed_club")
     return CLUB
 
 
@@ -1005,6 +1006,35 @@ def squad_report(formation, mode="full"):
 @app.get("/api/club")
 def club(formation: str | None = None, mode: str = "full", fair_play: bool = False):
     return squad_report(_formation(formation.split(",") if formation else None), _mode(mode, fair_play))
+
+
+@app.get("/api/clubs")
+def clubs(q: str = ""):
+    """Club search, for saves where fmsave finds no managed club (national or B team, several human managers...)."""
+    q = q.strip()
+    rows = con().execute("""SELECT club_uid, any_value(club_name), count(*) FROM players
+                            WHERE club_uid IS NOT NULL AND (club_name ILIKE ? OR CAST(club_uid AS VARCHAR) = ?)
+                            GROUP BY 1 ORDER BY 3 DESC LIMIT 20""", [f"%{q}%", q]).fetchall()
+    return [{"club_uid": u, "club_name": n, "players": k} for u, n, k in rows]
+
+
+class ClubPick(BaseModel):
+    club_uid: int
+
+
+@app.post("/api/club/pick")
+def club_pick(q: ClubPick):
+    """Set the managed club by hand. The save's match data is gone by now, so the formation is the default
+    shape (the user changes it in My Club). Saved in club.json: a new save replaces it like any data file."""
+    global CLUB
+    n, name = con().execute("SELECT count(*), any_value(club_name) FROM players WHERE club_uid = ?", [q.club_uid]).fetchone()
+    if not n:
+        raise HTTPException(404, "unknown club")
+    club = {"club_uid": q.club_uid, "club_name": name, "formation": infer_formation([]), "picked": True}
+    with open(data_dir() / "club.json", "w") as f:
+        json.dump(club, f)
+    CLUB = club
+    return club
 
 
 class TargetQuery(BaseModel):
