@@ -1127,7 +1127,7 @@ const FEATURED = { full: ['wonderkids', 'hidden_gems', 'bosman', 'free_agents', 
   moneyball: ['top_performers', 'young_performers', 'bosman_open', 'scorers', 'creators'] };
 const OVERVIEW = {
   full: ['club_name', 'best_role_score', 'stat_score', 'transfer_value', 'contract_wage', 'months_left'],
-  fair: ['club_name', 'best_role_score', 'key_attrs', 'stat_score', 's_avg_rating', 'transfer_value', 'contract_wage', 'months_left'],
+  fair: ['club_name', 'best_role_score', 'key_attrs', 'attr_avg', 'stat_score', 's_avg_rating', 'transfer_value', 'contract_wage', 'months_left'],
   moneyball: ['club_name', 'stat_score', 'key_stats', 's_minutes', 's_avg_rating', 'transfer_value', 'contract_wage', 'months_left'],
 };
 const POSITIONS = ['GK','DL','DC','DR','WBL','WBR','DM','ML','MC','MR','AML','AMC','AMR','ST'];
@@ -1304,6 +1304,7 @@ function colDef(c) {
   if (c === 'ability_current') Object.assign(d, { width: 104, cellRenderer: p => abilityBar(p.value) });
   if (c === 'ability_potential') Object.assign(d, { width: 132, cellRenderer: p => p.data ? abilityBar(p.value, hid('pa_gap') ? null : p.data.pa_gap) : '' });
   if (c === 'stat_score') Object.assign(d, { width: 124, headerTooltip: 'Performance index 0–100: per-90 percentiles vs same position group (600+ min), plus club level', cellRenderer: p => p.data ? perfBar(p.value) : '' });
+  if (c === 'attr_avg') Object.assign(d, { width: 96, headerTooltip: 'Average of visible attributes (technical or goalkeeping, mental, physical), hidden ones excluded', cellRenderer: p => p.value == null ? '' : `<b class="mono" style="color:${a20(p.value)}">${p.value.toFixed(1)}</b>` });
   if (c === 'pa_gap') Object.assign(d, { width: 70, cellRenderer: p => p.value == null ? '' : `<span class="mono" style="color:${p.value >= 40 ? C.good : p.value >= 20 ? C.ok : C.muted}">+${p.value}</span>` });
   if (c === 'best_role_score') Object.assign(d, { width: 170, cellRenderer: p => p.value == null || !p.data ? ''
     : `<span class="role"><b style="color:${scoreColor(p.value)}">${p.value.toFixed(0)}</b><span>${esc(label('role_' + p.data.best_role))}</span></span>` });
@@ -2923,6 +2924,7 @@ function setMode(m, initial) {
   if (pr && !presetOk(pr)) st.preset = null;
   if (!lensOk(lens())) st.lens = 'blend';
   if (st.view !== 'overview' && !VIEWS[st.view].some(c => !hid(c))) st.view = 'overview';
+  if (m === 'moneyball' && st.page === 'scout' && VIEWS.season) st.view = 'season';  // Moneyball reads the season stats first
   const fm = grid.getFilterModel(); Object.keys(fm).forEach(k => hid(k) && delete fm[k]); grid.setFilterModel(fm);
   grid.applyColumnState({ state: grid.getColumnState().filter(c => hid(c.colId) && c.sort).map(c => ({ colId: c.colId, sort: null })) });
   peerCache.clear();
@@ -2957,7 +2959,7 @@ async function exportCSV() {
   toast('CSV downloaded', 'good');
 }
 function resetAll() {
-  F = F0(); setGender('');
+  F = F0();
   $('#search').value = ''; grid.setFilterModel(null);
   if (st.preset) { st.preset = null; renderLists(); }
   if (st.page === 'scout') applyColumns();
