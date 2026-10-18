@@ -211,3 +211,59 @@ def test_bad_formation_in_club_json_is_replaced(scout, tmp_path):
     (tmp_path / "club.json").write_text(json.dumps({"club_uid": 1, "club_name": "Hoffenheim", "formation": ["GK", "DM"]}))
     assert scout.read_club(tmp_path / "club.json")["formation"] == scout.infer_formation([])
     assert scout.read_club(tmp_path / "missing.json") is None
+
+
+@pytest.fixture
+def squad(scout, monkeypatch):
+    """A tiny world: our club (uid 1) with one player per 4-2-3-1 slot plus a second striker, and outside players."""
+    pos_cols = ["gk", "dc", "dl", "dr", "dm", "mc", "amc", "aml", "amr", "stc", "wbl", "wbr", "ml", "mr", "sw"]
+    xi = ["gk", "dr", "dc", "dc", "dl", "dm", "dm", "amr", "amc", "aml", "stc"]
+    rows = [(i + 1, 1, p, 60, 50) for i, p in enumerate(xi)] + [(12, 1, "stc", 55, 90)]  # 12: weaker striker, top performer
+    rows += [(100 + i, 2, "stc", 70 + i, 40 + 10 * i) for i in range(3)]  # outside strikers: role score 70-72, performance 40-60
+    con = scout.con()
+    cols = ", ".join([f"CASE WHEN p = '{c}' THEN 20 ELSE 1 END AS positions_{c}" for c in pos_cols]
+                     + [f"r AS role_{r}" for r in scout.ROLES])
+    con.execute("CREATE OR REPLACE TABLE w (uid INT, club_uid INT, p VARCHAR, r DOUBLE, perf DOUBLE)")
+    con.executemany("INSERT INTO w VALUES (?, ?, ?, ?, ?)", rows)
+    deal = ", ".join(f"0.0 AS {k}_{m}" for k in scout.PER_MODE for m in scout.MODES)
+    con.execute(f"""CREATE OR REPLACE TABLE players AS SELECT uid, 'P' || uid AS name, 25 AS age, 120 AS ability_current,
+        140 AS ability_potential, 1000000 AS transfer_value, 1000 AS contract_wage, club_uid, 'Club ' || club_uid AS club_name,
+        'Men' AS gender, false AS free_agent, perf AS stat_score, 1500 AS s_minutes, {cols}, {deal} FROM w""")
+    cols = {r[0] for r in con.execute("DESCRIBE players").fetchall()}
+    fair = {c for c in cols if c.startswith(scout.HIDDEN_PREFIXES)}
+    hidden = {"full": set(), "fair": fair, "moneyball": fair | {c for c in cols if c.startswith(scout.MONEYBALL_PREFIXES)}}
+    monkeypatch.setattr(scout, "COLS", cols, raising=False)  # set by load()
+    monkeypatch.setattr(scout, "MODE_HIDDEN", hidden)
+    monkeypatch.setattr(scout, "VISIBLE", {m: (cols - h - scout.INTERNAL) | set(scout.PER_MODE) for m, h in hidden.items()})
+    monkeypatch.setattr(scout, "CLUB", {"club_uid": 1, "club_name": "Us", "formation": "GK DR DC DC DL DM DM AMR AMC AML ST".split()})
+    monkeypatch.setattr(scout, "STATUS", "ready")
+    return scout
+
+
+def test_club_basis_switches_between_role_scores_and_performance(squad, client):
+    st = lambda **p: client.get("/api/club", params=p).json()["slots"][10]["starter"]
+    assert st()["uid"] == 11  # attributes: the 60 role score beats the 55
+    assert st(basis="performance")["uid"] == 12 and st(basis="performance")["fit"] == 90
+    assert st(mode="moneyball")["uid"] == 12  # moneyball is always performance
+    assert client.get("/api/club", params={"basis": "vibes"}).status_code == 400
+
+
+def test_club_pins_put_the_managers_pick_in_the_slot(squad, client):
+    d = client.get("/api/club", params={"pins": "10:12"}).json()
+    assert d["slots"][10]["starter"]["uid"] == 12 and d["slots"][10]["pinned"] and d["pins"] == {"10": 12}
+    assert d["slots"][10]["backup"]["uid"] == 11
+    # a pin the player can't play (a striker in goal) is dropped, not forced
+    d = client.get("/api/club", params={"pins": "0:12"}).json()
+    assert d["slots"][0]["starter"]["uid"] == 1 and d["pins"] == {}
+    assert client.get("/api/club", params={"pins": "x"}).status_code == 400
+
+
+def test_club_targets_follow_basis_and_edit_search(squad, client):
+    q = {"slot_index": 10, "budget": None, "age_max": 40}
+    uids = lambda **extra: [r["uid"] for r in client.post("/api/club/needs", json={**q, **extra}).json()["rows"]]
+    assert uids() == [102, 101, 100]  # role score 72, 71, 70 over the starter's 60
+    assert uids(basis="performance") == []  # nobody outside beats P12's 90 performance
+    assert uids(basis="performance", pins={"10": 11}) == [102]  # with P11 (50) picked to start, the 60 is an upgrade
+    # Edit search criteria narrow the list (here a role-score minimum), whatever positions they name
+    assert uids(search={"filters": {"role_" + next(iter(squad.ROLES)): {"filterType": "number", "type": "greaterThanOrEqual", "filter": 71}},
+                        "positions": ["GK"]}) == [102, 101]

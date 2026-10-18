@@ -973,11 +973,14 @@ SHAPES = {"4-2-3-1": "GK DR DC DC DL DM DM AMR AMC AML ST", "4-3-3": "GK DR DC D
           "3-4-3": "GK DC DC DC WBR MC MC WBL AMR AML ST", "5-3-2": "GK DC DC DC WBR WBL DM MC MC ST ST"}
 
 
-def fit_sql(pos, mode="full"):
-    """0-100 fit at a slot, only if the player can play there (>= 15/20). Attributes modes use the best
-    role score of the slot's group; moneyball uses the stats-only performance index."""
+BASES = ("attributes", "performance")
+
+
+def fit_sql(pos, mode="full", basis="attributes"):
+    """0-100 fit at a slot, only if the player can play there (>= 15/20). The attributes basis uses the best
+    role score of the slot's group; the performance basis (always in moneyball) the stats-only performance index."""
     col = "stc" if pos == "ST" else pos.lower()
-    if mode == "moneyball":
+    if mode == "moneyball" or basis == "performance":
         return f"CASE WHEN positions_{col} >= 15 THEN stat_score END"
     roles = [f"role_{r}" for r, (g, _) in ROLES.items() if g == SLOT_GROUP[pos]]
     return f"CASE WHEN positions_{col} >= 15 THEN greatest({', '.join(roles)}) END"
@@ -1008,11 +1011,18 @@ def _formation(f):
     return f
 
 
-def squad_report(formation, mode="full"):
+def _basis(basis, mode):
+    if basis not in BASES:
+        raise HTTPException(400, "basis must be attributes or performance")
+    return "performance" if mode == "moneyball" else basis
+
+
+def squad_report(formation, mode="full", basis="attributes", pins=None):
+    """pins: {slot index: uid} the manager put there himself; the rest of the XI is picked around them."""
     club = _club()
     pos_set = sorted(set(formation))
     cur = con().execute(f"SELECT uid, name, age, ability_current AS ca, ability_potential AS pa, transfer_value, contract_wage, "
-                        f"{', '.join(f'{fit_sql(p, mode)} AS fit_{p}' for p in pos_set)} FROM players WHERE club_uid = ?", [club["club_uid"]])
+                        f"{', '.join(f'{fit_sql(p, mode, basis)} AS fit_{p}' for p in pos_set)} FROM players WHERE club_uid = ?", [club["club_uid"]])
     names = [d[0] for d in cur.description]
     squad = [dict(zip(names, r)) for r in cur.fetchall()]
 
@@ -1022,9 +1032,14 @@ def squad_report(formation, mode="full"):
         c = {"uid": p["uid"], "name": p["name"], "age": p["age"], "fit": p[f"fit_{pos}"], "wage": p["contract_wage"]}
         return {**c, "ca": p["ca"], "pa": p["pa"]} if mode == "full" else c
     ranked = {p: sorted((s for s in squad if s[f"fit_{p}"] is not None), key=lambda s: -s[f"fit_{p}"]) for p in pos_set}
-    # Greedy XI: scarcest positions pick first so a versatile player isn't spent where others could play.
     taken, starters = set(), {}
-    for i in sorted(range(11), key=lambda i: len(ranked[formation[i]])):
+    by_uid = {s["uid"]: s for s in squad}
+    for i, uid in (pins or {}).items():  # a pin only holds if he can play there and isn't pinned twice
+        p = by_uid.get(uid)
+        if 0 <= i < 11 and p and p[f"fit_{formation[i]}"] is not None and uid not in taken:
+            starters[i] = p; taken.add(uid)
+    # Greedy XI: scarcest positions pick first so a versatile player isn't spent where others could play.
+    for i in sorted((i for i in range(11) if i not in starters), key=lambda i: len(ranked[formation[i]])):
         pos = formation[i]
         starters[i] = next((s for s in ranked[pos] if s["uid"] not in taken), None)
         if starters[i]:
@@ -1037,7 +1052,7 @@ def squad_report(formation, mode="full"):
         backup = next((s for s in ranked[pos] if s["uid"] not in taken), None)
         sf, bf = fits[i], backup[f"fit_{pos}"] if backup else 0
         need = round((team_fit - sf) + 0.3 * (sf - bf), 1)
-        slots.append({"slot_index": i, "pos": pos, "starter": card(st, pos), "backup": card(backup, pos),
+        slots.append({"slot_index": i, "pos": pos, "starter": card(st, pos), "backup": card(backup, pos), "pinned": i in (pins or {}) and st is not None and st["uid"] == pins[i],
                       "depth": len(ranked[pos]), "need": need,
                       # everyone else who can play there, best first (starters elsewhere included: the manager decides)
                       "others": [card(x, pos) for x in ranked[pos] if x is not st and x is not backup],
@@ -1048,7 +1063,7 @@ def squad_report(formation, mode="full"):
     gender = con().execute("SELECT mode(gender) FROM players WHERE club_uid = ?", [club["club_uid"]]).fetchone()[0]
     shape = next((k for k, v in SHAPES.items() if sorted(v.split()) == sorted(formation)), None)
     return {"club_uid": club["club_uid"], "club_name": club["club_name"], "formation": formation, "formation_name": shape,
-            "mode": mode, "shapes": {k: v.split() for k, v in SHAPES.items()}, "slots": slots, "team_fit": round(team_fit, 1),
+            "mode": mode, "basis": basis, "pins": {i: s["starter"]["uid"] for i, s in enumerate(slots) if s["pinned"]}, "shapes": {k: v.split() for k, v in SHAPES.items()}, "slots": slots, "team_fit": round(team_fit, 1),
             "gender": gender, "default_budget": int(round(2 * max(values, default=0), -4)),
             # A signing can earn up to ~25% above the current top earner before he breaks the wage structure.
             "top_wage": wages[0] if wages else 0, "default_wage_max": int(round(1.25 * (wages[0] if wages else 0), -2)),
@@ -1056,8 +1071,14 @@ def squad_report(formation, mode="full"):
 
 
 @app.get("/api/club")
-def club(formation: str | None = None, mode: str = "full", fair_play: bool = False):
-    return squad_report(_formation(formation.split(",") if formation else None), _mode(mode, fair_play))
+def club(formation: str | None = None, mode: str = "full", fair_play: bool = False, basis: str = "attributes", pins: str = ""):
+    """pins: "slot:uid,slot:uid"."""
+    mode = _mode(mode, fair_play)
+    try:
+        pin_map = {int(i): int(u) for i, u in (x.split(":") for x in pins.split(",") if x)}
+    except ValueError:
+        raise HTTPException(400, "pins must be slot:uid pairs")
+    return squad_report(_formation(formation.split(",") if formation else None), mode, _basis(basis, mode), pin_map)
 
 
 @app.get("/api/clubs")
@@ -1098,6 +1119,9 @@ class TargetQuery(BaseModel):
     slot_index: int | None = None  # only this pitch slot (0-10)
     mode: str = "full"
     fair_play: bool = False
+    basis: str = "attributes"       # rank by role scores, or by the stats-only performance index
+    pins: dict[int, int] = {}       # slot index -> uid the manager started there himself
+    search: Query | None = None     # Edit search criteria (positions ignored: the slot decides)
 
 
 def targets(q: TargetQuery, rep, slots, per_pos, min_rating, extra_where=""):
@@ -1105,12 +1129,17 @@ def targets(q: TargetQuery, rep, slots, per_pos, min_rating, extra_where=""):
     upgrade x slot need, plus how far under the fair fee they are, minus a penalty
     for wages above the club's structure (a well-paid player rarely takes a pay cut to move)."""
     club, mode = _club(), q.mode
+    search_where, search_args = "", []
+    if q.search:
+        q.search.mode, q.search.positions, q.search.sort = mode, [], []
+        w, search_args, _ = build(q.search)
+        search_where = f"uid IN (SELECT uid FROM {source(mode)} {w})" if w else ""
     wage_ref = max(rep["xi_median_wage"], 1)
     rows = []
     for s in slots:
         pos, sf = s["pos"], (s["starter"] or {}).get("fit") or 0
         col = "stc" if pos == "ST" else pos.lower()
-        fit = fit_sql(pos, mode)
+        fit = fit_sql(pos, mode, q.basis)
         where = [f"positions_{col} >= {min_rating}", f"({fit}) > ?", "coalesce(club_uid, -1) <> ?",
                  "(transfer_value > 0 OR free_agent)"]
         args = [sf + 2, club["club_uid"]]
@@ -1120,6 +1149,8 @@ def targets(q: TargetQuery, rep, slots, per_pos, min_rating, extra_where=""):
                 where.append(cond); args.append(val)
         if q.gender in ("Men", "Women"):
             where.append("gender = ?"); args.append(q.gender)
+        if search_where:
+            where.append(search_where); args += search_args
         weight = 1 + max(s["need"], 0) / 10
         # wage penalty: 0 at/below our XI's median wage, growing with each multiple above it.
         score = (f"(({fit}) - {sf}) * {weight} "
@@ -1153,7 +1184,8 @@ def targets(q: TargetQuery, rep, slots, per_pos, min_rating, extra_where=""):
 
 def _prepare(q: TargetQuery):
     q.mode = _mode(q.mode, q.fair_play)
-    rep = squad_report(_formation(q.formation), q.mode)
+    q.basis = _basis(q.basis, q.mode)
+    rep = squad_report(_formation(q.formation), q.mode, q.basis, q.pins)
     if q.budget is None:
         q.budget = rep["default_budget"] or None
     if q.wage_max is None:

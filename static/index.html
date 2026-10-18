@@ -676,6 +676,10 @@ dialog::backdrop { background: rgba(3,6,9,.6); backdrop-filter: blur(2px); }
 .rank .f { font: 700 13px var(--f-mono); text-align: right; }
 .rank .f small { display: block; font: 500 10px var(--f-body); color: var(--muted); }
 .slot-list { max-height: 260px; overflow-y: auto; }
+.slot-row { display: flex; align-items: center; gap: 4px; } .slot-row .person { flex: 1; min-width: 0; } .slot-row .start { flex: none; padding: 4px 8px; font-size: 12px; }
+.slot[draggable="true"] { cursor: grab; } .slot.drop .disc { box-shadow: 0 0 0 3px var(--accent), 0 0 22px var(--accent); }
+.slot.pinned .lbl::after { content: " ●"; color: var(--accent); }  /* a starter the manager picked */
+.btn .badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); font: 700 11px/18px var(--f-mono); text-align: center; }
 .pname { cursor: pointer; text-decoration: underline transparent; text-underline-offset: 3px; transition: text-decoration-color var(--t), color var(--t); }
 .pname:hover, .pname:focus-visible { color: var(--accent); text-decoration-color: currentColor; }
 .reco .keys { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
@@ -2611,7 +2615,7 @@ function renderES() {
   const roles = Object.entries(META.roles).filter(([r]) => cols.has('role_' + r)), rgrp = [...new Set(roles.map(([, gp]) => gp))];
   const esPos = [...META.positions, 'ML', 'MR'], unknownPos = esPos.filter(p => !PZ[p]);  // ML / MR: single positions inside W
   const n = {}; esSecs().forEach(([k], i) => n[k] = i + 1);
-  $('#esMode').innerHTML = `<span class="mode-chip">${MODES[MODE]}</span>${noAttr ? 'Attributes are off in Moneyball' : full ? '' : 'Hidden info is off in Fair play'}`;
+  $('#esMode').innerHTML = `<span class="mode-chip">${MODES[MODE]}</span>${esFor === 'club' ? 'Positions come from the slot; budget, wage and age from My Club. ' : ''}${noAttr ? 'Attributes are off in Moneyball' : full ? '' : 'Hidden info is off in Fair play'}`;
   $('#esRail').innerHTML = esSecs().map(([k, l]) => `<button type="button" data-esgo="${k}" aria-current="false"><i aria-hidden="true">${String(n[k]).padStart(2, '0')}</i>${l}<b></b></button>`).join('')
     + `<p>Every criterion must match. The count below updates as you go.</p>`;
   const parts = [
@@ -2685,7 +2689,7 @@ function esLive() {
   $('#esLive').classList.remove('tick');
   esT = setTimeout(async () => {
     if (!D) return;
-    const r = await api('/api/players', query({ start: 0, end: 1, filters: grid.getFilterModel() }, D)).catch(() => null);
+    const r = await api('/api/players', esFor === 'club' ? { ...clubSearchQuery(D), start: 0, end: 1 } : query({ start: 0, end: 1, filters: grid.getFilterModel() }, D)).catch(() => null);
     if (!$('#es').open) return;
     const el = $('#esLive'), t = r && r.ok ? (await r.json()).total : null;
     el.classList.toggle('zero', t === 0);
@@ -2693,10 +2697,16 @@ function esLive() {
     if (t !== esN) { void el.offsetWidth; el.classList.add('tick'); } esN = t;
   }, 350);
 }
-function openES() { D = clone(F); esCrit = []; $('#esName').value = ''; $('#esNatQ') && ($('#esNatQ').value = ''); if (st.page !== 'scout' && st.page !== 'deals') { st.page = '-'; setPage('scout'); } renderES(); $('#esBody').scrollTop = 0; $('#es').showModal(); esSpy(); }
+let esFor = 'grid';  // whose criteria the dialog edits: the Scout / Deal Finder list (F) or My Club's targets (CF)
+function openES(target = 'grid') {
+  esFor = target; D = clone(target === 'club' ? CF : F); esCrit = []; $('#esName').value = ''; $('#esNatQ') && ($('#esNatQ').value = '');
+  if (target === 'grid' && st.page !== 'scout' && st.page !== 'deals') { st.page = '-'; setPage('scout'); }
+  $('#esTitle').textContent = target === 'club' ? 'Edit search · My Club targets' : 'Edit search';
+  renderES(); $('#esBody').scrollTop = 0; $('#es').showModal(); esSpy(); }
 function applyES() {
   if (D.gender != null) setGender(D.gender);
   delete D.gender;
+  if (esFor === 'club') { CF = D; D = null; lsSet('fm26_club_filter', CF); $('#es').close(); renderClub(); loadRecos(); return; }
   F = D; D = null; $('#es').close(); renderSummary(); refresh();
 }
 function loadSearch(s) { F = { ...F0(), ...clone(s.f) }; renderSummary(); refresh(); toast(`Search “${s.name}” loaded`); }
@@ -2704,21 +2714,46 @@ const esNum = v => { if (v === '' || v == null) return null; const m = parseMone
 
 // ---------- My Club ----------
 let recoT, recoSeq = 0;
+// The manager's own choices, kept across sessions: rank by attributes or performance, starters he picked (slot -> uid),
+// and Edit search criteria for the targets (CF: same shape as F; positions are left to the slot).
+const ls = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+let BASIS = ls('fm26_club_basis', 'attributes'), PINS = ls('fm26_pins', {}), CF = { ...F0(), ...ls('fm26_club_filter', {}) };
+const basis = () => MODE === 'moneyball' ? 'performance' : BASIS;
+const cfCrit = () => [...(CF.age_min != null || CF.age_max != null ? [`Age ${dualTxt(CF.age_min, CF.age_max, v => v)}`] : []),
+  ...(CF.value_max != null ? [`Value ≤ ${money(CF.value_max)}`] : []), ...critList(CF).map(([t]) => t)];
+const savedFormation = () => { const sv = ls('fm26_formation', null); return Array.isArray(sv) && sv.length === 11 ? sv : null; };
+function clubQS(f = formation || savedFormation()) {
+  const pins = Object.entries(PINS).map(([i, u]) => `${i}:${u}`).join(',');
+  return [f ? 'formation=' + f.join(',') : '', 'mode=' + MODE, 'basis=' + basis(), pins ? 'pins=' + pins : ''].filter(Boolean).join('&');
+}
+function setPins(p) { PINS = p; lsSet('fm26_pins', PINS); refetchClub(); }
+// Swap the starters of two slots (drag on the pitch), if each can play the other's position.
+function swapSlots(a, b) {
+  if (a === b) return;
+  const sa = slotOf(a), sb = slotOf(b), A = sa.starter, B = sb.starter;
+  const can = (who, s) => who && [s.starter, s.backup, ...(s.others || [])].some(x => x?.uid === who.uid);
+  if (A && !can(A, sb)) return toast(`${A.name} can't play ${formation[b]}`, 'bad');
+  if (B && !can(B, sa)) return toast(`${B.name} can't play ${formation[a]}`, 'bad');
+  const p = { ...PINS }; delete p[a]; delete p[b];
+  if (B) p[a] = B.uid; if (A) p[b] = A.uid;
+  setPins(p);
+}
 const parseMoney = s => { const m = String(s).trim().replace(/[£€$,\s]/g, '').match(/^(\d+(?:\.\d+)?)([kKmM]?)$/); if (!m) return String(s).trim() === '' ? null : NaN; return Math.round(+m[1] * ({ k: 1e3, m: 1e6 }[m[2].toLowerCase()] || 1)); };
 function clubBody() {
   const b = feeIn(parseMoney($('#cBudget')?.value ?? '')), w = wageIn(parseMoney($('#cWage')?.value ?? '')), a = $('#cAge')?.value;
-  return { budget: Number.isNaN(b) ? null : b, wage_max: Number.isNaN(w) ? null : w, age_max: a ? Number(a) : null, gender: gender(), formation, mode: MODE, slot_index: slotSel };
+  return { budget: Number.isNaN(b) ? null : b, wage_max: Number.isNaN(w) ? null : w, age_max: a ? Number(a) : null, gender: gender(), formation, mode: MODE, slot_index: slotSel,
+    basis: basis(), pins: PINS, search: cfCrit().length ? clubSearchQuery(CF) : null };
 }
+const clubSearchQuery = f => query({ search: '', preset: null, shortlist: null, positions: [], similar_to: null, filters: {} }, f);
 async function loadClub(force) {
   const box = $('#club');
   if (CLUB && !force) { if (!$('.club-head', box)) { renderClub(); loadRecos(); } return; }
   box.innerHTML = `<div class="panel-msg">${emptyState('Reading the teamsheet…', 'Rating every slot of your formation.')}</div>`;
-  let sv = null; try { sv = JSON.parse(localStorage.getItem('fm26_formation') || 'null'); } catch {}
-  const qs = [Array.isArray(sv) && sv.length === 11 ? 'formation=' + sv.join(',') : '', 'mode=' + MODE].filter(Boolean).join('&');
-  const r = await api('/api/club?' + qs).catch(() => null);
+  const r = await api('/api/club?' + clubQS(savedFormation())).catch(() => null);
   if (r && r.status === 404) return renderClubPicker(box);  // the save names no managed club: let the user pick it
   if (!r || !r.ok) { box.innerHTML = `<div class="panel-msg">${emptyState('My Club is not available', 'The server did not answer. It may be restarting.', '<button class="btn" id="clubRetry">Try again</button>')}</div>`; return; }
-  CLUB = await r.json(); formation = [...CLUB.formation];
+  CLUB = await r.json(); formation = [...CLUB.formation]; PINS = CLUB.pins || {};
   renderClub(); loadRecos();
   grid?.refreshCells({ columns: ['name'], force: true });
 }
@@ -2741,8 +2776,8 @@ async function pickClub(uid) {
 }
 async function refetchClub() {
   try { localStorage.setItem('fm26_formation', JSON.stringify(formation)); } catch {}
-  const r = await api('/api/club?formation=' + formation.join(',') + mq('&')).catch(() => null);
-  if (r && r.ok) { const d = await r.json(); if (d.formation.join() === formation.join()) CLUB = d; }
+  const r = await api('/api/club?' + clubQS()).catch(() => null);
+  if (r && r.ok) { const d = await r.json(); if (d.formation.join() === formation.join()) { CLUB = d; PINS = d.pins || {}; lsSet('fm26_pins', PINS); } }
   renderClub(); loadRecos();
 }
 const shapes = () => CLUB.shapes || {};
@@ -2754,7 +2789,7 @@ function slotXY() {
     const spread = n === 1 ? 0 : n === 2 ? 28 : 24;
     return [Math.min(90, Math.max(10, x + (k - (n + 1) / 2) * spread)), y]; });
 }
-const fitWord = () => MODE === 'moneyball' ? 'performance' : 'fit';
+const fitWord = () => basis() === 'performance' ? 'performance' : 'fit';
 function renderClub() {
   const box = $('#club'), name = shapeName() || 'Custom shape';
   const xy = slotXY();
@@ -2767,11 +2802,15 @@ function renderClub() {
         <label class="fld">Budget <input id="cBudget" class="in" style="width:96px" placeholder="${money(CLUB.default_budget)}" value="${esc(prev.b ?? '')}" title="e.g. 2.5M or 400k"></label>
         <label class="fld">Max wage <input id="cWage" class="in" style="width:84px" placeholder="${wage(CLUB.default_wage_max)}" value="${esc(prev.w ?? '')}" title="Weekly, e.g. 15k. Default: 1.25× your top earner (${wage(CLUB.top_wage)})"></label>
         <label class="fld">Max age <input id="cAge" class="in" type="number" min="15" max="45" style="width:64px" placeholder="31" value="${esc(prev.a ?? '')}"></label>
+        <div class="seg" role="group" aria-label="Rank players by">${[['attributes', 'Attributes', 'Best role score for the position (attributes)'], ['performance', 'Performance', 'Stats-only performance index this season (600+ min)']].map(([k, l, tip]) =>
+          `<button data-basis="${k}" aria-pressed="${basis() === k}" title="${MODE === 'moneyball' && k === 'attributes' ? 'Attributes are off in Moneyball' : tip}"${MODE === 'moneyball' && k === 'attributes' ? ' disabled' : ''}>${l}</button>`).join('')}</div>
+        <button class="btn" data-club-es aria-haspopup="dialog" title="Filter the targets with every Edit search criterion (e)">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Edit search${cfCrit().length ? ` <b class="badge">${cfCrit().length}</b>` : ''}</button>
       </div>
     </div>
     <div class="club-grid">
       <section aria-label="Formation">
-        <h2 class="col-title">Formation <span class="muted" style="font-weight:500;letter-spacing:0;text-transform:none">click a slot to see targets for it</span></h2>
+        <h2 class="col-title">Formation <span class="muted" style="font-weight:500;letter-spacing:0;text-transform:none">click for targets · drag to swap</span>${Object.keys(PINS).length ? '<button class="link" data-pins-reset style="margin-left:auto" title="Let the app pick the best XI again">Reset XI</button>' : ''}</h2>
         <div class="pitch" id="pitch">
           <svg viewBox="0 0 68 92" preserveAspectRatio="none" fill="none" stroke="rgba(255,255,255,.16)" stroke-width=".35" aria-hidden="true">
             <rect x="2" y="2" width="64" height="88" rx="1"/><path d="M2 46h64"/><circle cx="34" cy="46" r="7.5"/><circle cx="34" cy="46" r=".6" fill="rgba(255,255,255,.3)"/>
@@ -2779,7 +2818,7 @@ function renderClub() {
             <rect x="15" y="76" width="38" height="14"/><rect x="25" y="85" width="18" height="5"/><path d="M28 76a7 5 0 0 1 12 0"/>
           </svg>
           ${formation.map((pos, i) => { const s = slotOf(i), g = s.pos === pos ? s.grade : null, fit = s.starter?.fit;
-            return `<button class="slot g-${g || 'none'} ${g === 'weak' ? 'weak' : ''}" style="left:${xy[i][0]}%;top:${xy[i][1]}%;animation-delay:${i * 35}ms" data-slot="${i}" aria-pressed="${slotSel === i}"
+            return `<button class="slot g-${g || 'none'} ${g === 'weak' ? 'weak' : ''}${s.pinned ? ' pinned' : ''}" style="left:${xy[i][0]}%;top:${xy[i][1]}%;animation-delay:${i * 35}ms" data-slot="${i}" aria-pressed="${slotSel === i}" draggable="true"
               aria-label="${pos}: ${esc(s.starter?.name || 'nobody')}, ${fitWord()} ${fit != null ? fit.toFixed(0) : 'none'}, ${g || 'unrated'}. Show targets for this slot">
               <span class="lbl">${pos}</span><span class="disc">${fit != null ? fit.toFixed(0) : '–'}</span>
               <span class="nm">${esc(s.starter ? lastName(s.starter.name) : 'Nobody')}</span>${s.backup ? `<span class="bk">${esc(lastName(s.backup.name))}</span>` : ''}</button>`; }).join('')}
@@ -2802,6 +2841,7 @@ function renderClub() {
             <button data-reco="tactic" aria-pressed="${recoTab === 'tactic'}">Fit the tactic</button></div>
           <span id="recoScope"></span>
         </div>
+        ${cfCrit().length ? `<div class="chips" style="margin-bottom:8px"><span class="muted" style="font-size:12px">Edit search:</span>${cfCrit().map(t => `<span class="crit-chip" style="animation:none">${t}</span>`).join('')}<button class="link" data-club-es-clear>Clear</button></div>` : ''}
         <div id="recos"></div>
       </section>
     </div>`;
@@ -2816,7 +2856,9 @@ function renderSlotCard() {
   const card = $('#slotCard'); if (!card) return;
   if (slotSel == null) { card.innerHTML = '<p class="muted" style="margin:0;font-size:13px">Click a slot on the pitch (or a row in the ranking) to see targets for that position only.</p>'; return; }
   const s = slotOf(slotSel), pos = formation[slotSel], same = s.pos === pos;
-  const person = (who, role) => who ? `<button class="person" data-player="${who.uid}"><div class="who"><b><span class="pname" data-profile="${who.uid}" role="link" tabindex="0" title="Full profile">${esc(who.name)}</span></b><span>${role} · ${who.age} yrs${hid('ability_current') || who.ca == null ? '' : ` · CA ${who.ca} / PA ${who.pa}`}${who.wage != null ? ' · ' + wage(who.wage) : ''}</span></div>${fitBar(who.fit)}<b class="mono" style="color:${who.fit != null ? scoreColor(who.fit) : C.muted};width:26px;text-align:right">${who.fit != null ? who.fit.toFixed(0) : '–'}</b></button>`
+  const start = (who, role) => role === 'Starter' ? (s.pinned ? `<button class="link start" data-unpin title="Let the app pick the best player here">Auto</button>` : '')
+    : `<button class="link start" data-start="${who.uid}" title="Start ${esc(who.name)} at ${pos}">Start</button>`;
+  const person = (who, role) => who ? `<div class="slot-row"><button class="person" data-player="${who.uid}"><div class="who"><b><span class="pname" data-profile="${who.uid}" role="link" tabindex="0" title="Full profile">${esc(who.name)}</span></b><span>${role}${role === 'Starter' && s.pinned ? ' (your pick)' : ''} · ${who.age} yrs${hid('ability_current') || who.ca == null ? '' : ` · CA ${who.ca} / PA ${who.pa}`}${who.wage != null ? ' · ' + wage(who.wage) : ''}</span></div>${fitBar(who.fit)}<b class="mono" style="color:${who.fit != null ? scoreColor(who.fit) : C.muted};width:26px;text-align:right">${who.fit != null ? who.fit.toFixed(0) : '–'}</b></button>${start(who, role)}</div>`
     : `<p class="muted" style="font-size:13px;margin:6px 8px">No ${role.toLowerCase()} for this position.</p>`;
   card.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px"><b style="font:700 15px var(--f-display);letter-spacing:.06em;text-transform:uppercase">Slot ${slotSel + 1} · ${pos}</b>
       <span><button class="link" data-pos-edit aria-expanded="${posEdit}">${posEdit ? 'Done' : 'Change position'}</button><button class="link" data-clear-slot>Close</button></span></div>
@@ -2842,7 +2884,7 @@ const KEY_STATS = { ST: ['s_goals_p90', 's_xg_p90', 's_shots_p90'], W: ['s_dribb
   GK: ['stat_score', 's_clean_sheets', 's_expected_goals_prevented'] };
 function recoKeys(p) {
   const g = SLOT_GRP[p.target_pos] || groupOf(p), chip = (l, v, cls = '', t = l) => `<span class="ac" title="${esc(t)}">${l}<b class="${cls}">${v}</b></span>`;
-  if (MODE === 'moneyball') return [...(KEY_STATS[g] || []).map(k => p[k] != null ? chip(STAT_ABBR[k], Number.isInteger(p[k]) ? p[k] : p[k].toFixed(k === 'stat_score' ? 0 : 2), '', label(k)) : '')].join('');
+  if (basis() === 'performance') return [...(KEY_STATS[g] || []).map(k => p[k] != null ? chip(STAT_ABBR[k], Number.isInteger(p[k]) ? p[k] : p[k].toFixed(k === 'stat_score' ? 0 : 2), '', label(k)) : '')].join('');
   return [MODE === 'full' && p.ability_current != null ? chip('CA', p.ability_current, '', 'Current ability') + chip('PA', p.ability_potential ?? '–', '', 'Potential ability') : '',
     ...KEY_ATTRS[g].map(a => p['attributes_' + a] != null ? chip(ABBR[a] || a.slice(0, 3), p['attributes_' + a], tier(p['attributes_' + a]), label('attributes_' + a)) : '')].join('');
 }
@@ -3231,9 +3273,8 @@ async function init() {
   // Load club in the background (after the first grid page: concurrent DuckDB queries can clash server-side).
   await firstPage;
   if (CLUB) return;
-  api('/api/club' + mq()).then(r => r.ok ? r.json() : null).then(d => { if (d && !CLUB) { CLUB = d; formation = [...d.formation];
-    let sv = null; try { sv = JSON.parse(localStorage.getItem('fm26_formation') || 'null'); } catch {}
-    if (Array.isArray(sv) && sv.join() !== formation.join()) CLUB = null; else grid.refreshCells({ columns: ['name'], force: true }); } }).catch(() => {});
+  api('/api/club?' + clubQS(savedFormation())).then(r => r.ok ? r.json() : null).then(d => { if (d && !CLUB) { CLUB = d; formation = [...d.formation]; PINS = d.pins || {};
+    grid.refreshCells({ columns: ['name'], force: true }); } }).catch(() => {});
 }
 
 let qt;
@@ -3297,12 +3338,25 @@ document.addEventListener('click', e => {
   else if (d.slot != null) selectSlot(+d.slot);
   else if (d.clearSlot != null) selectSlot(null);
   else if (d.posEdit != null) { posEdit = !posEdit; renderSlotCard(); }
-  else if (d.setpos) { if (formation[slotSel] === d.setpos) return; formation[slotSel] = d.setpos; renderClub(); refetchClub(); }
+  else if (d.setpos) { if (formation[slotSel] === d.setpos) return; formation[slotSel] = d.setpos; delete PINS[slotSel]; lsSet('fm26_pins', PINS); renderClub(); refetchClub(); }
+  else if (d.start) setPins({ ...Object.fromEntries(Object.entries(PINS).filter(([, u]) => u !== +d.start)), [slotSel]: +d.start });
+  else if (d.unpin != null) { const p = { ...PINS }; delete p[slotSel]; setPins(p); }
+  else if (d.pinsReset != null) setPins({});
+  else if (d.basis) { if (d.basis === BASIS) return; BASIS = d.basis; lsSet('fm26_club_basis', BASIS); refetchClub(); }
+  else if (d.clubEs != null) openES('club');
+  else if (d.clubEsClear != null) { CF = F0(); lsSet('fm26_club_filter', {}); renderClub(); loadRecos(); }
   else if (d.reco) { recoTab = d.reco; $$('[data-reco]').forEach(b => b.setAttribute('aria-pressed', b === t)); renderScope(); loadRecos(); }
   else if (d.pickClub) pickClub(+d.pickClub);
   else if (d.copy != null) copyText(d.copy);
   else if (t.id === 'clubRetry') { CLUB = null; loadClub(true); }
 });
+// My Club pitch: drag a slot onto another to swap their starters.
+let dragSlot = null;
+document.addEventListener('dragstart', e => { const s = e.target.closest?.('.slot[data-slot]'); if (!s) return; dragSlot = +s.dataset.slot; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', s.dataset.slot); });
+document.addEventListener('dragover', e => { const s = dragSlot != null && e.target.closest?.('.slot[data-slot]'); if (!s) return; e.preventDefault(); e.stopPropagation();
+  $$('.slot.drop').forEach(x => x !== s && x.classList.remove('drop')); s.classList.add('drop'); }, true);
+document.addEventListener('drop', e => { const s = dragSlot != null && e.target.closest?.('.slot[data-slot]'); if (!s) return; e.preventDefault(); e.stopPropagation(); swapSlots(dragSlot, +s.dataset.slot); }, true);
+document.addEventListener('dragend', () => { dragSlot = null; $$('.slot.drop').forEach(x => x.classList.remove('drop')); });
 // Middle-click on a player (grid row, My Club, Offers, similar list) opens his full profile page.
 const PLAYER_SEL = '[data-player], [data-profile], #grid .ag-row[row-id]';
 document.addEventListener('mousedown', e => { if (e.button === 1 && e.target.closest(PLAYER_SEL)) e.preventDefault(); });  // no autoscroll
@@ -3313,7 +3367,7 @@ document.addEventListener('auxclick', e => {
   if (uid) { e.preventDefault(); openProfile(uid); }
 });
 document.addEventListener('change', e => {
-  if (e.target.id === 'cShape') { formation = [...shapes()[e.target.value]]; slotSel = null; renderClub(); refetchClub(); }
+  if (e.target.id === 'cShape') { formation = [...shapes()[e.target.value]]; slotSel = null; PINS = {}; renderClub(); refetchClub(); }
 });
 document.addEventListener('input', e => {
   if (['cBudget', 'cWage', 'cAge'].includes(e.target.id)) { clearTimeout(recoT); recoT = setTimeout(loadRecos, 400); }
@@ -3416,7 +3470,7 @@ document.addEventListener('keydown', e => {
   if (typing || e.metaKey || e.ctrlKey || e.altKey || !META) return;
   if (e.key === '/') { e.preventDefault(); $('#search').focus(); }
   else if (e.key === '1') setPage('scout'); else if (e.key === '2') { if (FAIR) setPage('deals'); } else if (e.key === '3') setPage('club'); else if (e.key === '4') setPage('offers');
-  else if (e.key === 'e') { e.preventDefault(); openES(); }
+  else if (e.key === 'e') { e.preventDefault(); openES(st.page === 'club' && CLUB ? 'club' : 'grid'); }
   else if (e.key === 's' && (drawerPlayer || st.page === 'player' && ppPlayer)) { const p = drawerPlayer || ppPlayer; toggleStar(p.uid, p.name, p.club_uid); }
 });
 
