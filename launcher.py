@@ -1,4 +1,4 @@
-import json, socket, sys, threading, time, traceback, urllib.request, webbrowser
+import json, os, socket, sys, threading, time, traceback, urllib.request, webbrowser
 
 from datadir import data_dir
 
@@ -52,11 +52,26 @@ def log_to_file():
         sys.stdout = sys.stderr = open(data_dir() / "launcher.log", "w", encoding="utf-8", buffering=1)
 
 
+def unblock_dlls():
+    """A zip downloaded from the web and extracted with Explorer tags every file as from the Internet (a
+    Zone.Identifier stream). .NET then refuses to load pythonnet's and WebView2's assemblies, and the window falls
+    back to the browser. Dropping the tag is what "Unblock" in the file's Properties does."""
+    if sys.platform != "win32" or not getattr(sys, "frozen", False):
+        return
+    from pathlib import Path
+    for f in Path(sys._MEIPASS).rglob("*.dll"):
+        try:
+            os.remove(f"{f}:Zone.Identifier")
+        except OSError:  # not tagged, or a read-only folder
+            pass
+
+
 def native_window(url, ready) -> bool:
     """Show the app in its own window (WKWebView on macOS, WebView2 on Windows) until it is closed: the splash
     first, the app once ready() says the server answers. False when no native window can be shown here: the caller
     falls back to the browser."""
     try:
+        unblock_dlls()
         import webview
         webview.settings["ALLOW_DOWNLOADS"] = True  # CSV export
         webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = True  # update link, GitHub

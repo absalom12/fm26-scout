@@ -9,7 +9,16 @@ def get(url):
         return r.read()
 
 
+def tag_as_downloaded(exe):
+    """What Explorer does when it extracts the zip downloaded from the release page (the launcher must undo it)."""
+    for f in Path(exe).parent.rglob("*.dll"):
+        with open(f"{f}:Zone.Identifier", "w") as z:
+            z.write("[ZoneTransfer]\nZoneId=3\n")
+
+
 def main(exe):
+    if sys.platform == "win32":
+        tag_as_downloaded(exe)
     data = Path(tempfile.mkdtemp())
     proc = subprocess.Popen([exe], env={**os.environ, "FM26_DATA_DIR": str(data)})
     try:
