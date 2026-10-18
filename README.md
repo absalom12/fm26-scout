@@ -86,3 +86,5 @@ A massive shoutout to [Randal S. Olson](https://x.com/randal_olson) for creating
 # 📄 License
 
 Distributed under the MIT License. See [LICENSE](https://github.com/absalom12/fm26-scout/blob/main/LICENSE.md) for details.
+
+Bundled third-party files, in `static/vendor/`: [AG Grid Community](https://www.ag-grid.com/) 32.3.3 (MIT) and the Barlow, Barlow Condensed and JetBrains Mono fonts (SIL Open Font License 1.1). They ship with the app so it works offline and loads nothing from a CDN.

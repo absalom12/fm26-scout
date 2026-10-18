@@ -6,6 +6,7 @@ from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from datadir import FILES, data_dir, list_saves, replace_data, resolve_save
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from urllib.parse import urlsplit
 from pydantic import BaseModel
 
@@ -1188,3 +1189,7 @@ def offer(q: OfferQuery):
 @app.get("/")
 def index():
     return FileResponse(os.path.join(RES, "static", "index.html"))
+
+
+# Third-party files shipped with the app (AG Grid, fonts) so it runs offline and contacts no CDN.
+app.mount("/vendor", StaticFiles(directory=os.path.join(RES, "static", "vendor")), name="vendor")
