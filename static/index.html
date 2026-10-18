@@ -1249,9 +1249,10 @@ const flag = code => {
   return /^[A-Z]{2}$/i.test(code) ? [...code.toUpperCase()].map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('') : '';
 };
 const natCode = name => META.nations?.find(n => n.name === name)?.code || '';
-// Flags (names too if set in Settings); the country name shows on hover and to screen readers. Second nations only on the full profile (all = true).
-const natHTML = (p, all = false) => !p || !p.nationality ? '' : `<span class="nat">${[[p.nationality, p.nationality_code], ...(all && p.second_nationalities || '').split(', ').filter(Boolean).map(n => [n, natCode(n)])]
-  .map(([n, c]) => { const f = flag(c); const named = f && SET.nat === 'name';
+// Flags (names too if set in Settings, except in tight lists: flagOnly); the country name shows on hover and to screen readers.
+// Second nations only on the full profile (all = true).
+const natHTML = (p, all = false, flagOnly = false) => !p || !p.nationality ? '' : `<span class="nat">${[[p.nationality, p.nationality_code], ...(all && p.second_nationalities || '').split(', ').filter(Boolean).map(n => [n, natCode(n)])]
+  .map(([n, c]) => { const f = flag(c); const named = f && SET.nat === 'name' && !flagOnly;
     return `<span class="flag" title="${esc(n)}">${f || esc(n)}${f && !named ? `<span class="sr">${esc(n)}</span>` : ''}</span>${named ? `<span class="nat-n">${esc(n)}</span>` : ''}`; }).join('')}</span>`;
 // Contract time left: months up to a year, then years.
 const leftTxt = m => m > 12 ? `${+(m / 12).toFixed(1)} years` : `${m} month${m === 1 ? '' : 's'}`;
@@ -2300,7 +2301,7 @@ function secSwarm() {
 }
 // One similar player: flag, name, age and club, fee, and the number he was matched on.
 const simRow = (r, pa, ak = []) => { const [t, , v, c] = simMetric(r), av = ak.length ? mean(ak.map(k => r[k])) : null;
-  return `<button class="sim-row" data-profile="${r.uid}"><span><b>${natHTML(r)} ${esc(r.name)}</b><small>${r.age} yrs · ${esc(r.club_name || 'Free agent')}</small></span>
+  return `<button class="sim-row" data-profile="${r.uid}"><span><b>${natHTML(r, false, true)} ${esc(r.name)}</b><small>${r.age} yrs · ${esc(r.club_name || 'Free agent')}</small></span>
     <span class="mono" style="font-size:12px">${feeHTML(r)}</span>${ak.length ? `<span class="mono" style="color:${av == null ? C.muted : sev(av)};font-weight:700" title="Average of the matched attributes"><span class="sr">Average of the matched attributes </span>${av == null ? '–' : av.toFixed(1)}</span>` : ''}<span class="mono" style="color:${c};font-weight:700" title="${t}"><span class="sr">${t} </span>${v}</span>${pa ? `<span class="mono" style="color:${abilityColor(r.ability_potential)};font-weight:700" title="Potential ability"><span class="sr">Potential ability </span>${r.ability_potential ?? '–'}</span>` : ''}</button>`; };
 // Column names over a similar-players list (CA and PA in Full).
 const SIM_SHORT = { 'Current ability': 'CA', Performance: 'Performance', 'Best role': 'Best role' };
