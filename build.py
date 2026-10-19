@@ -7,11 +7,13 @@ icon = "assets/icon.ico" if sys.platform == "win32" else "assets/icon.icns"  # r
 sign = ["--codesign-identity", os.environ["CODESIGN_IDENTITY"], "--osx-entitlements-file", "assets/entitlements.plist"] \
     if sys.platform == "darwin" and os.environ.get("CODESIGN_IDENTITY") else []  # set by CI when Apple secrets exist
 PyInstaller.__main__.run([
-    "launcher.py", "--name", "FM26-Scout", "--noconsole", "--onedir", "--noconfirm", "--clean", "--icon", icon,
+    "launcher.py", "--name", "ScoutSheet", "--noconsole", "--onedir", "--noconfirm", "--clean", "--icon", icon,
     "--add-data", f"static{sep}static",
     "--collect-all", "fmsave",
     "--collect-submodules", "uvicorn",
     "--hidden-import", "multipart",
+    # Kept from the FM26 Scout days: macOS files the window's localStorage (shortlist, saved searches) under it.
+    "--osx-bundle-identifier", "FM26-Scout",
     # Optional extras of duckdb/fmsave the app never imports: fewer files for macOS to scan on first launch.
     "--exclude-module", "pandas", "--exclude-module", "PIL",
     *sign,

@@ -11,9 +11,9 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            asset: FM26-Scout-mac.zip
+            asset: ScoutSheet-mac.zip
           - os: windows-latest
-            asset: FM26-Scout-windows.zip
+            asset: ScoutSheet-windows.zip
     runs-on: ${{ matrix.os }}
     env:
       APPLE_CERT_P12: ${{ secrets.APPLE_CERT_P12 }}  # all Apple secrets optional: without them the Mac build stays unsigned
@@ -39,20 +39,20 @@ jobs:
         run: echo "${GITHUB_REF_NAME#v}" > VERSION
       - run: python build.py
       - if: runner.os == 'macOS'
-        run: python tests/smoke.py dist/FM26-Scout.app/Contents/MacOS/FM26-Scout
+        run: python tests/smoke.py dist/ScoutSheet.app/Contents/MacOS/ScoutSheet
       - if: runner.os == 'Windows'
-        run: python tests/smoke.py dist/FM26-Scout/FM26-Scout.exe
+        run: python tests/smoke.py dist/ScoutSheet/ScoutSheet.exe
       - name: Notarize and staple
         if: runner.os == 'macOS' && env.APPLE_CERT_P12 != ''
         run: |
-          codesign --verify --deep --strict --verbose=2 dist/FM26-Scout.app
-          ditto -c -k --keepParent dist/FM26-Scout.app notarize.zip
+          codesign --verify --deep --strict --verbose=2 dist/ScoutSheet.app
+          ditto -c -k --keepParent dist/ScoutSheet.app notarize.zip
           xcrun notarytool submit notarize.zip --apple-id "${{ secrets.APPLE_ID }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --wait
-          xcrun stapler staple dist/FM26-Scout.app
+          xcrun stapler staple dist/ScoutSheet.app
       - if: runner.os == 'macOS'
-        run: ditto -c -k --keepParent dist/FM26-Scout.app ${{ matrix.asset }}
+        run: ditto -c -k --keepParent dist/ScoutSheet.app ${{ matrix.asset }}
       - if: runner.os == 'Windows'
-        run: Compress-Archive -Path dist/FM26-Scout -DestinationPath ${{ matrix.asset }}
+        run: Compress-Archive -Path dist/ScoutSheet -DestinationPath ${{ matrix.asset }}
       - if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with: { files: "${{ matrix.asset }}" }

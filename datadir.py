@@ -5,14 +5,21 @@ FILES = ("all_world_players.csv", "club_gender.csv", "club_league.csv", "season_
 
 
 def data_dir() -> Path:
-    if env := os.environ.get("FM26_DATA_DIR"):
+    if env := os.environ.get("SCOUTSHEET_DATA_DIR"):
         p = Path(env)
-    elif sys.platform == "win32":
-        p = Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming") / "FM26 Scout"
-    elif sys.platform == "darwin":
-        p = Path.home() / "Library" / "Application Support" / "FM26 Scout"
     else:
-        p = Path.home() / ".local" / "share" / "fm26-scout"
+        if sys.platform == "win32":
+            base, name, old = Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming"), "ScoutSheet", "FM26 Scout"
+        elif sys.platform == "darwin":
+            base, name, old = Path.home() / "Library" / "Application Support", "ScoutSheet", "FM26 Scout"
+        else:
+            base, name, old = Path.home() / ".local" / "share", "scoutsheet", "fm26-scout"
+        p = base / name
+        if not p.exists() and (base / old).is_dir():  # the app was called FM26 Scout: keep the user's data
+            try:
+                (base / old).rename(p)
+            except OSError:  # the old app is still running (Windows): use its folder this time, move it next launch
+                p = base / old
     p.mkdir(parents=True, exist_ok=True)
     return p
 
@@ -27,7 +34,7 @@ def _documents_dir() -> Path:
 
 
 def saves_dir() -> Path:
-    if env := os.environ.get("FM26_SAVES_DIR"):
+    if env := os.environ.get("SCOUTSHEET_SAVES_DIR"):
         return Path(env)
     base = Path.home() / "Library" / "Application Support" if sys.platform == "darwin" else _documents_dir()
     return base / "Sports Interactive" / "Football Manager 26" / "games"

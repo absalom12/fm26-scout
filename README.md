@@ -1,83 +1,84 @@
-<img width="1512" height="825" alt="Capture d’écran 2026-10-18 à 01 33 15" src="https://github.com/user-attachments/assets/60973a26-b210-4c2d-83e5-6b84b06d4144" />
-In save data - Decembre 2028.
+<img width="1512" height="825" alt="ScoutSheet player grid" src="https://github.com/user-attachments/assets/60973a26-b210-4c2d-83e5-6b84b06d4144" />
 
-# ⚽ FM26 Scout
+# ⚽ ScoutSheet
 
-A fast, local web application to scout, value, and shortlist players directly from your **Football Manager 2026** save file.
+**Sign the stats. Not the name.** A free scouting tool for Football Manager 26.
 
-Powered by `fmsave` for read-only save file parsing, **FastAPI + DuckDB** for lightning-fast queries, and **AG Grid** for a responsive single-page frontend.
+ScoutSheet pulls every player out of your own FM26 save and puts them in one place. Scout them in the app, Moneyball style if you like, or export the data and dig in with your own tools. Find the players who are better than their price.
 
----
+Free and open source. Runs on your computer, works offline, and never writes to your save.
 
-## 🔥 Key Features
-
-- **75,000+ Player Grid:** Fast data exploration with FM-style "Edit Search" filters, column presets, and deep customization.
-- **3 Flexible Scouting Modes:**
-  - 🔓 **Full:** Unrestricted view including hidden **CA / PA** attributes and potential.
-  - ⚖️ **Fair Play:** Realistic view—hidden attributes, **CA**, and **PA** are completely omitted.
-  - 📊 **Moneyball:** Pure stats & observable in-game performance metrics without relying on raw attributes.
-- **Deal Finder:** Evaluates fair transfer fees and wages versus actual club valuations to highlight genuine bargains.
-- **My Club Engine:** Infer your team's tactical formation from recent matches, rank squad power, and receive slot-by-slot recruitment targets tailored to your tactical gaps.
-- **Offers Validator:** Analyze incoming and outgoing bids with fair-fee verdicts and likelihood-of-acceptance estimates.
-- **Comprehensive Database Filters:** Includes nationality filters, positional role weightings, and gender filters (strictly isolating men's database entries via the `UID < 2,000,000,000` rule).
+🌐 **[scoutsheet.app](https://scoutsheet.app)**
 
 ---
 
-## 🚀 Download & Quick Start (No Terminal / No Install)
+## Three ways to scout
 
-Get up and running in less than two minutes without touching Python or the command line:
+One click switches modes. Same save, same players, different eyes.
 
-1. **Download:** Head over to **[Releases (v0.4.8)](https://github.com/absalom12/fm26-scout/releases/tag/v0.4.8)** and grab `FM26-Scout-mac.zip` (for Apple Silicon Macs) or `FM26-Scout-windows.zip`.
-2. **Extract & Open:**
-   - **macOS:** Unzip and drag `FM26-Scout` to your Applications folder (optional), then double-click it.
-   - **Windows:** Extract the `FM26-Scout` folder anywhere (*do not run inside the ZIP archive*) and double-click `FM26-Scout.exe`.
-3. **Scout:** Your default browser will automatically launch `http://127.0.0.1:8765` (the next free port if that one is taken). Select your `.fm` save file from the detected list and allow ~1 minute for parsing.
+- **Full:** the whole truth. Current and potential ability, hidden attributes, personality, and a written scouting report on every player.
+- **Fair play:** find them yourself. Only what your scouts would tell you in the game: no potential, no hidden attributes.
+- **Moneyball:** only results count. Attributes switched off; players are judged on what they do in matches, next to what they cost.
 
-> ℹ️ **Auto-Exit & Local Security:** The background server automatically closes a few seconds after you close your browser tab. Your save file is read **100% locally** and never leaves your machine. The only online request is a check, at launch, for a newer version on GitHub (nothing about you or your save is sent).
+## What you get
+
+- **Your weak spots:** ScoutSheet rates every position in your team and shows the weakest first. Click one for the players who would make it better, with what they cost.
+- **Player profile:** where he plays, what he's good at, how he compares with players in his position. Stats, price, contract and similar players are one tab away.
+- **Bargains:** every player gets a fair price, worked out from similar players (same kind of profile, age, level and contract) in your own save. Then you see who sells for far less than he's worth. In Moneyball, a player needs 900 minutes before he gets one.
+- **Your data, anywhere:** export any list, with every column, to a CSV file for Excel, Google Sheets or your own tools.
+- **Offers:** check a bid against the player's fair price before you accept or send it.
+- **Men and women:** every player in the save, with a switch between them.
 
 ---
+
+## 🚀 Download and first launch
+
+Get the latest version from **[Releases](https://github.com/absalom12/scoutsheet/releases/latest)**: `ScoutSheet-windows.zip` or `ScoutSheet-mac.zip` (Apple Silicon, M1 or later). Ready in about three minutes.
+
+- **Windows:** unzip the folder first (don't run it from inside the zip), then double-click `ScoutSheet.exe`. If Windows says it protected your PC, click **More info**, then **Run anyway**. That's the only time you'll see it.
+- **Mac:** unzip, drag ScoutSheet to Applications, then double-click it.
+
+The app opens in its own window. Pick your save: reading it takes about a minute. When a new version is out, one click installs it and restarts the app.
 
 ### 🛡️ Is it safe to open?
 
-- **Mac:** yes, and nothing to do. The app is made by a registered Apple developer and checked by Apple, so it opens like any other app.
-- **Windows:** yes, but Windows will show a blue **"Windows protected your PC"** screen the first time. That is normal for small free apps from independent developers: Microsoft's seal of approval costs a yearly fee, which I'm not paying for a free project. To continue, click **More info**, then **Run anyway**. You only do this once.
+- **Mac:** yes, and nothing to do. The app is signed and notarised by Apple, so it opens like any other app.
+- **Windows:** yes, but SmartScreen asks you to confirm once. Microsoft's signing costs a yearly fee, which a free project doesn't pay.
 
-The app runs only on your computer and never sends your save file anywhere. When it starts, it only asks GitHub whether a newer version exists, and shows a link if there is one. The code is public, so anyone can check it.
+Your save is only read, never written, and never leaves your computer. The one online request: at launch, the app asks GitHub whether a newer version exists (nothing about you or your save is sent; you can turn the check off in Settings). The code is public, so anyone can check it.
 
 ---
 
-## 🛠️ For Developers & Contributors
+## 🛠️ For developers
 
-If you want to run from source, modify code, or build executables manually:
+Built on `fmsave` (read-only save parsing), **FastAPI + DuckDB** for queries and **AG Grid** for the single-page frontend.
 
 ```bash
-# Clone repository
-git clone https://github.com/absalom12/fm26-scout.git
-cd fm26-scout
+git clone https://github.com/absalom12/scoutsheet.git
+cd scoutsheet
 
-# Setup virtual environment (Python 3.12)
+# Python 3.12
 python3.12 -m venv venv
 venv/bin/pip install -r requirements.txt -r requirements-dev.txt
 
-# Run local development server
 venv/bin/python launcher.py     # or: venv/bin/uvicorn app:app --port 8000
-
-# Run unit tests
 venv/bin/pytest
-
-# Build standalone desktop executables (PyInstaller)
-venv/bin/python build.py
+venv/bin/python build.py        # standalone app (PyInstaller)
 ```
+
+Releases are built by GitHub Actions on a `v*` tag.
 
 # 📁 Application Storage
 
 Generated databases and cached parse outputs live in:
 
-macOS: ~/Library/Application Support/FM26 Scout/
+macOS: ~/Library/Application Support/ScoutSheet/
 
-Windows: %APPDATA%\FM26 Scout\
+Windows: %APPDATA%\ScoutSheet\
 
-(Note: Set the FM26_DATA_DIR environment variable to override this storage path.)
+(The app used to be called FM26 Scout: its old `FM26 Scout` folder is moved there on first launch, saves and settings included.)
+
+(Note: Set the SCOUTSHEET_DATA_DIR environment variable to override this storage path.)
 
 # 🙏 Credits & Shoutouts
 
@@ -85,6 +86,6 @@ A massive shoutout to [Randal S. Olson](https://x.com/randal_olson) for creating
 
 # 📄 License
 
-Distributed under the MIT License. See [LICENSE](https://github.com/absalom12/fm26-scout/blob/main/LICENSE.md) for details.
+Distributed under the MIT License. See [LICENSE](https://github.com/absalom12/scoutsheet/blob/main/LICENSE.md) for details.
 
 Bundled third-party files, in `static/vendor/`: [AG Grid Community](https://www.ag-grid.com/) 32.3.3 (MIT) and the Barlow, Barlow Condensed and JetBrains Mono fonts (SIL Open Font License 1.1). They ship with the app so it works offline and loads nothing from a CDN.

@@ -78,7 +78,7 @@ POS = {
     "CM": ["mc"], "W": ["ml", "mr", "aml", "amr"], "AM": ["amc"], "ST": ["stc"],
 }
 # Single positions the search can also filter on (they sit inside a group above).
-EXACT_POS = {"ML": ["ml"], "MR": ["mr"]}
+EXACT_POS = {p: [p.lower()] for p in ("DL", "DR", "WBL", "WBR", "ML", "MR", "AML", "AMR")}
 # Role -> (position group, {attribute: weight}). Key attributes weight 2, preferable 1. Score 0-100.
 ROLES = {
     "sweeper_keeper": ("GK", dict(reflexes=2, one_on_ones=2, rushing_out=2, command_of_area=2, kicking=1, passing=1,
@@ -327,6 +327,7 @@ NAT_GROUP = {"GK": "GK", "SW": "CB", "DC": "CB", "DL": "FB", "DR": "FB", "WBL": 
 
 
 MIN_PEERS = 30  # smallest league (per position group) worth ranking players inside
+PERF_MIN = 400  # league minutes this season from which a player gets the performance index and peer percentiles
 
 
 def add_stat_score():
@@ -337,11 +338,11 @@ def add_stat_score():
     grp = "CASE split_part(natural_positions, ';', 1) " + " ".join(f"WHEN '{k}' THEN '{v}'" for k, v in NAT_GROUP.items()) + " END"
     parts = " UNION ALL ".join(
         f"SELECT uid, ({' + '.join(f'percent_rank() OVER (PARTITION BY gender, lg ORDER BY coalesce({m}, 0))' for m in ms)}) / {len(ms)} AS perf "
-        f"FROM q WHERE stat_group = '{g}' AND s_minutes >= 600" for g, ms in STAT_METRICS.items())
+        f"FROM q WHERE stat_group = '{g}' AND s_minutes >= {PERF_MIN}" for g, ms in STAT_METRICS.items())
     con().execute(f"""
         CREATE OR REPLACE TABLE players AS
         WITH p AS (SELECT *, {grp} AS stat_group FROM players),
-             q AS (SELECT *, CASE WHEN count(*) FILTER (WHERE s_minutes >= 600) OVER (PARTITION BY gender, stat_group, s_league_id) >= {MIN_PEERS}
+             q AS (SELECT *, CASE WHEN count(*) FILTER (WHERE s_minutes >= {PERF_MIN}) OVER (PARTITION BY gender, stat_group, s_league_id) >= {MIN_PEERS}
                                   THEN s_league_id END AS lg FROM p),
              s AS ({parts}),
              lv AS (SELECT s_league_id, percent_rank() OVER (ORDER BY league_strength) AS lvl
@@ -351,6 +352,113 @@ def add_stat_score():
                    FROM s JOIN p ON p.uid = s.uid LEFT JOIN lv ON lv.s_league_id = p.s_league_id)
         SELECT p.*, round(100 * r.perf * (0.4 + 0.6 * r.lvl), 1) AS stat_score
         FROM p LEFT JOIN r USING (uid)""")
+
+
+# Moneyball role fit: the season-stats twin of ROLES. Stat -> (label, unit, SQL value, lower is better).
+ROLE_STATS = {
+    "save_pct": ("Save %", "%", "100.0 * (coalesce(s_saves_held, 0) + coalesce(s_saves_parried, 0) + coalesce(s_saves_tipped, 0)) / nullif(s_shots_on_target_faced, 0)", False),
+    "xgp": ("xG prevented", "/90", _p90("s_expected_goals_prevented"), False),
+    "conceded": ("Goals conceded", "/90", _p90("s_goals_allowed"), True),
+    "cs": ("Clean sheets", "/90", _p90("s_clean_sheets"), False),
+    "pass_pct": ("Pass completion", "%", "s_pass_pct", False),
+    "passes": ("Passes completed", "/90", _p90("s_passes_completed"), False),
+    "prog": ("Progressive passes", "/90", _p90("s_progressive_passes"), False),
+    "key_passes": ("Key passes", "/90", _p90("s_key_passes"), False),
+    "ccc": ("Clear-cut chances made", "/90", _p90("s_clear_cut_chances_created"), False),
+    "xa": ("xA", "/90", _p90("s_expected_assists"), False),
+    "crosses": ("Crosses completed", "/90", _p90("s_crosses_completed"), False),
+    "dribbles": ("Dribbles", "/90", _p90("s_dribbles"), False),
+    "xg": ("xG", "/90", _p90("s_expected_goals"), False),
+    "goals": ("Goals", "/90", _p90("s_goals"), False),
+    "shots": ("Shots", "/90", _p90("s_shots"), False),
+    "sot": ("Shots on target", "/90", _p90("s_shots_on_target"), False),
+    "fouled": ("Fouls won", "/90", _p90("s_fouls_against"), False),
+    "tackles": ("Tackles won", "/90", _p90("s_tackles_completed"), False),
+    "int": ("Interceptions", "/90", _p90("s_interceptions"), False),
+    "poss_won": ("Possession won", "/90", _p90("s_possession_won"), False),
+    "pressures": ("Pressures completed", "/90", _p90("s_pressures_completed"), False),
+    "blocks": ("Blocks", "/90", _p90("s_blocks"), False),
+    "headers": ("Headers won", "/90", _p90("s_headers_won"), False),
+    "header_pct": ("Header win %", "%", "s_header_pct", False),
+    "distance": ("Distance", "km/90", _p90("s_distance_km"), False),
+}
+# Role -> {stat: weight}, key 2 / preferable 1. Picked per role, then kept only if the stat ranks the save's best attribute
+# fits for that role (top quarter of role_<role>, PERF_MIN+ min, same group) above the rest. Group = ROLES[role][0].
+STAT_ROLES = {
+    "sweeper_keeper": dict(save_pct=2, pass_pct=2, poss_won=2, xgp=2, passes=1, conceded=1, cs=1),
+    "ball_playing_def": dict(pass_pct=2, poss_won=2, blocks=2, prog=1, header_pct=1, pressures=1),
+    "inverted_wingback": dict(pass_pct=2, prog=2, tackles=2, passes=1, poss_won=1, key_passes=1),
+    "attacking_fullback": dict(dribbles=2, crosses=2, pressures=2, xa=1, distance=1, key_passes=1),
+    "anchor": dict(int=2, pass_pct=2, blocks=2, headers=1, pressures=1, poss_won=1, tackles=1),
+    "deep_playmaker": dict(prog=2, pass_pct=2, key_passes=2, xa=1, passes=1, ccc=1),
+    "box_to_box": dict(poss_won=2, prog=2, distance=2, key_passes=1, shots=1, int=1, pass_pct=1),
+    "inside_forward": dict(xg=2, shots=2, goals=2, sot=1, dribbles=1, key_passes=1),
+    "winger": dict(dribbles=2, crosses=2, key_passes=2, xa=1, prog=1, pressures=1),
+    "advanced_playmaker": dict(key_passes=2, xa=2, ccc=2, prog=2, dribbles=1, pass_pct=1),
+    "pressing_forward": dict(poss_won=2, pressures=2, distance=2, xg=1, key_passes=1, passes=1),
+    "advanced_forward": dict(xg=2, sot=2, goals=2, shots=1, dribbles=1, fouled=1),
+    "target_man": dict(headers=2, header_pct=2, xg=1, fouled=1, key_passes=1, goals=1),
+}
+# The "15" of the stats: the 70th percentile of the group. The save's top-quarter attribute fits sit at a median ~67th
+# percentile on these stats, so reaching 70 = producing like an accomplished player in that role.
+ROLE_LIMIT_PCT = 70
+STAT_Q = {}  # (gender, group, stat) -> 101 percentiles (0..100) among same-group players with PERF_MIN+ min
+
+
+def _pct_sql(v, q, low):
+    """Percentile 0-100 of value v against the 101-point list q (share of peers below; above when lower is better)."""
+    return f"coalesce(least(len(list_filter({q}, x -> x {'>' if low else '<'} {v})), 100), 0)"
+
+
+def stat_pct(v, q, low):
+    """Python twin of _pct_sql, for the profile's per-stat bars."""
+    return 0 if v is None or q is None else min(sum(x > v if low else x < v for x in q if x is not None), 100)
+
+
+def add_stat_roles():
+    """srole_<role>: 0-100 Moneyball role fit, the weighted mean of the role's stat percentiles against the role's
+    position group (same gender, PERF_MIN+ min). Only for players with PERF_MIN+ min who can play that group (15+)."""
+    STAT_Q.clear()
+    pts = "[" + ", ".join(str(i / 100) for i in range(101)) + "]"
+    joins = []
+    for g in POS:
+        roles = [r for r, (gg, _) in ROLES.items() if gg == g and r in STAT_ROLES]
+        ks = sorted({k for r in roles for k in STAT_ROLES[r]})
+        if not ks:
+            continue
+        vals = ", ".join(f"{ROLE_STATS[k][2]} AS m_{k}" for k in ks)
+        for row in con().execute(f"SELECT gender, {', '.join(f'quantile_cont(m_{k}, {pts})' for k in ks)} FROM "
+                                 f"(SELECT gender, {vals} FROM players WHERE stat_group = '{g}' AND s_minutes >= {PERF_MIN}) GROUP BY 1").fetchall():
+            STAT_Q.update({(row[0], g, k): q for k, q in zip(ks, row[1:])})
+        qcols = ", ".join(f"quantile_cont(m_{k}, {pts}) AS q_{k}" for k in ks)
+        score = lambda r: " + ".join(f"{w} * {_pct_sql('m_' + k, 'q_' + k, ROLE_STATS[k][3])}" for k, w in STAT_ROLES[r].items())
+        pos = ", ".join(f"positions_{p}" for p in POS[g])
+        joins.append(f"""LEFT JOIN (
+            WITH v AS (SELECT uid, gender, stat_group, s_minutes, greatest({pos}, 0) AS fit, {vals} FROM players WHERE s_minutes >= {PERF_MIN}),
+                 q AS (SELECT gender, {qcols} FROM v WHERE stat_group = '{g}' GROUP BY 1)
+            SELECT uid, {', '.join(f'round(({score(r)}) / {sum(STAT_ROLES[r].values())}, 1) AS srole_{r}' for r in roles)}
+            FROM v JOIN q ON q.gender IS NOT DISTINCT FROM v.gender WHERE v.fit >= 15) USING (uid)""")
+    con().execute("CREATE OR REPLACE TABLE players AS SELECT * FROM players " + " ".join(joins))
+
+
+def stat_roles(p):
+    """Per-stat detail behind each srole_ score of a player: {role: [{stat, value, pct, limit, weight}]}."""
+    roles = [r for r in STAT_ROLES if p.get(f"srole_{r}") is not None]
+    if not roles:
+        return {}
+    ks = sorted({k for r in roles for k in STAT_ROLES[r]})
+    vals = dict(zip(ks, con().execute(f"SELECT {', '.join(ROLE_STATS[k][2] for k in ks)} FROM players WHERE uid = ?", [p["uid"]]).fetchone()))
+    out = {}
+    for r in roles:
+        g = ROLES[r][0]
+        out[r] = []
+        for k, w in STAT_ROLES[r].items():
+            q, low = STAT_Q.get((p.get("gender"), g, k)), ROLE_STATS[k][3]
+            lim = q[100 - ROLE_LIMIT_PCT if low else ROLE_LIMIT_PCT] if q else None
+            v = vals[k]
+            out[r].append({"stat": k, "weight": w, "value": None if v is None else round(float(v), 3),
+                           "pct": stat_pct(v, q, low), "limit": None if lim is None else round(float(lim), 3)})
+    return out
 
 
 # ---- Fair price model ----
@@ -531,6 +639,7 @@ def load(d=None):
     _step(.5, 1, "Scoring players")
     if has_s:
         add_stat_score()
+        add_stat_roles()
     add_deals()
     global COLS, CLUB, MODE_HIDDEN, VISIBLE
     CLUB = read_club(j("club.json"))
@@ -631,16 +740,16 @@ PRESETS = {
     "ball_winners": ("Form", "Ball winners", "Tackles + interceptions per 90, 900+ min", "s_minutes >= 900", "s_def_actions_p90 DESC", "season"),
     "young_breakout": ("Form", "Young breakouts", "Age ≤ 21, 900+ min, rating ≥ 7.0", "age <= 21 AND s_minutes >= 900 AND s_avg_rating >= 7.0", "s_avg_rating DESC", "season"),
     # Deal Finder lenses: % under the fair fee, weighted by quality so £5k nobodies don't win on ratio alone.
-    "deals_ability": ("Deals", "Best deals · Ability", "CA/PA vs fee", "deal_ability IS NOT NULL AND transfer_value > 0 AND (ability_current >= 90 OR ability_potential >= 130)",
+    "deals_ability": ("Deals", "Best deals · Ability", "CA/PA vs value", "deal_ability IS NOT NULL AND transfer_value > 0 AND (ability_current >= 90 OR ability_potential >= 130)",
                       "deal_ability * (ability_current + ability_potential) DESC", "deals"),
-    "deals_attributes": ("Deals", "Best deals · Attributes", "Role score vs fee", "deal_attributes IS NOT NULL AND transfer_value > 0 AND best_role_score >= 55",
+    "deals_attributes": ("Deals", "Best deals · Attributes", "Role score vs value", "deal_attributes IS NOT NULL AND transfer_value > 0 AND best_role_score >= 55",
                          "deal_attributes * best_role_score DESC", "deals"),
-    "deals_form": ("Deals", "Best deals · Form", "Season rating vs fee, 900+ min", "deal_form IS NOT NULL AND transfer_value > 0 AND stat_score >= 40",
+    "deals_form": ("Deals", "Best deals · Form", "Season rating vs value, 900+ min", "deal_form IS NOT NULL AND transfer_value > 0 AND stat_score >= 40",
                    "deal_form * s_avg_rating DESC", "deals"),
-    "deals_stats": ("Deals", "Best deals · Performance", "Stats-only performance index vs fee, 900+ min", "deal_stats IS NOT NULL AND transfer_value > 0 AND stat_score >= 40",
+    "deals_stats": ("Deals", "Best deals · Performance", "Stats-only performance index vs value, 900+ min", "deal_stats IS NOT NULL AND transfer_value > 0 AND stat_score >= 40",
                     "deal_stats * stat_score DESC", "deals"),
     # fair_fee is the mode's own valuation, so ln(fair_fee) is a mode-neutral quality weight.
-    "deals_blend": ("Deals", "Best deals · Blend", "Every lens your data mode allows vs fee", "deal_score IS NOT NULL AND transfer_value > 0 AND fair_fee >= 100000",
+    "deals_blend": ("Deals", "Best deals · Blend", "Every lens your data mode allows vs value", "deal_score IS NOT NULL AND transfer_value > 0 AND fair_fee >= 100000",
                     "deal_score * ln(fair_fee) DESC", "deals"),
 }
 for r, (grp, _) in ROLES.items():
@@ -771,7 +880,7 @@ def export(q: Query):
 
 
 # Moneyball "similar": the in-game stats that matter for each position group. A player's strengths are the ones
-# where he ranks highest among same-position peers (900+ min, same gender).
+# where he ranks highest among same-position peers (PERF_MIN+ min, same gender).
 POSITION_STATS = {
     "ST": ["s_goals_p90", "s_xg_p90", "s_shots_p90", "s_assists_p90", "s_key_passes_p90", "s_dribbles_p90", "s_headers_won_p90", "s_pressures_p90", "s_xa_p90"],
     "W": ["s_dribbles_p90", "s_xa_p90", "s_crosses_p90", "s_key_passes_p90", "s_goals_p90", "s_xg_p90", "s_shots_p90", "s_prog_passes_p90", "s_pressures_p90"],
@@ -791,8 +900,8 @@ def stat_strengths(p):
     if not cols:
         return []
     row = con().execute(f"SELECT {', '.join(f'avg(({c} < ?)::INT)' for c in cols)} FROM players "
-                        "WHERE stat_group = ? AND gender IS NOT DISTINCT FROM ? AND s_minutes >= 900",
-                        [p[c] for c in cols] + [p.get("stat_group"), p.get("gender")]).fetchone()
+                        "WHERE stat_group = ? AND gender IS NOT DISTINCT FROM ? AND s_minutes >= ?",
+                        [p[c] for c in cols] + [p.get("stat_group"), p.get("gender"), PERF_MIN]).fetchone()
     ranked = sorted(zip(cols, (p[c] for c in cols), row), key=lambda x: -(x[2] or 0))
     return [(c, float(v), round(100 * (pc or 0))) for c, v, pc in ranked[:STRENGTHS_N]]
 
@@ -849,7 +958,13 @@ def _player(uid, mode):
 def player(uid: int, mode: str = "full", fair_play: bool = False):
     mode = _mode(mode, fair_play)
     p = _player(uid, mode)
-    return {**p, "fair_fee_range": fair_range(p.get("fair_fee"), p.get("gender"), mode)}
+    extra = {"stat_roles": stat_roles(p)} if mode == "moneyball" else {}
+    return {**p, "fair_fee_range": fair_range(p.get("fair_fee"), p.get("gender"), mode), **extra}
+
+
+def money_max():
+    v, w = con().execute("SELECT max(transfer_value), max(contract_wage) FROM players").fetchone()
+    return {"max_value": v or 0, "max_wage": w or 0}
 
 
 @app.get("/api/meta")
@@ -861,6 +976,9 @@ def meta():
             # Key attributes per role, heaviest first (for showing why a role score is what it is).
             "role_attributes": {r: [a for a, _ in sorted(w.items(), key=lambda kv: -kv[1])] for r, (_, w) in ROLES.items()},
             "stat_groups": list(STAT_METRICS),
+            "role_stats": {k: [l, u, low] for k, (l, u, _, low) in ROLE_STATS.items()}, "role_limit_pct": ROLE_LIMIT_PCT,
+            # ends of the money sliders (value, weekly wage): 0 -> the save's max
+            **money_max(),
             "model_fit_r2": {f"{g}/{m}": r2 for (g, m), r2 in MODEL_FIT.items()},
             "nations": [{"name": n, "code": c, "players": k} for n, c, k in con().execute(
                 "SELECT nationality, any_value(nationality_code), count(*) FROM players WHERE nationality IS NOT NULL GROUP BY 1 ORDER BY 3 DESC").fetchall()],
@@ -925,13 +1043,13 @@ def load_save(q: SaveReq):
 @app.get("/api/status")
 def status():
     busy = _ingest_lock.locked()
-    return {"app": "fm26-scout", "status": STATUS, "version": VERSION, "progress": dict(PROGRESS) if busy else None,
+    return {"app": "scoutsheet", "status": STATUS, "version": VERSION, "progress": dict(PROGRESS) if busy else None,
             "can_update": updater.bundle() is not None, "update": dict(updater.STATE)}
 
 
 @app.post("/api/update")
 def update():
-    """Install the latest release in place and relaunch (macOS app only; the page polls /api/status)."""
+    """Install the latest release in place and relaunch (built app only; the page polls /api/status)."""
     if updater.bundle() is None:
         raise HTTPException(400, "not_supported")
     if _ingest_lock.locked() or updater.STATE["state"] in ("downloading", "installing", "restarting"):
@@ -1029,7 +1147,7 @@ def squad_report(formation, mode="full", basis="attributes", pins=None):
     def card(p, pos):
         if not p:
             return None
-        c = {"uid": p["uid"], "name": p["name"], "age": p["age"], "fit": p[f"fit_{pos}"], "wage": p["contract_wage"]}
+        c = {"uid": p["uid"], "name": p["name"], "age": p["age"], "fit": p[f"fit_{pos}"], "wage": p["contract_wage"], "value": p["transfer_value"]}
         return {**c, "ca": p["ca"], "pa": p["pa"]} if mode == "full" else c
     ranked = {p: sorted((s for s in squad if s[f"fit_{p}"] is not None), key=lambda s: -s[f"fit_{p}"]) for p in pos_set}
     taken, starters = set(), {}
@@ -1057,16 +1175,14 @@ def squad_report(formation, mode="full", basis="attributes", pins=None):
                       # everyone else who can play there, best first (starters elsewhere included: the manager decides)
                       "others": [card(x, pos) for x in ranked[pos] if x is not st and x is not backup],
                       "grade": "weak" if need >= 4 else "strong" if need <= 1 else "ok"})
-    values = [s["transfer_value"] or 0 for s in squad]
     wages = sorted((s["contract_wage"] or 0 for s in squad), reverse=True)
     xi_wages = sorted((starters[i]["contract_wage"] or 0 for i in starters if starters[i]), reverse=True)
     gender = con().execute("SELECT mode(gender) FROM players WHERE club_uid = ?", [club["club_uid"]]).fetchone()[0]
     shape = next((k for k, v in SHAPES.items() if sorted(v.split()) == sorted(formation)), None)
     return {"club_uid": club["club_uid"], "club_name": club["club_name"], "formation": formation, "formation_name": shape,
             "mode": mode, "basis": basis, "pins": {i: s["starter"]["uid"] for i, s in enumerate(slots) if s["pinned"]}, "shapes": {k: v.split() for k, v in SHAPES.items()}, "slots": slots, "team_fit": round(team_fit, 1),
-            "gender": gender, "default_budget": int(round(2 * max(values, default=0), -4)),
-            # A signing can earn up to ~25% above the current top earner before he breaks the wage structure.
-            "top_wage": wages[0] if wages else 0, "default_wage_max": int(round(1.25 * (wages[0] if wages else 0), -2)),
+            # No default budget / wage cap (a silent one hid most targets): the UI's money sliders run 0 -> /api/meta's max.
+            "gender": gender, "top_wage": wages[0] if wages else 0,
             "xi_median_wage": xi_wages[len(xi_wages) // 2] if xi_wages else 0}
 
 
@@ -1170,7 +1286,7 @@ def targets(q: TargetQuery, rep, slots, per_pos, min_rating, extra_where=""):
             if row["free_agent"]:
                 bits.append("free agent")
             elif deal and deal > 0:
-                bits.append(f"{deal:.0f}% under fair fee")
+                bits.append(f"{deal:.0f}% under fair value")
             if wage > 1.5 * wage_ref:
                 bits.append(f"wage £{wage / 1000:.1f}k/w is {wage / wage_ref:.1f}× your XI median")
             row.update(target_pos=pos, target_slot_index=s["slot_index"], upgrade=up, replaces=s["starter"],
@@ -1186,10 +1302,6 @@ def _prepare(q: TargetQuery):
     q.mode = _mode(q.mode, q.fair_play)
     q.basis = _basis(q.basis, q.mode)
     rep = squad_report(_formation(q.formation), q.mode, q.basis, q.pins)
-    if q.budget is None:
-        q.budget = rep["default_budget"] or None
-    if q.wage_max is None:
-        q.wage_max = rep["default_wage_max"] or None
     if q.gender is None:
         q.gender = rep["gender"]
     if q.age_max is None:
@@ -1267,7 +1379,7 @@ def offer(q: OfferQuery):
     notes = []
     if fair_fee is None:
         verdict, ratio = "unknown", None
-        notes.append("No fair fee under 900 min." if mode == "moneyball"
+        notes.append("No fair value under 900 min." if mode == "moneyball"
                      else f"Not enough data to value this player in {mode} mode.")
     else:
         ratio = q.fee / fair_fee if fair_fee else None
@@ -1277,7 +1389,7 @@ def offer(q: OfferQuery):
         notes.append(f"The wage (£{wage / 1000:.1f}k/w) is well above a fair £{fair_wage / 1000:.1f}k/w for this player.")
     if p.get("free_agent"):
         asking, acceptance = 0, "likely"
-        notes.append("Free agent: no fee needed, only wages.")
+        notes.append("Free agent: no transfer needed, only wages.")
     elif value is None:
         asking, acceptance = None, "not for sale"
         notes.append("No game valuation: his club does not want to sell. Any bid is likely to be rejected outright.")
@@ -1287,7 +1399,7 @@ def offer(q: OfferQuery):
         # Acceptance is the selling club's view, independent of whether the fee is fair for you.
         acceptance = "likely" if q.fee >= asking else "possible" if q.fee >= 0.8 * asking else "unlikely"
     if months is not None and months <= 6 and not p.get("free_agent"):
-        notes.append(f"Contract ends in {months} months: a pre-contract or a cut-price fee is realistic.")
+        notes.append(f"Contract ends in {months} months: a pre-contract or a cut-price bid is realistic.")
     if p.get("on_loan"):
         notes.append(f"On loan from {p.get('loan_parent_club_name')}; negotiate with the parent club.")
     if CLUB and wage > 1.25 * squad_report(_formation(None), mode)["top_wage"]:

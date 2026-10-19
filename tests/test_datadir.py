@@ -4,7 +4,7 @@ from datadir import FILES, data_dir, list_saves, replace_data, resolve_save
 
 
 def test_data_dir_env_override(tmp_path, monkeypatch):
-    monkeypatch.setenv("FM26_DATA_DIR", str(tmp_path / "d"))
+    monkeypatch.setenv("SCOUTSHEET_DATA_DIR", str(tmp_path / "d"))
     assert data_dir() == tmp_path / "d" and data_dir().is_dir()
 
 
@@ -51,3 +51,14 @@ def test_replace_data_swaps_and_removes_stale(tmp_path):
     replace_data(src, dst)
     assert (dst / "all_world_players.csv").read_text() == "new"
     assert not (dst / "club.json").exists()
+
+
+def test_old_data_folder_moves_to_the_new_name(tmp_path, monkeypatch):
+    monkeypatch.delenv("SCOUTSHEET_DATA_DIR", raising=False)
+    monkeypatch.setattr("sys.platform", "linux")
+    monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
+    old = tmp_path / ".local" / "share" / "fm26-scout"
+    old.mkdir(parents=True)
+    (old / "club.json").write_text("{}")
+    assert data_dir() == tmp_path / ".local" / "share" / "scoutsheet"
+    assert (data_dir() / "club.json").read_text() == "{}" and not old.exists()

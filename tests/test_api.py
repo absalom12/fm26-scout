@@ -8,8 +8,8 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture
 def scout(tmp_path, monkeypatch):
-    monkeypatch.setenv("FM26_DATA_DIR", str(tmp_path / "data"))
-    monkeypatch.setenv("FM26_SAVES_DIR", str(tmp_path / "saves"))
+    monkeypatch.setenv("SCOUTSHEET_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("SCOUTSHEET_SAVES_DIR", str(tmp_path / "saves"))
     (tmp_path / "saves").mkdir()
     import app
     monkeypatch.setattr(app, "STATUS", "empty")
@@ -32,7 +32,7 @@ def test_data_routes_409_loading(scout, client):
 
 
 def test_status_identifies_app(client):
-    assert client.get("/api/status").json() == {"app": "fm26-scout", "status": "empty", "version": "dev", "progress": None,
+    assert client.get("/api/status").json() == {"app": "scoutsheet", "status": "empty", "version": "dev", "progress": None,
                                                  "can_update": False, "update": {"state": None, "pct": 0, "error": None}}
 
 
@@ -47,7 +47,7 @@ def test_saves_lists_and_reports_missing_folder(scout, client, tmp_path, monkeyp
     (tmp_path / "saves" / "Chantilly (v02).fm").write_bytes(b"x")
     d = client.get("/api/saves").json()
     assert d["folder_found"] and [s["name"] for s in d["saves"]] == ["Chantilly (v02).fm"]
-    monkeypatch.setenv("FM26_SAVES_DIR", str(tmp_path / "nope"))
+    monkeypatch.setenv("SCOUTSHEET_SAVES_DIR", str(tmp_path / "nope"))
     assert client.get("/api/saves").json() == {"folder_found": False, "saves": []}
 
 
@@ -258,6 +258,19 @@ def test_club_pins_put_the_managers_pick_in_the_slot(squad, client):
     assert client.get("/api/club", params={"pins": "x"}).status_code == 400
 
 
+def test_club_targets_have_no_hidden_budget_or_wage_cap(squad, client):
+    # P102 earns 50x and costs 50x our players: no silent default cap may hide him; only the caps the user sets do
+    squad.con().execute("UPDATE players SET contract_wage = 50000, transfer_value = 50000000 WHERE uid = 102")
+    uids = lambda **q: [r["uid"] for r in client.post("/api/club/needs", json={"slot_index": 10, "age_max": 40, **q}).json()["rows"]]
+    assert uids() == [101, 100, 102]  # in, ranked last by the wage-structure penalty
+    assert uids(wage_max=2000) == uids(budget=2000000) == [101, 100]
+    d = client.get("/api/club").json()
+    assert "default_budget" not in d and "default_wage_max" not in d
+    m = squad.money_max()  # /api/meta's money slider ends
+    assert m["max_value"] == 50000000 and m["max_wage"] == 50000  # the money sliders' ends
+    assert d["slots"][0]["starter"]["value"] == 1000000  # what the slot's budget follows in the UI
+
+
 def test_club_targets_follow_basis_and_edit_search(squad, client):
     q = {"slot_index": 10, "budget": None, "age_max": 40}
     uids = lambda **extra: [r["uid"] for r in client.post("/api/club/needs", json={**q, **extra}).json()["rows"]]
@@ -267,3 +280,71 @@ def test_club_targets_follow_basis_and_edit_search(squad, client):
     # Edit search criteria narrow the list (here a role-score minimum), whatever positions they name
     assert uids(search={"filters": {"role_" + next(iter(squad.ROLES)): {"filterType": "number", "type": "greaterThanOrEqual", "filter": 71}},
                         "positions": ["GK"]}) == [102, 101]
+
+
+def test_performance_index_and_peer_percentiles_start_at_perf_min(scout, monkeypatch):
+    """400 league minutes are enough for the performance index and the peer pools; fair prices keep their own 900."""
+    import re
+    assert scout.PERF_MIN == 400 and scout.MONEYBALL_MIN == 900
+    stats = sorted({c for ms in scout.STAT_METRICS.values() for m in ms for c in re.findall(r"s_[a-z_]+", m)} - {"s_minutes"})
+    con = scout.con()
+    con.execute(f"""CREATE OR REPLACE TABLE players AS SELECT i AS uid, 'STC' AS natural_positions, 'Men' AS gender,
+        NULL::INT AS s_league_id, NULL::DOUBLE AS league_strength, 1.0 * i AS s_league_rep,
+        CASE i WHEN 1 THEN 399 WHEN 2 THEN 400 ELSE 1000 END AS s_minutes, {', '.join(f'1.0 * i AS {c}' for c in stats)}
+        FROM range(1, 41) t(i)""")
+    scout.add_stat_score()
+    ss = dict(con.execute("SELECT uid, stat_score FROM players WHERE uid <= 2").fetchall())
+    assert ss[1] is None and ss[2] is not None
+    # peer pool for strengths counts the 400-minute player, not the 399 one
+    con.execute("ALTER TABLE players ADD COLUMN s_goals_p90 DOUBLE")
+    con.execute("UPDATE players SET s_goals_p90 = CASE WHEN uid <= 2 THEN 1.0 ELSE 2.0 END")
+    monkeypatch.setattr(scout, "COLS", {"s_goals_p90"}, raising=False)
+    (_, _, pc), = scout.stat_strengths({"stat_group": "ST", "gender": "Men", "s_goals_p90": 1.5})
+    assert pc == round(100 * 1 / 39)  # beats the 400-minute peer only (39 peers have 400+ min)
+
+
+@pytest.fixture
+def stat_world(scout, monkeypatch):
+    """60 strikers and 30 keepers with random season stats (one striker and one keeper under PERF_MIN), plus attributes."""
+    import re
+    cols = sorted({c for _, _, e, _ in scout.ROLE_STATS.values() for c in re.findall(r"\bs_\w+", e)} - {"s_minutes"})
+    pos = ", ".join(f"{'CASE WHEN uid > 60 THEN 20 ELSE 1 END' if p == 'gk' else 'CASE WHEN uid <= 60 THEN 20 ELSE 1 END'} AS positions_{p}"
+                    for g in scout.POS.values() for p in g)
+    con = scout.con()
+    con.execute(f"""CREATE OR REPLACE TABLE players AS SELECT uid, 'P' || uid AS name, 'Men' AS gender,
+        CASE WHEN uid <= 60 THEN 'ST' ELSE 'GK' END AS stat_group, CASE WHEN uid IN (1, 61) THEN 300 ELSE 900 + uid END AS s_minutes,
+        {', '.join(f'(hash(uid, {i}) % 1000) / 10.0 AS {c}' for i, c in enumerate(cols))}, {pos},
+        14 AS attributes_finishing, 70.0 AS {', 70.0 AS '.join(f'role_{r}' for r in scout.ROLES)},
+        {', '.join(f'0.0 AS {k}_{m}' for k in scout.PER_MODE for m in scout.MODES)}
+        FROM range(1, 91) t(uid)""")
+    scout.add_stat_roles()
+    cols = {r[0] for r in con.execute("DESCRIBE players").fetchall()}
+    hidden = {"full": set(), "fair": set(), "moneyball": {c for c in cols if c.startswith(scout.MONEYBALL_PREFIXES)}}
+    monkeypatch.setattr(scout, "COLS", cols, raising=False)
+    monkeypatch.setattr(scout, "MODE_HIDDEN", hidden)
+    monkeypatch.setattr(scout, "VISIBLE", {m: (cols - h - scout.INTERNAL) | set(scout.PER_MODE) for m, h in hidden.items()})
+    monkeypatch.setattr(scout, "STATUS", "ready")
+    return scout
+
+
+def test_stat_roles_score_range_and_minutes_gate(stat_world):
+    st = [f"srole_{r}" for r, (g, _) in stat_world.ROLES.items() if g == "ST"]
+    rows = stat_world.con().execute(f"SELECT uid, srole_sweeper_keeper, {', '.join(st)} FROM players ORDER BY uid").fetchall()
+    by = {r[0]: r[1:] for r in rows}
+    assert all(v is None for v in by[1] + by[61])  # under PERF_MIN: no score
+    assert by[2][0] is None and all(0 <= v <= 100 for v in by[2][1:])  # a striker: striker roles only
+    assert 0 <= by[62][0] <= 100 and all(v is None for v in by[62][1:])  # a keeper: the GK role only
+    assert max(r[1] for r in rows if r[1] is not None) > 50 > min(r[1] for r in rows if r[1] is not None)
+
+
+def test_moneyball_player_has_stat_role_fit_and_no_attributes(stat_world, client):
+    d = client.get("/api/player/5?mode=moneyball").json()
+    assert not [k for k in d if k.startswith(("attributes_", "role_"))]
+    fit = d["stat_roles"]
+    assert set(fit) == {r for r, (g, _) in stat_world.ROLES.items() if g == "ST"}
+    for r, xs in fit.items():  # the bars add up to the score
+        assert [x["stat"] for x in xs] == list(stat_world.STAT_ROLES[r])
+        assert round(sum(x["weight"] * x["pct"] for x in xs) / sum(x["weight"] for x in xs), 1) == d[f"srole_{r}"]
+        assert all(x["limit"] is not None and 0 <= x["pct"] <= 100 for x in xs)
+    assert client.get("/api/player/1?mode=moneyball").json()["stat_roles"] == {}
+    assert "stat_roles" not in client.get("/api/player/5?mode=full").json()

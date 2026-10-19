@@ -13,14 +13,14 @@ b{font-size:22px;letter-spacing:.04em}p{margin:0;color:#8b98a5;max-width:380px;l
 i{display:block;width:180px;height:3px;margin:6px auto 0;border-radius:3px;background:#222d38;overflow:hidden;position:relative}
 i:after{content:"";position:absolute;inset:0;width:40%;background:#4aa3ff;animation:s 1.2s ease-in-out infinite}
 @keyframes s{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
-</style><b>FM26 SCOUT</b><i></i><p>Starting…<br>The first launch after an install or an update takes a few more seconds while your computer checks the app.</p>"""
-FAILED = SPLASH.split("<i>")[0] + "<p>FM26 Scout could not start. Close this window and open it again.</p>"
+</style><b>SCOUTSHEET</b><i></i><p>Starting…<br>The first launch after an install or an update takes a few more seconds while your computer checks the app.</p>"""
+FAILED = SPLASH.split("<i>")[0] + "<p>ScoutSheet could not start. Close this window and open it again.</p>"
 
 
 def is_scout(port) -> bool:
     try:
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/status", timeout=1) as r:
-            return json.load(r).get("app") == "fm26-scout"
+            return json.load(r).get("app") == "scoutsheet"
     except Exception:
         return False
 
@@ -75,7 +75,7 @@ def native_window(url, ready) -> bool:
         import webview
         webview.settings["ALLOW_DOWNLOADS"] = True  # CSV export
         webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = True  # update link, GitHub
-        w = webview.create_window("FM26 Scout", html=SPLASH, width=1440, height=900, min_size=(1000, 680),
+        w = webview.create_window("ScoutSheet", html=SPLASH, width=1440, height=900, min_size=(1000, 680),
                                   background_color="#0b0f13")
         # Not private: shortlist and saved searches live in localStorage, kept next to the data.
         def shown():

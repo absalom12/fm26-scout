@@ -6,7 +6,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 K = 4  # supersampling factor
 FULL, FAIR, MONEY = "#3d9bff", "#2fe08a", "#ffc93c"
 
-# Same geometry as the site's brand SVGs (fm26-scout-site/brand/app-icon/*.svg).
+# Same geometry as the site's brand SVGs (scoutsheet-site/brand/app-icon/*.svg).
 MAC = {  # 1024 grid: macOS icon template, 824px rounded square with 100px margins
     "size": 1024, "bg": (100, 100, 924, 924, 185, "#11171e"), "rim": "#2a3642",
     "S": [(FULL, [(411.9, 277), (638.8, 277), (686.5, 333.7), (681.4, 366.1), (486.9, 366.1), (476, 435), (386.9, 435)]),

@@ -10,8 +10,8 @@ sync_api = pytest.importorskip("playwright.sync_api")
 
 @pytest.fixture
 def server(tmp_path, monkeypatch):
-    monkeypatch.setenv("FM26_DATA_DIR", str(tmp_path / "data"))
-    monkeypatch.setenv("FM26_SAVES_DIR", str(tmp_path / "saves"))
+    monkeypatch.setenv("SCOUTSHEET_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("SCOUTSHEET_SAVES_DIR", str(tmp_path / "saves"))
     (tmp_path / "saves").mkdir()
     import app
     monkeypatch.setattr(app, "STATUS", "empty")

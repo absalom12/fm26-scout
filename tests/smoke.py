@@ -20,7 +20,7 @@ def main(exe):
     if sys.platform == "win32":
         tag_as_downloaded(exe)
     data = Path(tempfile.mkdtemp())
-    proc = subprocess.Popen([exe], env={**os.environ, "FM26_DATA_DIR": str(data)})
+    proc = subprocess.Popen([exe], env={**os.environ, "SCOUTSHEET_DATA_DIR": str(data)})
     try:
         deadline = time.time() + 90
         while time.time() < deadline:
@@ -28,7 +28,7 @@ def main(exe):
                 sys.exit(f"app exited early with code {proc.returncode}")
             for port in range(8765, 8785):  # launcher picks the first free port from 8765
                 try:
-                    if json.loads(get(f"http://127.0.0.1:{port}/api/status")).get("app") == "fm26-scout":
+                    if json.loads(get(f"http://127.0.0.1:{port}/api/status")).get("app") == "scoutsheet":
                         assert b"<title>" in get(f"http://127.0.0.1:{port}/"), "bundled page missing"
                         print(f"ok on port {port}")
                         return check_window(data / "launcher.log")
