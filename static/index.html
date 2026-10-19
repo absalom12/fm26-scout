@@ -1722,7 +1722,7 @@ const FOOT_W = [[18, 'Very strong'], [15, 'Strong'], [12, 'Fairly strong'], [9, 
 const feetHTML = p => p.left_foot == null || p.right_foot == null ? '' : `<span class="feet" role="img" aria-label="${[['Left', p.left_foot], ['Right', p.right_foot]].map(([s, v]) => `${s} foot ${FOOT_W.find(w => v >= w[0])[1].toLowerCase()}`).join(', ')}">${[['L', p.left_foot], ['R', p.right_foot]].map(([s, v]) => { const w = FOOT_W.find(x => v >= x[0])[1];
   return `<span title="${s === 'L' ? 'Left' : 'Right'} foot: ${w} (${v}/20)"><b>${s}</b><i><i style="width:${v * 5}%;background:${scoreColor(v * 5)}"></i></i></span>`; }).join('')}</span>`;
 const roleList = p => MODE === 'moneyball' ? [] : Object.keys(META.roles).map(r => [r, p['role_' + r]]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
-const roleBars = roles => roles.map(([r, x]) => `<div class="rolebar"><span>${label('role_' + r)} <span class="muted" style="font-size:11px">${META.roles[r]}</span></span><div class="tr"><i style="width:${x}%;background:${scoreColor(x)}"></i></div><b class="mono" style="color:${scoreColor(x)};text-align:right">${x.toFixed(0)}</b></div>`).join('');
+const roleBars = roles => roles.map(([r, x]) => `<div class="rolebar"><span>${label('role_' + r)} <span class="muted" style="font-size:11px">${roleTag(r)}</span></span><div class="tr"><i style="width:${x}%;background:${scoreColor(x)}"></i></div><b class="mono" style="color:${scoreColor(x)};text-align:right">${x.toFixed(0)}</b></div>`).join('');
 // Value and wage tickets; with fair prices on, the fair values, deal % and per-lens fair values.
 function priceBody(p) {
   const noAttr = MODE === 'moneyball';
@@ -1803,7 +1803,6 @@ const median = xs => { const s = xs.filter(x => x != null).sort((a, b) => a - b)
 const clamp01 = x => Math.max(0, Math.min(1, x));
 const pctW = x => (clamp01(x) * 100).toFixed(1) + '%';
 const plural = g => g + 's';
-const isGKRole = (p, grp) => grp === 'GK' && p.best_role === 'sweeper_keeper';
 // Peer pool (300 same-position players, PERF_MIN+ min) and his season percentiles; percentiles only from PERF_MIN.
 async function ppBench(p, grp) {
   let pool; try { pool = await peers(grp, p.gender); } catch { return { pool: [], pcs: {} }; }
@@ -1870,7 +1869,6 @@ function ppTimeline(p, big) {
     <span class="tl-lg" aria-hidden="true"><span>${esc(dt(p.contract_start) || '?')}</span>${p.months_left != null && !big ? `<b style="color:${c}">${leftTxt(p.months_left)} left</b>` : ''}<span>${esc(dt(p.contract_end))}</span></span></div>`;
 }
 const saleTxt = p => p.free_agent ? 'Free agent' : p.transfer_value == null ? 'Not for sale' : 'Asking ' + money(p.transfer_value);
-const roleTxt = (p, grp) => isGKRole(p, grp) ? 'Sweeper Keeper · the only GK role' : label('role_' + p.best_role);
 function simMetric(r) {
   return MODE === 'moneyball' ? ['Performance', r.stat_score, r.stat_score != null ? Math.round(r.stat_score) : '–', r.stat_score != null ? pctColor(r.stat_score) : C.muted, 100]
     : !hid('ability_current') && r.ability_current != null ? ['Current ability', r.ability_current, r.ability_current, abilityColor(r.ability_current), 200]
@@ -2053,8 +2051,19 @@ function secVs() {
 }
 // Tactical fit: every role score next to his familiarity with the positions that role is played from.
 const GRP_POS = { GK: ['GK'], CB: ['DC'], FB: ['DL', 'DR', 'WBL', 'WBR'], DM: ['DM'], CM: ['MC'], W: ['AML', 'AMR', 'ML', 'MR'], AM: ['AMC'], ST: ['ST'] };
-const bestPos = (p, g) => (GRP_POS[g] || []).map(k => [k, p[posKey(k)] ?? 0]).sort((x, y) => y[1] - x[1])[0] || ['?', 0];
-const FIT_RULE = 'Fit 0-100 from the role\'s key attributes (heaviest first). Position = his most familiar position for that role (familiarity 1-20: 18+ natural, 15+ accomplished, 12+ competent). "Not trained" = fit 75+ but familiarity under 12.';
+const bestPos = (p, g) => (Array.isArray(g) ? g : GRP_POS[g] || []).map(k => [k, p[posKey(k)] ?? 0]).sort((x, y) => y[1] - x[1])[0] || ['?', 0];
+// FM26 roles: the positions each is played from (grid names) and their groups, e.g. Advanced Playmaker = AM/CM.
+const rolePos = r => (META.role_pos?.[r] || []).map(k => k === 'stc' ? 'ST' : k.toUpperCase());
+const POS_GRP = Object.fromEntries(Object.entries(GRP_POS).flatMap(([g, ks]) => ks.map(k => [k, g])));
+const roleTag = r => [...new Set(rolePos(r).map(k => POS_GRP[k]))].join('/');
+const canPlay = (p, r) => rolePos(r).some(k => (p[posKey(k)] ?? 0) >= 15);
+// Role picker: the roles his positions (15+) allow first, every other role under "Other positions".
+function roleSelect(roles, role, p) {
+  const opt = ([r, x]) => `<option value="${r}"${r === role ? ' selected' : ''}>${label('role_' + r)} (${roleTag(r)}) · ${x.toFixed(0)}</option>`;
+  const rest = roles.filter(([r]) => !canPlay(p, r));
+  return `<label class="rl-pick"><span class="sr">Role</span><select id="ppRole">${roles.filter(([r]) => canPlay(p, r)).map(opt).join('')}${rest.length ? `<optgroup label="Other positions">${rest.map(opt).join('')}</optgroup>` : ''}</select></label>`;
+}
+const FIT_RULE = 'Fit 0-100 from the role\'s FM26 key attributes. Position = his most familiar position for that role (familiarity 1-20: 18+ natural, 15+ accomplished, 12+ competent). "Not trained" = fit 75+ but familiarity under 12.';
 function secFit() {
   const { p, grp } = ppx, gk = grp === 'GK';
   const roles = Object.keys(META.roles).filter(r => (META.roles[r] === 'GK') === gk).map(r => [r, p['role_' + r]]).filter(x => x[1] != null).sort((x, y) => y[1] - x[1]);
@@ -2062,7 +2071,7 @@ function secFit() {
   const gap = roles[1] ? roles[0][1] - roles[1][1] : null, n75 = roles.filter(x => x[1] >= 75).length;
   const shape = gap == null ? null : gap >= 8 ? ['Specialist', `his best role leads the next by ${gap.toFixed(0)}`] : gap <= 3 ? ['Flexible', `his top two roles are ${gap.toFixed(0)} apart`] : ['Clear first role', `leads the next by ${gap.toFixed(0)}`];
   const cover = POSITIONS.map(k => [k, p[posKey(k)]]).filter(x => x[1] >= 12 && x[1] < 15);
-  const row = ([r, x]) => { const [pk, pv] = bestPos(p, META.roles[r]), f = famil(pv), untrained = x >= 75 && pv < 12;
+  const row = ([r, x]) => { const [pk, pv] = bestPos(p, rolePos(r)), f = famil(pv), untrained = x >= 75 && pv < 12;
     return `<div class="tf-r${untrained ? ' un' : ''}"><span class="tf-n">${label('role_' + r)}</span><i class="tf-b"><i style="width:${x}%;background:${scoreColor(x)}"></i></i><b style="color:${scoreColor(x)}">${x.toFixed(0)}</b>
       <span class="tf-p" style="--c:${f ? f[2] : C.muted}" title="${esc(`${pk} familiarity ${pv}/20${f ? ' (' + f[1] + ')' : ''}`)}">${pk} ${pv}</span></div>`; };
   return `${h3i('role', 'Tactical fit', 'role fit · best position for it')}
@@ -2070,7 +2079,7 @@ function secFit() {
       ${shape ? rsPill(shape[0], 'var(--mode)') + `<span class="rs-a">${shape[1]}</span>` : ''}${gk ? '' : `<span class="rs-a"><b style="color:${n75 >= 3 ? C.good : 'var(--text2)'}">${n75}</b> role${n75 === 1 ? '' : 's'} at 75+</span>`}
       ${av('versatility')}</div>
     <div class="tf"${gk ? ' style="flex:none"' : ''} title="${esc(FIT_RULE)}">${roles.slice(0, 7).map(row).join('')}</div>
-    ${gk ? '' : `<p class="rs-foot">Pill = his best position for the role${roles.slice(0, 7).some(([r, x]) => x >= 75 && bestPos(p, META.roles[r])[1] < 12) ? ' · <span style="color:var(--warn)">dashed</span> = fits 75+ but not trained there' : ''}.</p>`}
+    ${gk ? '' : `<p class="rs-foot">Pill = his best position for the role${roles.slice(0, 7).some(([r, x]) => x >= 75 && bestPos(p, rolePos(r))[1] < 12) ? ' · <span style="color:var(--warn)">dashed</span> = fits 75+ but not trained there' : ''}.</p>`}
     ${cover.length ? `<p class="rs-foot" title="Positions at familiarity 12-14 (competent): not in the header, which lists natural and accomplished positions">Can cover at a pinch: ${cover.map(([k, v]) => `<b>${k}</b> ${v}`).join(', ')}</p>` : ''}
     ${gk ? gkStyle(p) : ''}`;
 }
@@ -2132,11 +2141,11 @@ function secUse() {
   const add = (tag, txt, ks, tip) => out.push(`<li title="${esc(tip)}"><span class="ru-t">${tag}</span><span>${txt}${ks.length ? ' <span class="ru-k">' + ks.map(av).join('') + '</span>' : ''}</span></li>`);
   const roles = roleList(p).filter(([r]) => (META.roles[r] === 'GK') === gk);
   // Main role = best role he can already play (familiarity 15+ at one of its positions); Plan B = the next role within 5 points, flagged when it needs retraining.
-  const trained = ([r]) => bestPos(p, META.roles[r])[1] >= 15;
-  if (roles.length) { const main = roles.find(trained) || roles[0], [r, x] = main, [pk, pv] = bestPos(p, META.roles[r]), f = famil(pv);
+  const trained = ([r]) => bestPos(p, rolePos(r))[1] >= 15;
+  if (roles.length) { const main = roles.find(trained) || roles[0], [r, x] = main, [pk, pv] = bestPos(p, rolePos(r)), f = famil(pv);
     add('Role', `<b>${label('role_' + r)}</b> (fit ${x.toFixed(0)}) ${pv >= 15 ? `from <b>${pk}</b> (${f[1].toLowerCase()})` : `but needs training at ${pk} (${pv}/20)`}.`, [], 'Best role among those he can already play (familiarity 15+, accomplished, at one of its positions); otherwise his best role.');
     const alt = roles.find(o => o !== main && o[1] >= x - 5);
-    if (alt) { const [ak, apv] = bestPos(p, META.roles[alt[0]]);
+    if (alt) { const [ak, apv] = bestPos(p, rolePos(alt[0]));
       add('Plan B', `<b>${label('role_' + alt[0])}</b> (fit ${alt[1].toFixed(0)}), ${apv >= 15 ? (alt[1] > x ? 'a better fit' : 'almost as good') : `${alt[1] > x ? 'a better fit' : 'almost as good'} if trained at ${ak} (${apv}/20)`}.`, [], 'Next role within 5 points of the main one (or above it); positions under 15 familiarity need training.'); } }
   const s = A('stamina'), nf = A('natural_fitness');
   if (s != null && nf != null) add('Minutes', s >= 15 && nf >= 15 ? 'Can start every match.' : s <= 10 ? 'Sub him around the hour.' : nf <= 10 ? 'Needs rest between matches.' : 'Rotate him in busy weeks.', ['stamina', 'natural_fitness'],
@@ -2177,7 +2186,7 @@ function secRoleMB() {
   const gaps = keys.filter(x => x.pct < 50).sort((a, b) => a.pct - b.pct);
   const low = k => META.role_stats?.[k]?.[2];
   return `${head}
-    <label class="rl-pick"><span class="sr">Role</span><select id="ppRole">${roles.map(([r, x]) => `<option value="${r}"${r === role ? ' selected' : ''}>${label('role_' + r)} (${META.roles[r]}) · ${x.toFixed(0)}</option>`).join('')}</select></label>
+    ${roleSelect(roles, role, p)}
     <div class="rl-top">${ring(sc / 100, pctColor(sc), sc.toFixed(0), `${label('role_' + role)} fit ${sc.toFixed(0)} of 100, from season stats`)}
       <div><b>${label('role_' + role)}</b><span>meets <b style="color:${meets >= keys.length / 2 ? C.good : C.warn}">${meets} of ${keys.length}</b> key stats at the limit</span>
         <span>${gaps.length ? 'Gaps: ' + gaps.slice(0, 2).map(x => `${nm(x.stat)} <b style="color:${pctColor(x.pct)}">${ordN(x.pct)}</b>`).join(', ') : 'No key stat below the median'}</span>
@@ -2190,11 +2199,11 @@ function secRole() {
   const { p, grp } = ppx, gk = grp === 'GK';
   const roles = Object.keys(META.roles).filter(r => (META.roles[r] === 'GK') === gk).map(r => [r, p['role_' + r]]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
   if (!roles.length) return `${h3i('role', 'Role fit')}<p class="note">No role scores in this save.</p>`;
-  const role = roles.some(x => x[0] === ppRole) ? ppRole : roles[0][0], sc = p['role_' + role];
+  const role = roles.some(x => x[0] === ppRole) ? ppRole : (roles.find(([r]) => canPlay(p, r)) || roles[0])[0], sc = p['role_' + role];
   const vals = (META.role_attributes?.[role] || []).map(k => [k, p['attributes_' + k]]).filter(x => x[1] != null);
   const meets = vals.filter(x => x[1] >= 15).length, gaps = vals.filter(x => x[1] <= 11).sort((a, b) => a[1] - b[1]);
-  return `${h3i('role', 'Role fit', gk ? '<span title="Sweeper Keeper is the only goalkeeper role the save scores: compare it with other keepers, not with outfield roles">the only GK role scored</span> · tick = 15' : 'key attributes, heaviest first · tick = 15')}
-    <label class="rl-pick"><span class="sr">Role</span><select id="ppRole">${roles.map(([r, x]) => `<option value="${r}"${r === role ? ' selected' : ''}>${label('role_' + r)} (${META.roles[r]}) · ${x.toFixed(0)}</option>`).join('')}</select></label>
+  return `${h3i('role', 'Role fit', 'FM26 key attributes · tick = 15')}
+    ${roleSelect(roles, role, p)}
     <div class="rl-top">${ring(sc / 100, scoreColor(sc), sc.toFixed(0), `${label('role_' + role)} fit ${sc.toFixed(0)} of 100`)}
       <div><b>${label('role_' + role)}</b><span>meets <b style="color:${meets >= vals.length / 2 ? C.good : C.warn}">${meets} of ${vals.length}</b> key attributes at 15+</span>
         <span>${gaps.length ? 'Gaps: ' + gaps.slice(0, 3).map(([k, x]) => `${label(k)} ${x}`).join(', ') : 'No key attribute under 12'}</span>
@@ -2223,7 +2232,7 @@ function secKpis(x = ppx) {
   const k = (lbl, v, c, sub) => `<div class="kpi"><span>${lbl}</span><b style="color:${c || 'var(--text)'}">${v}</b><small>${sub}</small></div>`;
   const perf = p.stat_score != null ? Math.round(p.stat_score) : null, out = [];
   if (!hid('ability_current') && p.ability_current != null) out.push(k('CA / PA', `${p.ability_current} / ${p.ability_potential ?? '–'}`, abilityColor(p.ability_current), abil?.n ? `top ${Math.max(1, Math.ceil((abil.ca + 1) / abil.n * 100))}% of ${plural(grp)}` : tierOfV(p.ability_current, TIERS_CA)));
-  else if (!mb && p.best_role_score != null) out.push(k('Best role', p.best_role_score.toFixed(0), scoreColor(p.best_role_score), esc(isGKRole(p, grp) ? 'Sweeper Keeper (only GK role)' : label('role_' + p.best_role))));
+  else if (!mb && p.best_role_score != null) out.push(k('Best role', p.best_role_score.toFixed(0), scoreColor(p.best_role_score), esc(label('role_' + p.best_role))));
   out.push(k('Performance', perf ?? '–', perf != null ? pctColor(perf) : C.muted, perf != null ? 'index, his league' : `under ${PERF_MIN} min`));
   out.push(k('Avg rating', p.s_avg_rating ? p.s_avg_rating.toFixed(2) : '–', p.s_avg_rating ? ratingColor(p.s_avg_rating) : C.muted, `${p.s_apps ?? 0} apps · ${mins.toLocaleString()} min`));
   const ask = p.free_agent ? 'Free' : p.transfer_value == null ? 'Not for sale' : money(p.transfer_value);
@@ -3507,6 +3516,7 @@ async function init() {
   if (r && r.status === 409) { EMPTY = true; const d = await r.json().catch(() => ({})); return d.detail === 'loading' ? waitReady() : showWelcome(); }
   if (!r || !r.ok) { $('#grid').innerHTML = emptyState('Cannot reach the server', 'Close this tab, open ScoutSheet again, then reload.', '<button class="btn" onclick="location.reload()">Reload</button>'); return; }
   META = await r.json();
+  for (const [r, n] of Object.entries(META.role_names || {})) LABELS['role_' + r] = n;
   $('#valCap').outerHTML = capTile('value_max', ' line');
   setMode(MODE in (META.modes || {}) ? MODE : 'full', true);
   const cols = new Set(META.columns);

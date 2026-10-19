@@ -328,12 +328,12 @@ def stat_world(scout, monkeypatch):
 
 
 def test_stat_roles_score_range_and_minutes_gate(stat_world):
-    st = [f"srole_{r}" for r, (g, _) in stat_world.ROLES.items() if g == "ST"]
-    rows = stat_world.con().execute(f"SELECT uid, srole_sweeper_keeper, {', '.join(st)} FROM players ORDER BY uid").fetchall()
+    st = [f"srole_{r}" for r, g in stat_world.ROLE_GROUP.items() if g == "ST"]
+    rows = stat_world.con().execute(f"SELECT uid, srole_goalkeeper, {', '.join(st)} FROM players ORDER BY uid").fetchall()
     by = {r[0]: r[1:] for r in rows}
     assert all(v is None for v in by[1] + by[61])  # under PERF_MIN: no score
     assert by[2][0] is None and all(0 <= v <= 100 for v in by[2][1:])  # a striker: striker roles only
-    assert 0 <= by[62][0] <= 100 and all(v is None for v in by[62][1:])  # a keeper: the GK role only
+    assert 0 <= by[62][0] <= 100 and all(v is None for v in by[62][1:])  # a keeper: GK roles only
     assert max(r[1] for r in rows if r[1] is not None) > 50 > min(r[1] for r in rows if r[1] is not None)
 
 
@@ -341,10 +341,20 @@ def test_moneyball_player_has_stat_role_fit_and_no_attributes(stat_world, client
     d = client.get("/api/player/5?mode=moneyball").json()
     assert not [k for k in d if k.startswith(("attributes_", "role_"))]
     fit = d["stat_roles"]
-    assert set(fit) == {r for r, (g, _) in stat_world.ROLES.items() if g == "ST"}
+    assert set(fit) == {r for r, g in stat_world.ROLE_GROUP.items() if g == "ST"}
     for r, xs in fit.items():  # the bars add up to the score
         assert [x["stat"] for x in xs] == list(stat_world.STAT_ROLES[r])
         assert round(sum(x["weight"] * x["pct"] for x in xs) / sum(x["weight"] for x in xs), 1) == d[f"srole_{r}"]
         assert all(x["limit"] is not None and 0 <= x["pct"] <= 100 for x in xs)
     assert client.get("/api/player/1?mode=moneyball").json()["stat_roles"] == {}
     assert "stat_roles" not in client.get("/api/player/5?mode=full").json()
+
+
+def test_fm26_roles_use_known_attributes_positions_and_stats(scout):
+    attrs = set(scout._ATTR_TECH + scout._ATTR_MENTAL + scout._ATTR_PHYS + scout._ATTR_GK + ["long_shots"])
+    positions = {p for ps in scout.POS.values() for p in ps}
+    for r, (name, ps, w) in scout.ROLES.items():
+        assert set(w) <= attrs and set(ps) <= positions, r
+    assert set(scout.STAT_ROLES) == set(scout.ROLES)
+    assert all(set(d) <= set(scout.ROLE_STATS) for d in scout.STAT_ROLES.values())
+    assert scout.ROLE_GROUP["advanced_playmaker"] == "AM" and scout.ROLE_GROUP["wide_midfielder"] == "W"

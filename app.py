@@ -79,44 +79,63 @@ POS = {
 }
 # Single positions the search can also filter on (they sit inside a group above).
 EXACT_POS = {p: [p.lower()] for p in ("DL", "DR", "WBL", "WBR", "ML", "MR", "AML", "AMR")}
-# Role -> (position group, {attribute: weight}). Key attributes weight 2, preferable 1. Score 0-100.
+# FM26's in-possession roles, with the game's names and key attributes (as listed by fmsidekick.com's FM26 role
+# database). Role -> (name, positions it is played from, {attribute: weight}); score 0-100 = mean key attribute x 5.
+# The first position decides the role's group (Advanced Playmaker: AM, though central midfielders play it too).
+def _role(name, positions, attrs):
+    return name, positions.split(), dict.fromkeys(attrs.split(), 1)
+
+
 ROLES = {
-    "sweeper_keeper": ("GK", dict(reflexes=2, one_on_ones=2, rushing_out=2, command_of_area=2, kicking=1, passing=1,
-                                  first_touch=1, composure=2, anticipation=1, decisions=1, handling=1)),
-    "ball_playing_def": ("CB", dict(passing=2, composure=2, marking=2, tackling=2, positioning=2, heading=1, strength=1,
-                                    jumping_reach=1, vision=1, technique=1, decisions=1, anticipation=1)),
-    "inverted_wingback": ("FB", dict(passing=2, first_touch=1, technique=1, decisions=2, composure=1, tackling=1,
-                                     positioning=1, teamwork=2, anticipation=1, vision=1, stamina=1, work_rate=1)),
-    "attacking_fullback": ("FB", dict(crossing=2, dribbling=1, stamina=2, work_rate=2, pace=1, acceleration=2,
-                                      tackling=1, teamwork=1, off_the_ball=1, marking=1, positioning=1)),
-    "anchor": ("DM", dict(tackling=2, marking=2, positioning=2, anticipation=2, concentration=2, decisions=1,
-                          teamwork=1, strength=1, work_rate=1, composure=1)),
-    "deep_playmaker": ("DM", dict(passing=2, vision=2, technique=2, first_touch=2, composure=2, decisions=2,
-                                  teamwork=1, anticipation=1, off_the_ball=1)),
-    "box_to_box": ("CM", dict(stamina=2, work_rate=2, passing=2, tackling=1, off_the_ball=2, teamwork=2,
-                              determination=1, first_touch=1, finishing=1, long_shots=1, anticipation=1)),
-    "inside_forward": ("W", dict(dribbling=2, finishing=2, acceleration=2, pace=1, technique=1, off_the_ball=2,
-                                 first_touch=2, flair=1, composure=1, agility=1, anticipation=1)),
-    "winger": ("W", dict(crossing=2, dribbling=2, acceleration=2, pace=2, technique=1, agility=2, off_the_ball=1,
-                         first_touch=1, work_rate=1, flair=1)),
-    "advanced_playmaker": ("AM", dict(passing=2, vision=2, technique=2, first_touch=2, flair=2, decisions=2,
-                                      composure=1, dribbling=1, off_the_ball=1, agility=1)),
-    "pressing_forward": ("ST", dict(work_rate=2, stamina=2, aggression=2, acceleration=2, anticipation=1,
-                                    finishing=1, off_the_ball=1, teamwork=2, determination=1, composure=1, bravery=1)),
-    "advanced_forward": ("ST", dict(finishing=2, off_the_ball=2, composure=2, acceleration=2, first_touch=2,
-                                    dribbling=1, pace=1, anticipation=1, technique=1, decisions=1)),
-    "target_man": ("ST", dict(heading=2, jumping_reach=2, strength=2, bravery=2, balance=1, finishing=1,
-                              first_touch=1, composure=1, teamwork=1, aggression=1)),
+    "goalkeeper": _role("Goalkeeper", "gk", "handling aerial_reach command_of_area communication positioning reflexes agility concentration"),
+    "ball_playing_goalkeeper": _role("Ball-Playing Goalkeeper", "gk", "handling aerial_reach command_of_area communication kicking positioning reflexes agility"),
+    "no_nonsense_goalkeeper": _role("No-Nonsense Goalkeeper", "gk", "handling aerial_reach command_of_area communication positioning reflexes agility concentration"),
+    "centre_back": _role("Centre-Back", "dc", "heading marking tackling anticipation positioning strength jumping_reach"),
+    "ball_playing_centre_back": _role("Ball-Playing Centre-Back", "dc", "heading marking passing tackling anticipation positioning strength jumping_reach"),
+    "no_nonsense_centre_back": _role("No-Nonsense Centre-Back", "dc", "heading marking tackling anticipation positioning strength jumping_reach"),
+    "advanced_centre_back": _role("Advanced Centre-Back", "dc", "heading marking passing tackling anticipation decisions positioning technique"),
+    "full_back": _role("Full-Back", "dl dr", "marking tackling anticipation positioning teamwork acceleration concentration"),
+    "inside_full_back": _role("Inside Full-Back", "dl dr", "heading marking tackling anticipation positioning strength"),
+    "wing_back": _role("Wing-Back", "dl dr wbl wbr", "crossing marking tackling teamwork work_rate acceleration stamina pace"),
+    "inside_wing_back": _role("Inside Wing-Back", "dl dr wbl wbr", "passing tackling anticipation decisions positioning teamwork acceleration composure"),
+    "playmaking_wing_back": _role("Playmaking Wing-Back", "wbl wbr dl dr", "passing tackling vision decisions first_touch technique teamwork acceleration"),
+    "advanced_wing_back": _role("Advanced Wing-Back", "wbl wbr", "crossing dribbling off_the_ball technique teamwork work_rate acceleration stamina"),
+    "defensive_midfielder": _role("Defensive Midfielder", "dm", "tackling anticipation positioning teamwork concentration"),
+    "deep_lying_playmaker": _role("Deep-Lying Playmaker", "dm", "passing vision decisions first_touch technique teamwork composure"),
+    "half_back": _role("Half Back", "dm", "heading marking tackling anticipation positioning teamwork strength jumping_reach"),
+    "box_to_box_midfielder": _role("Box-to-Box Midfielder", "dm", "off_the_ball passing tackling teamwork work_rate stamina"),
+    "box_to_box_playmaker": _role("Box-to-Box Playmaker", "dm", "off_the_ball passing vision decisions first_touch technique teamwork work_rate"),
+    "central_midfielder": _role("Central Midfielder", "mc", "passing tackling decisions first_touch teamwork"),
+    "midfield_playmaker": _role("Midfield Playmaker", "mc", "off_the_ball passing vision decisions first_touch technique teamwork composure"),
+    "wide_central_midfielder": _role("Wide Central Midfielder", "mc", "passing tackling decisions first_touch teamwork"),
+    "advanced_playmaker": _role("Advanced Playmaker", "amc mc", "off_the_ball passing vision decisions first_touch technique teamwork composure"),
+    "attacking_midfielder": _role("Attacking Midfielder", "amc mc", "long_shots off_the_ball passing first_touch technique flair composure"),
+    "channel_midfielder": _role("Channel Midfielder", "amc mc", "crossing off_the_ball passing first_touch technique work_rate acceleration composure"),
+    "free_role": _role("Free Role", "amc", "dribbling long_shots off_the_ball passing vision first_touch technique flair"),
+    "second_striker": _role("Second Striker", "amc", "finishing off_the_ball anticipation first_touch acceleration composure"),
+    "winger": _role("Winger", "aml amr ml mr", "crossing dribbling technique teamwork acceleration pace agility"),
+    "inside_winger": _role("Inside Winger", "aml amr ml mr", "dribbling first_touch technique teamwork acceleration agility composure"),
+    "playmaking_winger": _role("Playmaking Winger", "aml amr ml mr", "crossing dribbling off_the_ball passing vision decisions first_touch technique"),
+    "wide_midfielder": _role("Wide Midfielder", "ml mr", "crossing passing decisions technique teamwork work_rate stamina pace"),
+    "inside_forward": _role("Inside Forward", "aml amr", "dribbling off_the_ball anticipation first_touch technique acceleration agility composure"),
+    "wide_forward": _role("Wide Forward", "aml amr", "dribbling off_the_ball anticipation first_touch technique acceleration pace agility"),
+    "centre_forward": _role("Centre Forward", "stc", "finishing heading off_the_ball first_touch technique acceleration strength composure"),
+    "channel_forward": _role("Channel Forward", "stc", "dribbling finishing off_the_ball first_touch technique work_rate acceleration composure"),
+    "deep_lying_forward": _role("Deep-Lying Forward", "stc", "finishing off_the_ball first_touch technique strength composure"),
+    "false_nine": _role("False Nine", "stc", "dribbling off_the_ball passing vision decisions first_touch technique teamwork"),
+    "poacher": _role("Poacher", "stc", "finishing heading off_the_ball anticipation acceleration composure concentration"),
+    "target_forward": _role("Target Forward", "stc", "finishing heading off_the_ball strength jumping_reach balance bravery aggression"),
 }
+ROLE_GROUP = {r: next(g for g, ps in POS.items() if pos[0] in ps) for r, (_, pos, _) in ROLES.items()}
+role_pos_sql = lambda r: ", ".join(f"positions_{p}" for p in ROLES[r][1])
 
 
 def _role_sql():
     cols, fits = [], []
-    for role, (grp, w) in ROLES.items():
+    for role, (_, _, w) in ROLES.items():
         expr = " + ".join(f"{v}*attributes_{a}" for a, v in w.items())
         cols.append(f"round(({expr}) * 5.0 / {sum(w.values())}, 1) AS role_{role}")
-        pos = ", ".join(f"positions_{p}" for p in POS[grp])
-        fits.append((role, f"CASE WHEN greatest({pos}, 0) >= 15 THEN role_{role} END"))
+        fits.append((role, f"CASE WHEN greatest({role_pos_sql(role)}, 0) >= 15 THEN role_{role} END"))
     best = "greatest(" + ", ".join(f for _, f in fits) + ")"
     name = "CASE " + " ".join(f"WHEN {f} = best_role_score THEN '{r}'" for r, f in fits) + " END"
     return ", ".join(cols), best, name
@@ -382,22 +401,49 @@ ROLE_STATS = {
     "header_pct": ("Header win %", "%", "s_header_pct", False),
     "distance": ("Distance", "km/90", _p90("s_distance_km"), False),
 }
-# Role -> {stat: weight}, key 2 / preferable 1. Picked per role, then kept only if the stat ranks the save's best attribute
-# fits for that role (top quarter of role_<role>, PERF_MIN+ min, same group) above the rest. Group = ROLES[role][0].
+# Role -> {stat: weight}. Candidates are the stats that show the role's key attributes on the pitch (finishing: xG,
+# goals, shots on target; passing: pass %, passes, progressive passes...). Kept: up to six that rank the save's best
+# attribute fits for the role (top quarter of role_<role>, PERF_MIN+ min, same group) above the rest, AUC >= 0.55,
+# best three weighted 2. Combined, they find those fits 65-86% of the time. Group = ROLE_GROUP[role].
 STAT_ROLES = {
-    "sweeper_keeper": dict(save_pct=2, pass_pct=2, poss_won=2, xgp=2, passes=1, conceded=1, cs=1),
-    "ball_playing_def": dict(pass_pct=2, poss_won=2, blocks=2, prog=1, header_pct=1, pressures=1),
-    "inverted_wingback": dict(pass_pct=2, prog=2, tackles=2, passes=1, poss_won=1, key_passes=1),
-    "attacking_fullback": dict(dribbles=2, crosses=2, pressures=2, xa=1, distance=1, key_passes=1),
-    "anchor": dict(int=2, pass_pct=2, blocks=2, headers=1, pressures=1, poss_won=1, tackles=1),
-    "deep_playmaker": dict(prog=2, pass_pct=2, key_passes=2, xa=1, passes=1, ccc=1),
-    "box_to_box": dict(poss_won=2, prog=2, distance=2, key_passes=1, shots=1, int=1, pass_pct=1),
-    "inside_forward": dict(xg=2, shots=2, goals=2, sot=1, dribbles=1, key_passes=1),
-    "winger": dict(dribbles=2, crosses=2, key_passes=2, xa=1, prog=1, pressures=1),
-    "advanced_playmaker": dict(key_passes=2, xa=2, ccc=2, prog=2, dribbles=1, pass_pct=1),
-    "pressing_forward": dict(poss_won=2, pressures=2, distance=2, xg=1, key_passes=1, passes=1),
-    "advanced_forward": dict(xg=2, sot=2, goals=2, shots=1, dribbles=1, fouled=1),
-    "target_man": dict(headers=2, header_pct=2, xg=1, fouled=1, key_passes=1, goals=1),
+    "goalkeeper": dict(save_pct=2, xgp=2, conceded=2, cs=1),
+    "ball_playing_goalkeeper": dict(save_pct=2, xgp=2, conceded=2, cs=1),
+    "no_nonsense_goalkeeper": dict(save_pct=2, xgp=2, conceded=2, cs=1),
+    "centre_back": dict(poss_won=2, blocks=2, header_pct=2, fouled=1),
+    "ball_playing_centre_back": dict(pass_pct=2, poss_won=2, blocks=2, header_pct=1),
+    "no_nonsense_centre_back": dict(poss_won=2, blocks=2, header_pct=2, fouled=1),
+    "advanced_centre_back": dict(pass_pct=2, poss_won=2, blocks=2, dribbles=1, passes=1, header_pct=1),
+    "full_back": dict(pressures=2, tackles=2, passes=2, dribbles=1, poss_won=1, blocks=1),
+    "inside_full_back": dict(tackles=2, poss_won=2, header_pct=2, blocks=1, int=1, fouled=1),
+    "wing_back": dict(pressures=2, tackles=2, dribbles=2, passes=1, distance=1, xa=1),
+    "inside_wing_back": dict(pressures=2, prog=2, tackles=2, pass_pct=1, passes=1, dribbles=1),
+    "playmaking_wing_back": dict(pressures=2, prog=2, tackles=2, pass_pct=1, dribbles=1, passes=1),
+    "advanced_wing_back": dict(pressures=2, pass_pct=2, dribbles=2, passes=1, distance=1, fouled=1),
+    "defensive_midfielder": dict(passes=2, pressures=2, blocks=2, int=1, tackles=1, poss_won=1),
+    "deep_lying_playmaker": dict(pass_pct=2, prog=2, passes=2, key_passes=1, pressures=1, ccc=1),
+    "half_back": dict(passes=2, pressures=2, blocks=2, header_pct=1, int=1, headers=1),
+    "box_to_box_midfielder": dict(pass_pct=2, passes=2, prog=2, pressures=1, distance=1, tackles=1),
+    "box_to_box_playmaker": dict(pass_pct=2, prog=2, passes=2, pressures=1, key_passes=1, distance=1),
+    "central_midfielder": dict(pass_pct=2, prog=2, pressures=2, poss_won=1, passes=1, dribbles=1),
+    "midfield_playmaker": dict(pass_pct=2, ccc=2, key_passes=2, prog=1, pressures=1, xa=1),
+    "wide_central_midfielder": dict(pass_pct=2, prog=2, pressures=2, poss_won=1, passes=1, dribbles=1),
+    "advanced_playmaker": dict(key_passes=2, prog=2, xa=2, ccc=1, dribbles=1, pressures=1),
+    "attacking_midfielder": dict(key_passes=2, prog=2, dribbles=2, sot=1, shots=1, xg=1),
+    "channel_midfielder": dict(prog=2, dribbles=2, pressures=2, xa=1, crosses=1, distance=1),
+    "free_role": dict(key_passes=2, prog=2, xa=2, dribbles=1, shots=1, ccc=1),
+    "second_striker": dict(dribbles=2, int=2, sot=2, shots=1, goals=1, xg=1),
+    "winger": dict(pressures=2, dribbles=2, passes=2, xa=1, pass_pct=1, fouled=1),
+    "inside_winger": dict(pressures=2, dribbles=2, passes=2, pass_pct=1, fouled=1),
+    "playmaking_winger": dict(dribbles=2, shots=2, key_passes=2, xg=1, ccc=1, passes=1),
+    "wide_midfielder": dict(pressures=2, dribbles=2, prog=2, passes=1, xa=1, pass_pct=1),
+    "inside_forward": dict(dribbles=2, shots=2, int=2, poss_won=1, xg=1, pass_pct=1),
+    "wide_forward": dict(dribbles=2, int=2, shots=2, poss_won=1, xg=1, pass_pct=1),
+    "centre_forward": dict(sot=2, header_pct=2, shots=2, xg=1, fouled=1, dribbles=1),
+    "channel_forward": dict(distance=2, sot=2, shots=2, xg=1, fouled=1, dribbles=1),
+    "deep_lying_forward": dict(sot=2, shots=2, xg=2, fouled=1, dribbles=1, goals=1),
+    "false_nine": dict(prog=2, passes=2, shots=2, ccc=1, xg=1, key_passes=1),
+    "poacher": dict(sot=2, shots=2, poss_won=2, xg=1, header_pct=1, goals=1),
+    "target_forward": dict(header_pct=2, headers=2, sot=2, shots=1, xg=1, poss_won=1),
 }
 # The "15" of the stats: the 70th percentile of the group. The save's top-quarter attribute fits sit at a median ~67th
 # percentile on these stats, so reaching 70 = producing like an accomplished player in that role.
@@ -422,7 +468,7 @@ def add_stat_roles():
     pts = "[" + ", ".join(str(i / 100) for i in range(101)) + "]"
     joins = []
     for g in POS:
-        roles = [r for r, (gg, _) in ROLES.items() if gg == g and r in STAT_ROLES]
+        roles = [r for r in STAT_ROLES if ROLE_GROUP[r] == g]
         ks = sorted({k for r in roles for k in STAT_ROLES[r]})
         if not ks:
             continue
@@ -432,12 +478,12 @@ def add_stat_roles():
             STAT_Q.update({(row[0], g, k): q for k, q in zip(ks, row[1:])})
         qcols = ", ".join(f"quantile_cont(m_{k}, {pts}) AS q_{k}" for k in ks)
         score = lambda r: " + ".join(f"{w} * {_pct_sql('m_' + k, 'q_' + k, ROLE_STATS[k][3])}" for k, w in STAT_ROLES[r].items())
-        pos = ", ".join(f"positions_{p}" for p in POS[g])
+        pos = ", ".join(sorted({f"positions_{p}" for r in roles for p in ROLES[r][1]}))
         joins.append(f"""LEFT JOIN (
-            WITH v AS (SELECT uid, gender, stat_group, s_minutes, greatest({pos}, 0) AS fit, {vals} FROM players WHERE s_minutes >= {PERF_MIN}),
+            WITH v AS (SELECT uid, gender, stat_group, s_minutes, {pos}, {vals} FROM players WHERE s_minutes >= {PERF_MIN}),
                  q AS (SELECT gender, {qcols} FROM v WHERE stat_group = '{g}' GROUP BY 1)
-            SELECT uid, {', '.join(f'round(({score(r)}) / {sum(STAT_ROLES[r].values())}, 1) AS srole_{r}' for r in roles)}
-            FROM v JOIN q ON q.gender IS NOT DISTINCT FROM v.gender WHERE v.fit >= 15) USING (uid)""")
+            SELECT uid, {', '.join(f'CASE WHEN greatest({role_pos_sql(r)}, 0) >= 15 THEN round(({score(r)}) / {sum(STAT_ROLES[r].values())}, 1) END AS srole_{r}' for r in roles)}
+            FROM v JOIN q ON q.gender IS NOT DISTINCT FROM v.gender) USING (uid)""")
     con().execute("CREATE OR REPLACE TABLE players AS SELECT * FROM players " + " ".join(joins))
 
 
@@ -450,7 +496,7 @@ def stat_roles(p):
     vals = dict(zip(ks, con().execute(f"SELECT {', '.join(ROLE_STATS[k][2] for k in ks)} FROM players WHERE uid = ?", [p["uid"]]).fetchone()))
     out = {}
     for r in roles:
-        g = ROLES[r][0]
+        g = ROLE_GROUP[r]
         out[r] = []
         for k, w in STAT_ROLES[r].items():
             q, low = STAT_Q.get((p.get("gender"), g, k)), ROLE_STATS[k][3]
@@ -752,10 +798,9 @@ PRESETS = {
     "deals_blend": ("Deals", "Best deals · Blend", "Every lens your data mode allows vs value", "deal_score IS NOT NULL AND transfer_value > 0 AND fair_fee >= 100000",
                     "deal_score * ln(fair_fee) DESC", "deals"),
 }
-for r, (grp, _) in ROLES.items():
-    pos = ", ".join(f"positions_{p}" for p in POS[grp])
-    PRESETS[f"role_{r}"] = ("Roles", r.replace("_", " ").title(), f"Best rated {grp}s for this role",
-                            f"greatest({pos}, 0) >= 15 AND role_{r} >= 50", f"role_{r} DESC", "roles")
+for r, (name, _, _) in ROLES.items():
+    PRESETS[f"role_{r}"] = ("Roles", name, f"Best rated {ROLE_GROUP[r]}s for this role",
+                            f"greatest({role_pos_sql(r)}, 0) >= 15 AND role_{r} >= 50", f"role_{r} DESC", "roles")
 DEFAULT_SORT = {"full": "ability_current DESC", "fair": "best_role_score DESC NULLS LAST", "moneyball": "stat_score DESC NULLS LAST"}
 
 
@@ -972,9 +1017,10 @@ def meta():
     return {"columns": sorted(VISIBLE["full"]), "game_date": GAME_DATE, "positions": list(POS),
             "modes": {m: {"lenses": ls, "hidden_columns": sorted(MODE_HIDDEN[m])} for m, ls in MODES.items()},
             "hidden_columns": sorted(MODE_HIDDEN["fair"]),  # legacy: fair-play list
-            "roles": {r: g for r, (g, _) in ROLES.items()},
+            "roles": ROLE_GROUP, "role_names": {r: n for r, (n, _, _) in ROLES.items()},
+            "role_pos": {r: ps for r, (_, ps, _) in ROLES.items()},
             # Key attributes per role, heaviest first (for showing why a role score is what it is).
-            "role_attributes": {r: [a for a, _ in sorted(w.items(), key=lambda kv: -kv[1])] for r, (_, w) in ROLES.items()},
+            "role_attributes": {r: [a for a, _ in sorted(w.items(), key=lambda kv: -kv[1])] for r, (_, _, w) in ROLES.items()},
             "stat_groups": list(STAT_METRICS),
             "role_stats": {k: [l, u, low] for k, (l, u, _, low) in ROLE_STATS.items()}, "role_limit_pct": ROLE_LIMIT_PCT,
             # ends of the money sliders (value, weekly wage): 0 -> the save's max
@@ -1100,7 +1146,8 @@ def fit_sql(pos, mode="full", basis="attributes"):
     col = "stc" if pos == "ST" else pos.lower()
     if mode == "moneyball" or basis == "performance":
         return f"CASE WHEN positions_{col} >= 15 THEN stat_score END"
-    roles = [f"role_{r}" for r, (g, _) in ROLES.items() if g == SLOT_GROUP[pos]]
+    roles = ([f"role_{r}" for r, (_, ps, _) in ROLES.items() if col in ps]  # SW has no FM26 role:
+             or [f"role_{r}" for r in ROLES if ROLE_GROUP[r] == SLOT_GROUP[pos]])  # use its group's
     return f"CASE WHEN positions_{col} >= 15 THEN greatest({', '.join(roles)}) END"
 
 
