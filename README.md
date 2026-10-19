@@ -33,7 +33,7 @@ One click switches modes. Same save, same players, different eyes.
 
 ## 🚀 Download and first launch
 
-Get the latest version from **[Releases](https://github.com/absalom12/scoutsheet/releases/latest)**: `ScoutSheet-windows.zip` or `ScoutSheet-mac.zip` (Apple Silicon, M1 or later). Ready in about three minutes.
+Get the latest version from **[Releases](https://github.com/absalom12/scoutsheetfm/releases/latest)**: `ScoutSheet-windows.zip` or `ScoutSheet-mac.zip` (Apple Silicon, M1 or later). Ready in about three minutes.
 
 - **Windows:** unzip the folder first (don't run it from inside the zip), then double-click `ScoutSheet.exe`. If Windows says it protected your PC, click **More info**, then **Run anyway**. That's the only time you'll see it.
 - **Mac:** unzip, drag ScoutSheet to Applications, then double-click it.
@@ -54,8 +54,8 @@ Your save is only read, never written, and never leaves your computer. The one o
 Built on `fmsave` (read-only save parsing), **FastAPI + DuckDB** for queries and **AG Grid** for the single-page frontend.
 
 ```bash
-git clone https://github.com/absalom12/scoutsheet.git
-cd scoutsheet
+git clone https://github.com/absalom12/scoutsheetfm.git
+cd scoutsheetfm
 
 # Python 3.12
 python3.12 -m venv venv
@@ -86,6 +86,6 @@ A massive shoutout to [Randal S. Olson](https://x.com/randal_olson) for creating
 
 # 📄 License
 
-Distributed under the MIT License. See [LICENSE](https://github.com/absalom12/scoutsheet/blob/main/LICENSE.md) for details.
+Distributed under the MIT License. See [LICENSE](https://github.com/absalom12/scoutsheetfm/blob/main/LICENSE.md) for details.
 
 Bundled third-party files, in `static/vendor/`: [AG Grid Community](https://www.ag-grid.com/) 32.3.3 (MIT) and the Barlow, Barlow Condensed and JetBrains Mono fonts (SIL Open Font License 1.1). They ship with the app so it works offline and loads nothing from a CDN.

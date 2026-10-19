@@ -3452,7 +3452,7 @@ async function checkUpdate() {
   try {
     const { version, can_update } = await (await api('/api/status')).json();
     if (!version || version === 'dev') return 'Version check is off in builds run from source.';
-    const r = await fetch('https://api.github.com/repos/absalom12/scoutsheet/releases/latest');
+    const r = await fetch('https://api.github.com/repos/absalom12/scoutsheetfm/releases/latest');
     if (!r.ok) return 'GitHub did not answer, try again later.';
     const latest = ((await r.json()).tag_name || '').replace(/^v/, '');
     const n = v => v.split('.').map(x => parseInt(x, 10) || 0);

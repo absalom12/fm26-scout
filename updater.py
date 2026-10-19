@@ -2,7 +2,7 @@
 Source runs keep the download link."""
 import hashlib, json, os, pathlib, shutil, subprocess, sys, tempfile, threading, urllib.request, zipfile
 
-REPO = "absalom12/scoutsheet"
+REPO = "absalom12/scoutsheetfm"
 ASSET = {"darwin": "ScoutSheet-mac.zip", "win32": "ScoutSheet-windows.zip"}.get(sys.platform)
 STATE = {"state": None, "pct": 0, "error": None}  # state: None | downloading | installing | restarting | error
 
