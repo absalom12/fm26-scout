@@ -23,7 +23,7 @@ One click switches modes. Same save, same players, different eyes.
 ## What you get
 
 - **Your weak spots:** ScoutSheet rates every position in your team and shows the weakest first. Click one for the players who would make it better, with what they cost.
-- **Player profile:** where he plays, what he's good at, how he compares with players in his position. Stats, price, contract and similar players are one tab away.
+- **Player profile:** where he plays, what he's good at, how he compares with players in his position, and in Moneyball, how well his season stats fit each role. Stats, price, contract and similar players are one tab away.
 - **Bargains:** every player gets a fair price, worked out from similar players (same kind of profile, age, level and contract) in your own save. Then you see who sells for far less than he's worth. In Moneyball, a player needs 900 minutes before he gets one.
 - **Your data, anywhere:** export any list, with every column, to a CSV file for Excel, Google Sheets or your own tools.
 - **Offers:** check a bid against the player's fair price before you accept or send it.
@@ -76,7 +76,7 @@ macOS: ~/Library/Application Support/ScoutSheet/
 
 Windows: %APPDATA%\ScoutSheet\
 
-(The app used to be called FM26 Scout: its old `FM26 Scout` folder is moved there on first launch, saves and settings included.)
+(The app used to be called FM26 Scout: its old `FM26 Scout` folder is moved there on first launch, so you don't have to load your save again.)
 
 (Note: Set the SCOUTSHEET_DATA_DIR environment variable to override this storage path.)
 
