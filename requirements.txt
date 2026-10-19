@@ -6,3 +6,4 @@ pydantic==2.14.1
 python-multipart==0.0.32
 fmsave==0.5.10
 pywebview==6.2.1
+certifi==2026.7.22

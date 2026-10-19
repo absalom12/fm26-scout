@@ -1,9 +1,13 @@
 """In-app update for the built app: download the latest release, check it, swap the app, relaunch.
 Source runs keep the download link."""
-import hashlib, json, os, pathlib, shutil, subprocess, sys, tempfile, threading, urllib.request, zipfile
+import hashlib, json, os, pathlib, shutil, ssl, subprocess, sys, tempfile, threading, urllib.request, zipfile
+
+import certifi
 
 REPO = "absalom12/scoutsheetfm"
 ASSET = {"darwin": "ScoutSheet-mac.zip", "win32": "ScoutSheet-windows.zip"}.get(sys.platform)
+# The bundled Python on macOS can't see the system's root certificates: use certifi's, on every platform.
+TLS = ssl.create_default_context(cafile=certifi.where())
 STATE = {"state": None, "pct": 0, "error": None}  # state: None | downloading | installing | restarting | error
 
 # Windows can't move the folder of a running exe: this runs once the app has exited. Moves are retried while
@@ -44,7 +48,7 @@ def newer(latest, current):
 
 def latest():
     """(version, zip url, sha256 hex) of the latest GitHub release."""
-    with urllib.request.urlopen(f"https://api.github.com/repos/{REPO}/releases/latest", timeout=15) as r:
+    with urllib.request.urlopen(f"https://api.github.com/repos/{REPO}/releases/latest", timeout=15, context=TLS) as r:
         rel = json.load(r)
     a = next(a for a in rel["assets"] if a["name"] == ASSET)
     if not a["browser_download_url"].startswith(f"https://github.com/{REPO}/releases/download/"):
@@ -71,7 +75,7 @@ def install(current, url, sha256):
     try:
         STATE.update(state="downloading", pct=0)
         h = hashlib.sha256()
-        with urllib.request.urlopen(url, timeout=30) as r, open(work / "update.zip", "wb") as f:
+        with urllib.request.urlopen(url, timeout=30, context=TLS) as r, open(work / "update.zip", "wb") as f:
             size, done = int(r.headers.get("Content-Length") or 0), 0
             while chunk := r.read(1 << 16):
                 f.write(chunk); h.update(chunk); done += len(chunk)

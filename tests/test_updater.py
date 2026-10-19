@@ -1,6 +1,7 @@
 import hashlib
 import os
 import shutil
+import ssl
 import subprocess
 import sys
 import zipfile
@@ -73,3 +74,9 @@ def test_windows_swap_replaces_the_folder_once_the_app_exits(tmp_path):
                     "-Work", work], check=True, timeout=60)
     assert [p.name for p in apps.iterdir()] == ["ScoutSheet"]
     assert (apps / "ScoutSheet" / "ScoutSheet.exe").exists()
+
+
+def test_update_downloads_check_certificates_against_certifi():
+    # A bundled macOS app has no system root certificates: without certifi's, every download fails.
+    assert updater.TLS.cert_store_stats()["x509_ca"] > 100
+    assert updater.TLS.verify_mode == ssl.CERT_REQUIRED and updater.TLS.check_hostname

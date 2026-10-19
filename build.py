@@ -10,6 +10,7 @@ PyInstaller.__main__.run([
     "launcher.py", "--name", "ScoutSheet", "--noconsole", "--onedir", "--noconfirm", "--clean", "--icon", icon,
     "--add-data", f"static{sep}static",
     "--collect-all", "fmsave",
+    "--collect-data", "certifi",  # cacert.pem: the in-app update's HTTPS check
     "--collect-submodules", "uvicorn",
     "--hidden-import", "multipart",
     # Kept from the FM26 Scout days: macOS files the window's localStorage (shortlist, saved searches) under it.
