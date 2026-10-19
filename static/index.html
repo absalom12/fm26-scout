@@ -3461,7 +3461,7 @@ async function checkUpdate() {
     if (i === undefined || a[i] < b[i]) return 'You have the latest version.';
     $('.update')?.remove();
     const el = document.createElement('a');
-    el.className = 'update'; el.href = 'https://fm26-scout-site.bien-vu-server.workers.dev/'; el.target = '_blank'; el.rel = 'noopener';
+    el.className = 'update'; el.href = 'https://scoutsheet.fm/'; el.target = '_blank'; el.rel = 'noopener';
     el.textContent = `ScoutSheet ${latest} is out (you have ${version}). Download it ↗`;
     document.body.append(el);
     if (can_update) {  // built app: install in place, the download link stays as the fallback

@@ -8,7 +8,7 @@ ScoutSheet pulls every player out of your own FM26 save and puts them in one pla
 
 Free and open source. Runs on your computer, works offline, and never writes to your save.
 
-🌐 **[scoutsheet.app](https://scoutsheet.app)**
+🌐 **[scoutsheet.fm](https://scoutsheet.fm)**
 
 ---
 
