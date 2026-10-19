@@ -1,4 +1,4 @@
-<img width="1512" height="825" alt="ScoutSheet player grid" src="https://github.com/user-attachments/assets/60973a26-b210-4c2d-83e5-6b84b06d4144" />
+<img width="1512" height="947" alt="Capture d’écran 2026-10-19 à 13 17 18" src="https://github.com/user-attachments/assets/9aa959e8-2fcd-4b89-bc43-49831716bef2" />
 
 # ⚽ ScoutSheet
 
