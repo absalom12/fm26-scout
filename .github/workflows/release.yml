@@ -57,6 +57,9 @@ jobs:
         run: ditto -c -k --keepParent dist/ScoutSheet.app ${{ matrix.asset }}
       - if: runner.os == 'Windows'
         run: Compress-Archive -Path dist/ScoutSheet -DestinationPath ${{ matrix.asset }}
+      - if: "!startsWith(github.ref, 'refs/tags/')"  # test builds from a branch: downloadable from the run, never released
+        uses: actions/upload-artifact@v4
+        with: { name: "${{ matrix.asset }}", path: "${{ matrix.asset }}", retention-days: 14 }
       - if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with: { files: "${{ matrix.asset }}" }
