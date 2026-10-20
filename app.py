@@ -1,6 +1,6 @@
 import collections, contextlib, csv, io, json, os, re, shutil, sys, tempfile, threading, time, traceback
 import duckdb, fmsave
-import updater
+import telemetry, updater
 import numpy as np
 from nations import NATIONS
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
@@ -30,7 +30,8 @@ def _step(frac, next_frac, step):
     PROGRESS.update(pct=round(lo + frac * (hi - lo)), next=round(lo + next_frac * (hi - lo)), step=step)
 _ingest_lock = threading.Lock()  # one load at a time (startup load or a save load)
 LAST_PING, BYE_AT = time.monotonic(), None
-OPEN_PATHS = {"/", "/api/status", "/api/saves", "/api/load-save", "/api/upload", "/api/ping", "/api/bye"}
+OPEN_PATHS = {"/", "/api/status", "/api/saves", "/api/load-save", "/api/upload", "/api/ping", "/api/bye", "/api/telemetry",
+              "/api/track"}
 
 
 def need_data(request: Request):
@@ -41,6 +42,9 @@ def need_data(request: Request):
 @contextlib.asynccontextmanager
 async def lifespan(_):
     threading.Thread(target=_load_data_dir, daemon=True).start()
+    telemetry.record("launch", telemetry.OS)
+    if getattr(sys, "frozen", False):  # source runs and tests never send
+        threading.Thread(target=telemetry.run, args=(VERSION,), daemon=True).start()
     yield
 
 
@@ -59,6 +63,14 @@ async def local_only(request: Request, call_next):
     if int(request.headers.get("content-length") or 0) > MAX_UPLOAD:
         return JSONResponse({"detail": "too large"}, status_code=413)
     return await call_next(request)
+
+
+@app.exception_handler(Exception)
+def crashed(request: Request, e: Exception):
+    """Counts the route and error type only (e.g. "error:api_club.KeyError"), never the message: it can hold a path."""
+    route = getattr(request.scope.get("route"), "path", "other").strip("/").replace("/", "_").replace("{", "").replace("}", "")
+    telemetry.record("error", f"{route}.{type(e).__name__}"[:40])
+    return JSONResponse({"detail": "Internal Server Error"}, status_code=500)
 
 
 _db = duckdb.connect()  # in-memory
@@ -899,6 +911,8 @@ def build(q: Query):
 def players(q: Query):
     w, args, order = build(q)
     src = source(q.mode)
+    if q.start == 0:  # a new search or sort, not the next page
+        telemetry.record("search", q.mode)
     total = con().execute(f"SELECT count(*) FROM {src} {w}", args).fetchone()[0]
     cur = con().execute(f"SELECT * FROM {src} {w} {order} LIMIT ? OFFSET ?", args + [max(q.end - q.start, 0), q.start])
     names = [d[0] for d in cur.description]
@@ -914,6 +928,7 @@ def _json(obj):
 
 @app.post("/api/export")
 def export(q: Query):
+    telemetry.record("export", q.mode)
     w, args, order = build(q)
     cur = con().execute(f"SELECT * FROM {source(q.mode)} {w} {order} LIMIT 20000", args)
     buf = io.StringIO()
@@ -962,6 +977,7 @@ def similar(uid: int, mode: str = "full"):
     """The criteria "Find similar players" puts on the Scout page (the list is then sorted with similar_to)."""
     mode = _mode(mode)
     p = _player(uid, mode)
+    telemetry.record("similar", mode)
     if mode == "moneyball":
         return {"stats": [{"col": c, "value": v, "pct": pc} for c, v, pc in stat_strengths(p)]}
     return {"attributes": [{"col": f"attributes_{a}", "value": p[f"attributes_{a}"]} for a in attr_strengths(p)]}
@@ -1003,6 +1019,7 @@ def _player(uid, mode):
 def player(uid: int, mode: str = "full", fair_play: bool = False):
     mode = _mode(mode, fair_play)
     p = _player(uid, mode)
+    telemetry.record("profile", mode)
     extra = {"stat_roles": stat_roles(p)} if mode == "moneyball" else {}
     return {**p, "fair_fee_range": fair_range(p.get("fair_fee"), p.get("gender"), mode), **extra}
 
@@ -1046,6 +1063,7 @@ def ingest(src):
             extract(str(src), tmp)
             replace_data(tmp, dd)
         except fmsave.FmsaveError as e:
+            telemetry.record("save_failed", type(e).__name__)
             raise HTTPException(400, str(e))
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
@@ -1057,6 +1075,7 @@ def ingest(src):
             STATUS = "empty"
             raise
         STATUS = "ready"
+        telemetry.record("save_loaded")
         return {"rows": con().execute("SELECT count(*) FROM players").fetchone()[0], "game_date": GAME_DATE}
     finally:
         _ingest_lock.release()
@@ -1101,6 +1120,7 @@ def update():
     if _ingest_lock.locked() or updater.STATE["state"] in ("downloading", "installing", "restarting"):
         raise HTTPException(409, "busy")
     threading.Thread(target=updater.run, args=(VERSION,), daemon=True).start()
+    telemetry.record("update")
     return {"ok": True}
 
 
@@ -1108,6 +1128,35 @@ def update():
 def saves():
     s = list_saves()
     return {"folder_found": s is not None, "saves": s or []}
+
+
+class Consent(BaseModel):
+    on: bool
+
+
+@app.get("/api/telemetry")
+def telemetry_state():
+    return telemetry.state()
+
+
+@app.post("/api/telemetry")
+def telemetry_set(q: Consent):
+    telemetry.set_consent(q.on)
+    telemetry.record("consent")  # only lands when q.on: counts how many say yes
+    return telemetry.state()
+
+
+class Track(BaseModel):
+    e: str
+    d: str | None = None
+    n: int = 1
+
+
+@app.post("/api/track")  # page events: mode switches, shortlist, visible seconds. Ignored unless the user opted in.
+def track(q: Track):
+    if q.e in ("mode", "fair_prices", "shortlist", "time"):
+        telemetry.record(q.e, q.d, q.n)
+    return {"ok": True}
 
 
 @app.post("/api/ping")
@@ -1241,6 +1290,7 @@ def club(formation: str | None = None, mode: str = "full", fair_play: bool = Fal
         pin_map = {int(i): int(u) for i, u in (x.split(":") for x in pins.split(",") if x)}
     except ValueError:
         raise HTTPException(400, "pins must be slot:uid pairs")
+    telemetry.record("club", mode)
     return squad_report(_formation(formation.split(",") if formation else None), mode, _basis(basis, mode), pin_map)
 
 
@@ -1364,6 +1414,7 @@ def _one_slot_per_pos(slots, key):
 
 @app.post("/api/club/needs")
 def club_needs(q: TargetQuery):
+    telemetry.record("club_needs")
     q, rep = _prepare(q)
     if q.slot_index is not None:
         return targets(q, rep, [rep["slots"][q.slot_index]], per_pos=20, min_rating=15)
@@ -1374,6 +1425,7 @@ def club_needs(q: TargetQuery):
 
 @app.post("/api/club/tactic")
 def club_tactic(q: TargetQuery):
+    telemetry.record("club_tactic")
     q, rep = _prepare(q)
     # Plug-and-play: natural in the slot (>= 18/20) and already at the XI's level. Only full mode may
     # use CA for that; the other modes rely on the fit-over-starter requirement alone.
@@ -1412,6 +1464,7 @@ def fair_range(fee, gender, mode):
 def offer(q: OfferQuery):
     mode = _mode(q.mode, q.fair_play)
     p = _player(q.uid, mode)
+    telemetry.record("offer", mode)
     lens_ids = [k for k in MODES[mode] if f"fair_fee_{k}" in COLS]
     row = con().execute(f"SELECT {', '.join(f'fair_fee_{k}, fair_wage_{k}' for k in lens_ids + [mode])} FROM players WHERE uid = ?",
                         [q.uid]).fetchone()

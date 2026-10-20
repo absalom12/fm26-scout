@@ -1129,9 +1129,23 @@ dialog.es.set { width: min(660px, calc(100vw - 32px)); height: auto; max-height:
       <div class="set-row"><span>Check at launch<small>Asks GitHub for the latest version, nothing else is sent</small></span><div class="seg" role="group" aria-label="Check for updates"><button type="button" data-set="updates" data-v="on">On</button><button type="button" data-set="updates" data-v="off">Off</button></div></div>
       <div class="set-row"><span>Version <b id="setVer" class="mono"></b><small id="setUpd" aria-live="polite"></small></span><button type="button" id="setCheck" class="btn">Check now</button></div>
     </section>
+    <section class="es-sec"><h3 data-n="03">Privacy</h3>
+      <div class="set-row"><span>Share usage stats<small>Daily counts of features used and errors. Never your save, players or clubs</small></span><div class="seg" role="group" aria-label="Share usage stats"><button type="button" data-tel="on">On</button><button type="button" data-tel="off">Off</button></div></div>
+    </section>
     </div>
     <footer class="es-foot set-foot"><button type="button" class="btn primary" data-set-close>Done</button></footer>
   </div>
+</dialog>
+<dialog id="consent" class="es set" aria-labelledby="consentTitle">
+  <form method="dialog" class="es-in">
+    <header class="es-head"><h2 id="consentTitle">Help improve ScoutSheet?</h2></header>
+    <div class="es-body">
+      <p>With your OK, ScoutSheet counts per day which features you use (modes, searches, profiles, exports, My Club), how long the app is open, its version, your OS and any errors, under a random ID.</p>
+      <p><b>Never sent:</b> your save, file names, players, clubs or leagues.</p>
+      <p>Counts go to scoutsheet.fm, wait on your computer while you are offline, and are deleted after 14 months. You can change your mind anytime in Settings: turning it off also deletes what was sent.</p>
+    </div>
+    <footer class="es-foot set-foot"><button class="btn" value="off">No thanks</button><button class="btn" value="on">Share usage stats</button></footer>
+  </form>
 </dialog>
 <dialog id="load" class="pal" aria-labelledby="loadTitle">
   <header class="es-head"><h2 id="loadTitle">Load a save</h2><button type="button" class="icon-btn" data-load-close aria-label="Close">×</button></header>
@@ -1412,6 +1426,7 @@ function toggleStar(uid, name, clubUid) {
   const on = !shortlist.has(uid);
   on ? shortlist.add(uid) : shortlist.delete(uid);
   saveSL();
+  if (on) track('shortlist');
   if (on && CLUB && clubUid === CLUB.club_uid) toast(`${name} is already one of ours. Up the Gas!`, 'good');
   else toast(on ? `★ ${name} added to shortlist` : `${name} removed from shortlist`);
   grid?.refreshCells({ columns: ['star'], force: true });
@@ -3332,6 +3347,7 @@ function setMode(m, initial) {
   $$('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m));
   try { localStorage.setItem('fm26_mode', m); } catch {}
   if (initial) return;
+  track('mode', m);
   try {
     const pr = META.presets.find(x => x.id === st.preset);
     if (pr && !presetOk(pr)) st.preset = null;
@@ -3357,6 +3373,7 @@ function setFair(on) {
   FAIR = on; document.body.classList.toggle('no-fair', !on); $('#fairBtn').setAttribute('aria-pressed', on);
   try { localStorage.setItem('fm26_fair_prices', on ? '1' : '0'); } catch {}
   if (!META) return;
+  track('fair_prices', on ? 'on' : 'off');
   try {
     const fm = grid.getFilterModel(); Object.keys(fm).forEach(k => hid(k) && delete fm[k]); grid.setFilterModel(fm);
     renderSummary();
@@ -3493,6 +3510,25 @@ async function installUpdate(el) {
       el.textContent = u.state === 'restarting' ? 'Restarting…' : `${u.state === 'installing' ? 'Installing' : 'Downloading'} update · ${u.pct} %`;
     }
   } catch { el.textContent = 'Restarting…'; }  // server gone: the app is relaunching
+}
+
+// ---------- Usage stats: opt-in, asked once at first launch; the server ignores events until the user says yes ----------
+const track = (e, d, n) => fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ e, d, n }) }).catch(() => {});
+let shownAt = Date.now();
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) { shownAt = Date.now(); return; }
+  const n = Math.round((Date.now() - shownAt) / 1000);
+  if (n > 0) navigator.sendBeacon('/api/track', new Blob([JSON.stringify({ e: 'time', n: Math.min(n, 86400) })], { type: 'application/json' }));
+});
+async function initTelemetry() {
+  let t; try { t = await (await fetch('/api/telemetry')).json(); } catch { return; }
+  const pressed = () => $$('[data-tel]').forEach(b => b.setAttribute('aria-pressed', (b.dataset.tel === 'on') === t.on));
+  const set = async on => { try { t = await (await api('/api/telemetry', { on })).json(); } catch {} pressed(); };
+  pressed();
+  $$('[data-tel]').forEach(b => b.onclick = () => set(b.dataset.tel === 'on'));
+  const d = $('#consent');
+  d.addEventListener('close', () => set(d.returnValue === 'on'));  // Escape counts as no: the question is never asked again
+  if (!t.asked) d.showModal();
 }
 
 // ---------- Init & events ----------
@@ -3800,6 +3836,7 @@ ping(); setInterval(ping, 30000);  // the server quits after 10 min without a pi
 setFair(FAIR);
 addEventListener('pagehide', () => navigator.sendBeacon('/api/bye'));
 init();
+initTelemetry();
 if (SET.updates === 'on') checkUpdate();
 </script>
 </body></html>

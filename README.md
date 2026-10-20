@@ -8,6 +8,8 @@ ScoutSheet pulls every player out of your own FM26 save and puts them in one pla
 
 Free and open source. Runs on your computer, works offline, and never writes to your save.
 
+Usage stats are opt-in: the app asks once at first launch, and you can turn them off in Settings → Privacy. Only daily counts of features used and errors are shared, never your save, players or clubs ([details](https://scoutsheet.fm/privacy)).
+
 🌐 **[scoutsheet.fm](https://scoutsheet.fm)**
 
 ---
