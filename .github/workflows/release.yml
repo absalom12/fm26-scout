@@ -12,6 +12,10 @@ jobs:
         include:
           - os: macos-latest
             asset: ScoutSheet-mac.zip
+          # Intel Macs: numpy has no universal2 wheel, so a separate x86_64 build.
+          # ponytail: GitHub keeps Intel runners until macOS 15's end (about Aug 2027); drop this entry then.
+          - os: macos-15-intel
+            asset: ScoutSheet-mac-intel.zip
           - os: windows-latest
             asset: ScoutSheet-windows.zip
     runs-on: ${{ matrix.os }}

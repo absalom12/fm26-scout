@@ -1,11 +1,12 @@
 """In-app update for the built app: download the latest release, check it, swap the app, relaunch.
 Source runs keep the download link."""
-import hashlib, json, os, pathlib, shutil, ssl, subprocess, sys, tempfile, threading, urllib.request, zipfile
+import hashlib, json, os, pathlib, platform, shutil, ssl, subprocess, sys, tempfile, threading, urllib.request, zipfile
 
 import certifi
 
 REPO = "absalom12/scoutsheetfm"
-ASSET = {"darwin": "ScoutSheet-mac.zip", "win32": "ScoutSheet-windows.zip"}.get(sys.platform)
+ASSET = {"darwin": "ScoutSheet-mac.zip" if platform.machine() == "arm64" else "ScoutSheet-mac-intel.zip",
+         "win32": "ScoutSheet-windows.zip"}.get(sys.platform)
 # The bundled Python on macOS can't see the system's root certificates: use certifi's, on every platform.
 TLS = ssl.create_default_context(cafile=certifi.where())
 STATE = {"state": None, "pct": 0, "error": None}  # state: None | downloading | installing | restarting | error
