@@ -948,6 +948,19 @@ dialog.es.set { width: min(660px, calc(100vw - 32px)); height: auto; max-height:
 .set-row small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
 .set-row .seg button { font-variant-numeric: tabular-nums; }
 .set-foot { justify-content: flex-end; }
+/* First-launch consent: what is counted / never sent, then two choices of the same size */
+#consent { width: min(480px, calc(100vw - 32px)); margin-top: max(24px, 14vh); }
+#consent .es-head { padding: 18px 20px 0; border: 0; }
+#consent .es-head h2 { font-size: 22px; outline: none; }
+#consent .es-body { padding: 10px 20px 16px; font-size: 13.5px; line-height: 1.5; color: var(--text2); }
+#consent .cs-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; padding: 12px 14px; border-radius: var(--r); background: var(--bg2); }
+#consent .cs-cols h3 { margin: 0 0 4px; font: 700 12px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+#consent .cs-cols .cs-no h3 { color: var(--muted); }
+#consent .cs-cols ul { margin: 0; padding-left: 16px; color: var(--text); }
+#consent p { margin: 0; }
+#consent .cs-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 20px; }
+#consent .cs-foot .btn { justify-content: center; height: 38px; }
+@media (max-width: 480px) { #consent .cs-cols { grid-template-columns: 1fr; } }
 .copy-btn { vertical-align: middle; margin-left: 6px; opacity: .7; } .copy-btn:hover { opacity: 1; }
 .ac-item { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; width: 100%; text-align: left; padding: 7px 10px; border-radius: 7px; }
 .ac-item.on, .ac-item:hover { background: var(--accent-soft); }
@@ -1138,13 +1151,16 @@ dialog.es.set { width: min(660px, calc(100vw - 32px)); height: auto; max-height:
 </dialog>
 <dialog id="consent" class="es set" aria-labelledby="consentTitle">
   <form method="dialog" class="es-in">
-    <header class="es-head"><h2 id="consentTitle">Help improve ScoutSheet?</h2></header>
+    <header class="es-head"><h2 id="consentTitle" tabindex="-1" autofocus>Help improve ScoutSheet?</h2></header>
     <div class="es-body">
-      <p>With your OK, ScoutSheet counts per day which features you use (modes, searches, profiles, exports, My Club), how long the app is open, its version, your OS and any errors, under a random ID.</p>
-      <p><b>Never sent:</b> your save, file names, players, clubs or leagues.</p>
-      <p>Counts go to scoutsheet.fm, wait on your computer while you are offline, and are deleted after 14 months. You can change your mind anytime in Settings: turning it off also deletes what was sent.</p>
+      <p>With your OK, ScoutSheet counts per day, under a random ID:</p>
+      <div class="cs-cols">
+        <div><h3>Counted</h3><ul><li>Features used (modes, searches, profiles, exports, My Club)</li><li>Time the app is open</li><li>Version, OS, errors</li></ul></div>
+        <div class="cs-no"><h3>Never sent</h3><ul><li>Your save</li><li>File names</li><li>Players, clubs, leagues</li></ul></div>
+      </div>
+      <p>Sent to scoutsheet.fm when you are online, deleted after 14 months. Change your mind anytime in Settings: turning it off deletes what was sent.</p>
     </div>
-    <footer class="es-foot set-foot"><button class="btn" value="off">No thanks</button><button class="btn" value="on">Share usage stats</button></footer>
+    <footer class="es-foot cs-foot"><button class="btn" value="off">No thanks</button><button class="btn primary" value="on">Share usage stats</button></footer>
   </form>
 </dialog>
 <dialog id="load" class="pal" aria-labelledby="loadTitle">
