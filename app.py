@@ -1170,8 +1170,8 @@ def meta():
             "model_fit_r2": {f"{g}/{m}": r2 for (g, m), r2 in MODEL_FIT.items()},
             "nations": [{"name": n, "code": c, "players": k} for n, c, k in con().execute(
                 "SELECT nationality, any_value(nationality_code), count(*) FROM players WHERE nationality IS NOT NULL GROUP BY 1 ORDER BY 3 DESC").fetchall()],
-            "leagues": [{"key": k, "name": n, "nation": c, "players": x} for k, n, c, x in con().execute(
-                "SELECT league_key, any_value(league), any_value(club_country), count(*) FROM players WHERE league_key IS NOT NULL GROUP BY 1 ORDER BY 4 DESC").fetchall()],
+            "leagues": [{"key": k, "name": n, "nation": c, "players": x, "level": lv} for k, n, c, x, lv in con().execute(  # level: mean club reputation, ranks a country's tiers
+                "SELECT league_key, any_value(league), any_value(club_country), count(*), round(max(league_strength)) FROM players WHERE league_key IS NOT NULL GROUP BY 1 ORDER BY 4 DESC").fetchall()],
             "club_nations": [{"name": n, "players": x} for n, x in con().execute(
                 "SELECT club_country, count(*) FROM players WHERE club_country IS NOT NULL GROUP BY 1 ORDER BY 2 DESC").fetchall()],
             "presets": [{"id": k, "group": g, "label": l, "desc": d, "view": v, "uses_hidden": uses_hidden(w, "fair"),

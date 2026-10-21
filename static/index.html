@@ -680,7 +680,7 @@ dialog::backdrop { background: rgba(3,6,9,.6); backdrop-filter: blur(2px); }
 .pal-g { font: 700 11px var(--f-display); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); padding: 10px 10px 4px; }
 .pal-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; min-height: 40px; }
 .pal-item .l { font-weight: 600; white-space: nowrap; }
-.pal-item .d { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.pal-item .d { color: var(--muted); font-size: 13px; line-height: 1.35; flex: 1; }  /* wraps: the descriptions explain the mode, cutting them hid the point */
 .pal-item.on { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
 .pal-item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 .pal-foot { display: flex; gap: 14px; padding: 8px 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
@@ -1461,7 +1461,7 @@ const dealColor = v => v >= 60 ? C.good : v >= 30 ? C.ok : v >= 0 ? C.muted : C.
 const dealTag = v => v >= 60 ? 'Steal' : v >= 30 ? 'Bargain' : v >= 0 ? 'Fair' : 'Over';
 // ponytail: deal % can be extreme (e.g. -19960% on form); capped for display.
 const pctTxt = v => v < -999 ? '−999%+' : `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(Math.round(v))}%`;
-const dealBadge = v => v == null ? '' : `<span class="deal" style="--c:${dealColor(v)}">${Math.min(999, Math.abs(Math.round(v)))}${v < -999 ? '+' : ''}% ${v >= 0 ? 'under' : 'over'} <em>${dealTag(v)}</em></span>`;
+const dealBadge = v => v == null ? '' : Math.abs(v) < .5 ? `<span class="deal" style="--c:${dealColor(0)}">at fair value</span>` : `<span class="deal" style="--c:${dealColor(v)}">${Math.min(999, Math.abs(Math.round(v)))}${v < -999 ? '+' : ''}% ${v >= 0 ? 'under' : 'over'} <em>${dealTag(v)}</em></span>`;
 const valueVsFair = (val, fair, fmt = money) => {
   if (fair == null) return '';
   if (val == null) return `<div class="vf" title="Fair ${fmt(fair)}"><div class="tr na"></div><span class="mono">${fmt(fair)}</span></div>`;
@@ -1608,7 +1608,7 @@ function colDef(c) {
   if (c === 'key_attrs' || c === 'key_stats') return { colId: c, headerName: label(c), hide: true, width: c === 'key_attrs' ? 290 : 260, sortable: false, filter: false, floatingFilter: false,
     cellRenderer: p => c === 'key_attrs' ? keyAttrs(p.data, st.page === 'deals' ? 5 : 4) : keyStats(p.data) };
   if (['name', 'club_name', 'natural_positions', 'best_role', 'contract_squad_status', 'nationality'].includes(c))
-    Object.assign(d, { filter: 'agTextColumnFilter', filterParams: { maxNumConditions: 1 }, width: c === 'name' ? 200 : c === 'club_name' ? 170 : c === 'nationality' ? 140 : 120 });
+    Object.assign(d, { filter: 'agTextColumnFilter', filterParams: { maxNumConditions: 1 }, width: c === 'name' ? 200 : c === 'club_name' ? 170 : c === 'nationality' ? 140 : c === 'contract_squad_status' ? 220 : 120 });
   if (c === 'name') Object.assign(d, { pinned: 'left', cellRenderer: p => !p.data ? '<span class="sk"></span>'
     : `<span class="cell-name pname" data-profile="${p.data.uid}" role="link" tabindex="-1" title="Full profile">${esc(p.value)}</span>${CLUB && p.data.club_uid === CLUB.club_uid ? '<span class="ours">OURS</span>' : ''}` });
   if (c === 'nationality') d.cellRenderer = p => natHTML(p.data);
@@ -1727,7 +1727,7 @@ function setPage(p) {
 function pickList(id) {
   st.preset = st.preset === id ? null : id;
   const pr = META.presets.find(x => x.id === st.preset);
-  if (pr && VIEWS[pr.view] && VIEWS[pr.view].some(c => !hid(c))) st.view = pr.view;
+  if (pr && VIEWS[pr.view] && VIEWS[pr.view].filter(c => !hid(c)).length > 1) st.view = pr.view;  // a view needs 2+ visible columns (Moneyball's Physical is height alone)
   if (st.page !== 'scout') { st.page = '-'; setPage('scout'); }
   else { applyColumns(); clearSort(); refresh(); }
   renderLists(); renderViews(); renderSummary();
@@ -1791,7 +1791,7 @@ function renderLists() {
 }
 function renderViews() {
   const names = { overview: 'Overview', technical: 'Tech', mental: 'Mental', physical: 'Physical', goalkeeping: 'GK', hidden: 'Hidden', season: 'Season', roles: 'Roles', contract: 'Contract' };
-  $('#views').innerHTML = Object.keys(VIEWS).filter(v => v === 'overview' || VIEWS[v].some(c => !hid(c))).map(v => `<button data-view="${v}" aria-pressed="${st.view === v}">${names[v] || v}</button>`).join('');
+  $('#views').innerHTML = Object.keys(VIEWS).filter(v => v === 'overview' || VIEWS[v].filter(c => !hid(c)).length > 1).map(v => `<button data-view="${v}" aria-pressed="${st.view === v}">${names[v] || v}</button>`).join('');
 }
 function renderLenses() {
   $('#lenses').innerHTML = LENSES.filter(lensOk).map(l => `<button class="lens" data-lens="${l.id}" aria-pressed="${st.lens === l.id}" ${META.presets.some(p => p.id === l.preset) ? '' : 'disabled'}><b>${l.label}</b><span>${l.hint}</span></button>`).join('');
@@ -2469,7 +2469,7 @@ function secKpis(x = ppx) {
   out.push(k('Performance', perf ?? '–', perf != null ? pctColor(perf) : C.muted, perf != null ? 'index, his league' : `under ${PERF_MIN} min`));
   out.push(k('Avg rating', p.s_avg_rating ? p.s_avg_rating.toFixed(2) : '–', p.s_avg_rating ? ratingColor(p.s_avg_rating) : C.muted, `${p.s_apps ?? 0} apps · ${mins.toLocaleString()} min`));
   const ask = p.free_agent ? 'Free' : p.transfer_value == null ? 'Not for sale' : money(p.transfer_value);
-  out.push(k('Value', ask, null, FAIR && p.deal_score != null ? `${Math.abs(Math.round(p.deal_score))}% ${p.deal_score >= 0 ? 'under' : 'over'} fair value` : FAIR && mb && mins < FAIR_MIN ? `Fair value at ${FAIR_MIN}+ min` : 'transfer value'));
+  out.push(k('Value', ask, null, FAIR && p.deal_score != null ? `${Math.abs(Math.round(p.deal_score))}% ${p.deal_score >= 0 ? 'under' : 'over'} fair value` : FAIR && mb && mins < FAIR_MIN ? `no fair value yet` : 'transfer value'));
   out.push(k('Wage', wage(p.contract_wage), null, p.free_agent ? 'asking, free agent' : p.contract_end ? `until ${esc(p.contract_end)}` : 'no contract'));  // a free agent's stored end date is stale
   return [...out.slice(-2), ...out.slice(0, -2)].join('');  // value and wage lead
 }
@@ -2806,7 +2806,7 @@ const PP_FN = { kpis: secKpis, hero: secHero, deal: secDeal, sg: secSG, dev: sec
   radar: () => profileInner(ppx.p), rarch: secArch, rvs: secVs, rfit: secFit, rmind: secMind, rrisk: secRisk, ruse: secUse, simmini: () => h3i('similar', 'Similar players', '<button class="link" data-ppgo="similar">See all →</button>') + simMini(MODE === 'moneyball' ? 7 : 3, false) };
 // Development over the snapshots ScoutSheet keeps each time this career's save is loaded (server: snapshot()).
 // series: [key, label, dashed]; one small line chart, one shared scale (CA and PA, or one measure alone).
-const dDate = d => new Date(d + 'T00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+const dDate = d => new Date(d + 'T00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 function histChart(title, series, fmt = v => v) {
   const h = ppx?.p?.history || [];
   if (h.length < 2) return `<div class="hist"><h4>${title}</h4><p class="note">${h.length ? `First look saved on ${dDate(h[0].date)}. Load this save again later in the season to see how he develops.`
@@ -3194,6 +3194,7 @@ function esSync() {
 function esSpy() {
   const b = $('#esBody'); let cur = b.querySelector('.es-sec');
   b.querySelectorAll('.es-sec').forEach(s => { if (s.offsetTop <= b.scrollTop + 80) cur = s; });
+  if (b.scrollTop + b.clientHeight >= b.scrollHeight - 4) cur = [...b.querySelectorAll('.es-sec')].pop();  // at the bottom: a short last section never reaches the top
   $$('#esRail [data-esgo]').forEach(x => x.setAttribute('aria-current', x.dataset.esgo === cur?.dataset.sec));
 }
 let esT, esN = null;
@@ -3216,19 +3217,20 @@ let esCap0 = [];
 let esFor = 'grid';  // whose criteria the dialog edits: the Scout / Deal Finder list (F) or My Club's targets (CF)
 // League suggestions while typing: name starts with the query, then a word does, then it is inside; most players first.
 // A country's "(all clubs)" entry sits right after its leagues.
+// "England · Tier 5" counts as a nation match, not a name match, so "eng" ranks a country's leagues by level.
 function lgSuggest() {
   const q = $('#esLgQ').value.trim().toLowerCase(), box = $('#esLgList');
   if (!q) { box.innerHTML = ''; $('#esLgQ').setAttribute('aria-expanded', 'false'); return; }
   const rank = t => { t = (t || '').toLowerCase(); return t.startsWith(q) ? 0 : t.split(/[\s·().-]+/).some(w => w.startsWith(q)) ? 1 : t.includes(q) ? 2 : 9; };
-  const lg = (META.leagues || []).map(l => ({ ...l, r: Math.min(rank(l.name), rank(l.nation) + 1) })).filter(l => l.r < 9 && !D.leagues.includes(l.key))
-    .sort((a, b) => a.r - b.r || b.players - a.players).slice(0, 8);
+  const lg = (META.leagues || []).map(l => ({ ...l, r: Math.min(rank(l.name.startsWith(l.nation + ' ·') ? '' : l.name), rank(l.nation) + 1) })).filter(l => l.r < 9 && !D.leagues.includes(l.key))
+    .sort((a, b) => a.r - b.r || (b.level ?? 0) - (a.level ?? 0) || b.players - a.players).slice(0, 8);  // "eng": Premier League first
   const cn = (META.club_nations || []).map(c => ({ key: 'c:' + c.name, name: `${c.name} (all clubs)`, nation: c.name, players: c.players, r: rank(c.name) }))
     .filter(c => c.r < 9 && !D.leagues.includes(c.key)).sort((a, b) => a.r - b.r || b.players - a.players).slice(0, 4);
   const out = [...lg];
   cn.forEach(c => { const i = out.map(l => l.nation).lastIndexOf(c.nation); out.splice(i < 0 ? out.length : i + 1, 0, c); });
   box.innerHTML = out.slice(0, 8).map((l, i) => `<button type="button" class="ac-item${i ? '' : ' on'}" role="option" aria-selected="${!i}" data-eslg="${esc(l.key)}"><b><span class="flag">${flag(natCode(l.nation))}</span> ${esc(l.name)}</b><span class="mono muted">${l.players.toLocaleString()}</span></button>`).join('')
     || '<p class="muted" style="padding:8px 10px;margin:0;font-size:13px">No league or country matches.</p>';
-  $('#esLgQ').setAttribute('aria-expanded', 'true');
+  $('#esLgQ').setAttribute('aria-expanded', 'true'); box.scrollIntoView({ block: 'nearest' });  // near the footer the list would open below the fold
 }
 // Nation suggestions, same ranking as leagues.
 function natSuggest() {
@@ -3238,7 +3240,7 @@ function natSuggest() {
   const out = (META.nations || []).map(n => ({ ...n, r: rank(n.name) })).filter(n => n.r < 9 && !D.nations.includes(n.name)).sort((a, b) => a.r - b.r || b.players - a.players).slice(0, 8);
   box.innerHTML = out.map((n, i) => `<button type="button" class="ac-item${i ? '' : ' on'}" role="option" aria-selected="${!i}" data-esnat="${esc(n.name)}"><b><span class="flag">${flag(n.code)}</span> ${esc(n.name)}</b><span class="mono muted">${n.players.toLocaleString()}</span></button>`).join('')
     || '<p class="muted" style="padding:8px 10px;margin:0;font-size:13px">No nation matches.</p>';
-  $('#esNatQ').setAttribute('aria-expanded', 'true');
+  $('#esNatQ').setAttribute('aria-expanded', 'true'); $('#esNatList')?.scrollIntoView({ block: 'nearest' });
 }
 function natPick(x) { if (!D.nations.includes(x)) D.nations = [...D.nations, x]; renderES(); const q = $('#esNatQ'); q.value = ''; q.focus(); }
 function lgPick(k) { if (!D.leagues.includes(k)) D.leagues = [...D.leagues, k]; renderES(); const q = $('#esLgQ'); q.value = ''; q.focus(); }
@@ -3405,12 +3407,12 @@ async function refetchClub() {
 }
 const shapes = () => CLUB.shapes || {};
 const shapeName = () => Object.keys(shapes()).find(k => shapes()[k].join() === formation.join()) || null;
-const slotOf = i => (CLUB.slots || []).find(s => s.slot_index === i) || { slot_index: i, pos: formation[i], grade: null };
+const slotOf = i => (CLUB?.slots || []).find(s => s.slot_index === i) || { slot_index: i, pos: formation?.[i], grade: null };  // CLUB is null until My Club loads (caps paint at startup)
 function slotXY() {
   const seen = {}, count = {}; formation.forEach(p => count[p] = (count[p] || 0) + 1);
   return formation.map(p => { const [x, y] = PITCH[p] || [50, 50], n = count[p], k = seen[p] = (seen[p] || 0) + 1;
     const spread = n === 1 ? 0 : n === 2 ? 28 : 24;
-    return [Math.min(90, Math.max(10, x + (k - (n + 1) / 2) * spread)), y]; });
+    return [Math.min(90, Math.max(10, x + (k - (n + 1) / 2) * spread)), 9 + y * .82]; });  // squeezed off the edges: a centred slot card at y 8% (ST) or 92% (GK) was clipped
 }
 const fitWord = () => basis() === 'performance' ? 'performance' : 'fit';
 function renderClub() {
@@ -3707,18 +3709,21 @@ function cmpPick() {
   if (recent.length) fill('#cmpRec', recent, 4);
   if (stars.length) fill('#cmpStars', stars, 4);
 }
-function cmpSearch() {
-  clearTimeout(cmpT);
+let cmpRun = null, cmpWait = false;  // the pending search, so Enter typed right after the last key waits for it
+function cmpSearch(now = false) {
+  clearTimeout(cmpT); cmpWait = false;
   const q = $('#cmpQ').value.trim(), hits = $('#cmpHits');
   $('#cmpLists').hidden = q.length >= 2; hits.hidden = q.length < 2;
   if (q.length < 2) { hits.innerHTML = ''; return; }
-  cmpT = setTimeout(async () => {
+  const run = async () => {
     const seq = ++cmpSeq, r = await api('/api/players', { search: q, start: 0, end: 40, mode: MODE }).catch(() => null);  // more than fits: the list scrolls (owner)
     if (seq !== cmpSeq || !r || !r.ok || !$('#cmpHits')) return;
     const rows = (await r.json()).rows.filter(x => x.uid !== cmpA.uid);
     hits.innerHTML = rows.map(cmpItem).join('') || '<p class="note">No player found.</p>';
     cmpMove(0, true);
-  }, 200);
+  };
+  if (now) { cmpWait = false; return cmpRun = run(); }
+  cmpWait = true; cmpT = setTimeout(() => { cmpWait = false; cmpRun = run(); }, 200);
 }
 // Keyboard: ↑/↓ walk the visible rows across sections, Enter picks.
 function cmpMove(d, reset = false) {
@@ -3904,7 +3909,10 @@ $('#cmp').addEventListener('change', e => { const id = e.target.id;
 $('#cmp').addEventListener('keydown', e => {
   if (e.key === 'Escape' && $('#cmpQ')?.value) { e.preventDefault(); e.stopPropagation(); $('#cmpQ').value = ''; cmpSearch(); return $('#cmpQ').focus(); }  // clear first, also when Chrome would skip the cancel event
   if (e.target.id === 'cmpQ' && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); return cmpMove(e.key === 'ArrowDown' ? 1 : -1); }
-  if (e.target.id === 'cmpQ' && e.key === 'Enter') { e.preventDefault(); return $('#cmpBody .cmp-row.on')?.click(); }
+  if (e.target.id === 'cmpQ' && e.key === 'Enter') { e.preventDefault();
+    const pick = () => $('#cmpBody .cmp-row.on')?.click(), q = e.target.value.trim();
+    if (q.length >= 2 && (cmpWait || !$('#cmpHits .cmp-row.on'))) return (cmpWait ? cmpSearch(true) : cmpRun || Promise.resolve()).then(pick);  // typed faster than the 200 ms debounce
+    return pick(); }
   if (e.key === '/' && $('#cmpQ') && e.target.id !== 'cmpQ') { e.preventDefault(); e.stopPropagation(); return $('#cmpQ').focus(); }
   if (e.target.matches('g[data-cmp-pos]') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click', { bubbles: true })); return; }
   const ids = $$('[data-cmptab]', $('#cmp')).map(b => b.dataset.cmptab);
@@ -3928,7 +3936,7 @@ function setMode(m, initial) {
     const pr = META.presets.find(x => x.id === st.preset);
     if (pr && !presetOk(pr)) st.preset = null;
     if (!lensOk(lens())) st.lens = 'blend';
-    if (st.view !== 'overview' && !VIEWS[st.view].some(c => !hid(c))) st.view = 'overview';
+    if (st.view !== 'overview' && VIEWS[st.view].filter(c => !hid(c)).length < 2) st.view = 'overview';
     if (m === 'moneyball' && st.page === 'scout' && VIEWS.season) st.view = 'season';  // Moneyball reads the season stats first
     else if (was === 'moneyball' && m !== 'moneyball' && st.view === 'season') st.view = 'overview';  // and leaving it goes back to the overview
     const fm = grid.getFilterModel(); Object.keys(fm).forEach(k => hid(k) && delete fm[k]); grid.setFilterModel(fm);
@@ -4215,7 +4223,7 @@ async function openLoad() {
   let r = { folder_found: false, saves: [] };
   try { r = await (await api('/api/saves')).json(); } catch {}
   $('#loadSaves').innerHTML = r.saves.length
-    ? r.saves.map(s => `<button type="button" class="btn" data-save="${esc(s.name)}"><span>${esc(s.name)}</span><span class="muted mono" style="font-size:12px">${Math.round(s.size / 1048576)} MB · ${new Date(s.mtime * 1000).toLocaleDateString()}</span></button>`).join('')
+    ? r.saves.map(s => `<button type="button" class="btn" data-save="${esc(s.name)}"><span>${esc(s.name)}</span><span class="muted mono" style="font-size:12px">${Math.round(s.size / 1048576)} MB · ${new Date(s.mtime * 1000).toLocaleDateString('en-GB')}</span></button>`).join('')
     : `<p class="note" style="margin:0">${r.folder_found ? 'No .fm save in the default FM26 folder.' : 'FM26 save folder not found.'} Drop the file above or browse to it.</p>`;
 }
 $('#loadBtn').onclick = openLoad;
