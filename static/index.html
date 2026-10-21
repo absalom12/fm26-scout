@@ -347,8 +347,7 @@ details[open] summary::before { content: "−"; }
 /* left column: Role fit over its own Similar players panel */
 .pg-over.m-full, .pg-over.m-fair { grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(300px, 380px); grid-template-rows: minmax(0, 1fr) minmax(0, .55fr) auto; grid-template-areas: "role attr sg" "role canvas radar" "simmini canvas radar"; }
 .pg-over.m-full { grid-template-areas: "role attr sg" "role canvas dev" "simmini canvas dev"; }
-.pg-over.m-moneyball { grid-template-columns: minmax(0, 1.35fr) minmax(0, .85fr) minmax(340px, 1fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "role simmini pizza"; }
-.rd-sep { border: 0; border-top: 1px solid var(--line); margin: 12px 0 10px; }
+.pg-over.m-moneyball { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(300px, 360px); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "read read pizza" "role simmini pizza"; }
 .rd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 8px 28px; align-items: start; } @media (max-width: 900px) { .rd-grid { grid-template-columns: 1fr; } }
 .rd-id { margin: 0 0 8px; font-size: 15px; } .rd-pos, .rd-chips { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin: 0 0 8px; } .rd-pos small { color: var(--muted); }
 .rd-conf { margin: 6px 0 0; font-size: 12.5px; color: var(--muted); }
@@ -2343,7 +2342,7 @@ function secRoleMB() {
       `${nm(x.stat)}: ${fmtRS(x.stat, x.value)} ${META.role_stats?.[x.stat]?.[1] || ''} · ${ordN(x.pct)} percentile of ${plural(rg)} · limit ${low(x.stat) ? '≤' : '≥'} ${fmtRS(x.stat, x.limit)}${low(x.stat) ? ' (lower is better)' : ''}${x.weight === 2 ? ' · key stat' : ''}`)).join('')}</div>`;
 }
 function secRole() {
-  if (MODE === 'moneyball') return `${secRead()}<hr class="rd-sep">${secRoleMB()}`;  // one card: the read on top of the role fit
+  if (MODE === 'moneyball') return secRoleMB();
   const { p, grp } = ppx, gk = grp === 'GK';
   const roles = Object.keys(META.roles).filter(r => (META.roles[r] === 'GK') === gk).map(r => [r, p['role_' + r]]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
   if (!roles.length) return `${h3i('role', 'Role fit')}<p class="note">No role scores in this save.</p>`;
@@ -2692,7 +2691,7 @@ const PP_PAGES = {
   full: [['over', 'Overview', ['role', 'simmini', 'attr', 'canvas', 'sg', 'dev']], ['report', 'Scouting report', ['rarch', 'rvs', 'rfit', 'rmind', 'rrisk', 'ruse']], ['stats', 'Statistics', ['swarm', 'pizza', 'stats']],
     ['similar', 'Similar players', ['similar', 'apx']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
   fair: [['over', 'Overview', ['role', 'simmini', 'attr', 'canvas', 'sg', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
-  moneyball: [['over', 'Overview', ['role', 'simmini', 'pizza']], ['stats', 'Statistics', ['swarm', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
+  moneyball: [['over', 'Overview', ['read', 'role', 'pizza', 'simmini']], ['stats', 'Statistics', ['swarm', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
 };
 const ppPages = () => PP_PAGES[MODE] || PP_PAGES.full;
 const ppCards = () => ppPages().flatMap(x => x[2]);
@@ -2714,8 +2713,8 @@ function simMini(n, more = true) {
   const s = ppx.sim; if (!s) return '<span class="sk" style="height:120px;width:100%"></span>';
   return s.rows.length ? `<div class="sim-mini">${s.rows.slice(0, n).map(r => simRow(r)).join('')}</div>${more ? '<button class="link" data-ppgo="similar">All similar players →</button>' : ''}` : '<p class="note">No close match found.</p>';
 }
-const PP_FN = { kpis: secKpis, hero: secHero, deal: secDeal, sg: secSG, dev: secDev, attr: secAttr, role: secRole, canvas: secCanvas, swarm: secSwarm, pizza: secPizza,
-  radar: () => profileInner(ppx.p), rarch: secArch, rvs: secVs, rfit: secFit, rmind: secMind, rrisk: secRisk, ruse: secUse, simmini: () => h3i('similar', 'Similar players', '<button class="link" data-ppgo="similar">See all →</button>') + simMini(MODE === 'moneyball' ? 10 : 3, false) };
+const PP_FN = { kpis: secKpis, hero: secHero, deal: secDeal, sg: secSG, dev: secDev, attr: secAttr, role: secRole, canvas: secCanvas, read: secRead, swarm: secSwarm, pizza: secPizza,
+  radar: () => profileInner(ppx.p), rarch: secArch, rvs: secVs, rfit: secFit, rmind: secMind, rrisk: secRisk, ruse: secUse, simmini: () => h3i('similar', 'Similar players', '<button class="link" data-ppgo="similar">See all →</button>') + simMini(MODE === 'moneyball' ? 7 : 3, false) };
 // Development over the snapshots ScoutSheet keeps each time this career's save is loaded (server: snapshot()).
 // series: [key, label, dashed]; one small line chart, one shared scale (CA and PA, or one measure alone).
 const dDate = d => new Date(d + 'T00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
