@@ -88,7 +88,7 @@ body.mode-fair { --mode: var(--good); } body.mode-moneyball { --mode: var(--gold
 /* Nationality */
 .nat-n { overflow: hidden; text-overflow: ellipsis; }
 .nat { display: inline-flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.flag { display: inline-block; font-size: 15px; line-height: 1; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+.flag { display: inline-block; font-size: 15px; line-height: 1; font-family: "Apple Color Emoji", "Twemoji Country Flags", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
 /* Key attribute / stat chips */
 .kchips { display: inline-flex; gap: 4px; overflow: hidden; vertical-align: middle; align-items: center; }
 .ac { display: inline-flex; gap: 4px; align-items: baseline; font: 600 11px var(--f-display); letter-spacing: .04em; color: var(--muted); background: #151e27; border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
@@ -3683,7 +3683,7 @@ function offerSearch() {
   }, 200);
 }
 function renderAC() {
-  $('#ofList').innerHTML = of.list.length ? of.list.map((p, i) => `<button class="ac-item${i === of.idx ? ' on' : ''}" role="option" aria-selected="${i === of.idx}" data-ofi="${i}"><b>${flag(p.nationality_code)} ${esc(p.name)}</b><b class="mono">${feeHTML(p)}</b><span>${esc(p.club_name || 'Free agent')} · ${p.age} yrs · ${esc((p.natural_positions || '').replaceAll(';', ' '))}</span><span>${wage(p.contract_wage)}</span></button>`).join('')
+  $('#ofList').innerHTML = of.list.length ? of.list.map((p, i) => `<button class="ac-item${i === of.idx ? ' on' : ''}" role="option" aria-selected="${i === of.idx}" data-ofi="${i}"><b><span class="flag">${flag(p.nationality_code)}</span> ${esc(p.name)}</b><b class="mono">${feeHTML(p)}</b><span>${esc(p.club_name || 'Free agent')} · ${p.age} yrs · ${esc((p.natural_positions || '').replaceAll(';', ' '))}</span><span>${wage(p.contract_wage)}</span></button>`).join('')
     : '<p class="muted" style="padding:8px 10px;margin:0;font-size:13px">No player found.</p>';
   $('#ofSearch').setAttribute('aria-expanded', 'true');
 }
@@ -3697,7 +3697,7 @@ let cmpA = null, cmpB = null, cmpT, cmpSeq = 0, cmpTabId = 'ver', cmpRole = null
 const CMP_POS = { DC: 'CB', SW: 'CB', MC: 'CM', STC: 'ST', AMC: 'AM' };
 const cmpKey = x => MODE === 'full' && x.best_role_score != null ? [Math.round(x.best_role_score), roleTag(x.best_role)] : [x.stat_score != null ? Math.round(x.stat_score) : '–', 'perf'];
 const cmpItem = x => { const [k, t] = cmpKey(x);
-  return `<button type="button" class="ac-item cmp-row" data-cmp-pick="${x.uid}"><span class="cr-n">${flag(x.nationality_code)} <b>${esc(x.name)}</b><small>${esc(x.club_name || 'Free agent')}</small></span>
+  return `<button type="button" class="ac-item cmp-row" data-cmp-pick="${x.uid}"><span class="cr-n"><span class="flag">${flag(x.nationality_code)}</span> <b>${esc(x.name)}</b><small>${esc(x.club_name || 'Free agent')}</small></span>
     <span class="cr-p">${posChips(x.natural_positions)}</span><span class="cr-a">${x.age ?? ''}</span><span class="cr-v mono">${x.free_agent ? 'Free' : money(x.transfer_value)}</span>
     <span class="pill cr-k" style="--c:${typeof k === 'number' ? pctColor(k) : C.muted}" title="${t === 'perf' ? 'Performance index' : 'Best role score'}">${k}<small>${esc(t)}</small></span></button>`; };
 const cmpSk = n => Array.from({ length: n }, () => '<span class="sk" style="height:44px;width:100%"></span>').join('');
@@ -3707,7 +3707,7 @@ function cmpPick() {
   const A = cmpA, recent = ls('fm26_recent', []).filter(x => x.uid !== A.uid).slice(0, 4).map(x => x.uid), stars = [...shortlist].filter(u => u !== A.uid);
   $('#cmpTitle').textContent = `Compare ${A.name} with…`;
   $('#cmpBody').innerHTML = `<div class="cmp-cast"><p class="cmp-ttl">Compare players</p>
-      <div class="cmp-vs"><div class="cmp-pl ka"><p class="cmp-nm"><i class="ka">●</i> ${flag(A.nationality_code)} ${esc(A.name)}</p><p>${posChips(A.natural_positions)} · ${A.age} yrs · ${esc(A.club_name || 'Free agent')}</p></div>
+      <div class="cmp-vs"><div class="cmp-pl ka"><p class="cmp-nm"><i class="ka">●</i> <span class="flag">${flag(A.nationality_code)}</span> ${esc(A.name)}</p><p>${posChips(A.natural_positions)} · ${A.age} yrs · ${esc(A.club_name || 'Free agent')}</p></div>
         <span class="cmp-vsw">vs</span><div class="cmp-slot"><i class="kb">◆</i> Pick player B</div></div>
       <label class="cmp-sb"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
         <input id="cmpQ" placeholder="Search players by name or club…" aria-label="Search a player to compare" autocomplete="off" role="combobox" aria-controls="cmpLists" aria-expanded="true"><kbd>/</kbd></label>
@@ -3905,7 +3905,7 @@ async function cmpShow(uid) {
         : MODE !== 'moneyball' && x.best_role_score != null ? t('Best role', Math.round(x.best_role_score), esc(label('role_' + x.best_role)))
         : t('Performance', x.stat_score != null ? Math.round(x.stat_score) : '–', 'index')); };
   const plate = (x, k) => `<div class="cmp-pl ${k}"><p class="cmp-nm"><i class="${k}">${k === 'ka' ? '●' : '◆'}</i> ${esc(x.name)}</p>
-    <p>${flag(x.nationality_code)} ${esc(x.club_name || 'Free agent')} · ${x.age} yrs · ${posChips(x.natural_positions)}</p><div class="pp-kpis">${kpis(x)}</div></div>`;
+    <p><span class="flag">${flag(x.nationality_code)}</span> ${esc(x.club_name || 'Free agent')} · ${x.age} yrs · ${posChips(x.natural_positions)}</p><div class="pp-kpis">${kpis(x)}</div></div>`;
   const cur = pages.some(x => x[0] === cmpTabId) ? cmpTabId : (cmpTabId = 'ver');
   $('#cmpBody').innerHTML = `<div class="cmp-top">${plate(A, 'ka')}<div class="cmp-score" role="img" aria-label="${esc(`${A.name} better on ${tot.a} lines, ${B.name} on ${tot.b}`)}"><b class="ka">${tot.a}</b><i>–</i><b class="kb">${tot.b}</b><small>lines won · <button class="link" data-cmp-again>change player</button></small></div>${plate(B, 'kb')}</div>
     <nav class="pp-tabs cmp-tabs" role="tablist" aria-label="Comparison pages">${pages.map(([id, l], i) => { const s = cmpScore[id];
