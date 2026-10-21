@@ -549,6 +549,13 @@ table.reg td { padding: 4px 6px; border-bottom: 1px solid var(--line); color: va
 .pp-verdict { margin-top: 10px; padding: 8px 12px; border-radius: var(--r); border: 1px solid color-mix(in srgb, var(--mode) 35%, transparent); background: color-mix(in srgb, var(--mode) 7%, var(--bg)); font-size: 12.5px; line-height: 1.4; color: var(--text2); flex: 0 1 auto; min-height: 0; overflow: hidden; }
 .pp-verdict h4 { margin: 0 0 4px !important; color: var(--mode) !important; } .pp-verdict p { margin: 0 0 4px; } .pp-verdict b { color: var(--text); } .pp-verdict small { color: var(--faint); font-size: 11px; }
 .deq { width: 100%; height: auto; flex: 0 1 auto; min-height: 0; }
+/* Price page: the verdict first, then how sure the model is, the market and the history */
+.pg-price { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1.1fr) minmax(0, .9fr); grid-template-areas: "pverdict plens plens" "pverdict pmarket phist"; }
+.pv-word { display: block; font: 700 40px/1 var(--f-display); letter-spacing: -.01em; text-transform: uppercase; color: var(--c); margin: 4px 0 6px; }
+.pv-act { margin: 0 0 12px; font-size: 14.5px; color: var(--text); line-height: 1.45; } .pv-act b { font-family: var(--f-mono); }
+.pv-conf { display: inline-block; margin: 10px 0 8px; } .pv-facts { display: grid; gap: 4px; margin-top: 10px; font-size: 12.5px; color: var(--muted); } .pv-facts b { color: var(--text); font-family: var(--f-mono); }
+.pg-price .deq { max-height: 230px; } .pv-bids { margin: 4px 0 2px; } .pv-bids .kpi { flex: 1; max-width: none; }
+.hist-sm { display: grid; gap: 4px; } .hist-sm .hist { margin-top: 4px; } .hist-sm .hist svg { max-height: 92px; }
 .deq text { font: 600 11px var(--f-body); fill: var(--text2); } .deq .lb { fill: var(--muted); } .deq .vl { font: 700 11px var(--f-mono); fill: var(--text); } .deq .ax { font: 500 10px var(--f-mono); fill: var(--muted); } .deq .fair { fill: var(--accent); }
 .tix { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
 .tix div { min-width: 0; padding: 5px 9px; border-radius: var(--r-sm); background: var(--bg); }
@@ -605,7 +612,7 @@ table.reg td { padding: 4px 6px; border-bottom: 1px solid var(--line); color: va
   .pp-head { flex-wrap: wrap; } .pp-id { flex-basis: 100%; }
   .pp-body:not([hidden]) { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; grid-auto-rows: auto; grid-template-areas: none; }
   .pp-body > .pp-card { grid-area: auto !important; overflow: visible; }
-  .pp-body > :is([data-pp="canvas"], [data-pp="attr"], [data-pp="stats"], [data-pp="similar"], [data-pp="apx"], [data-pp="price"]) { grid-column: 1 / -1 !important; }
+  .pp-body > :is([data-pp="canvas"], [data-pp="attr"], [data-pp="stats"], [data-pp="similar"], [data-pp="apx"], [data-pp="plens"]) { grid-column: 1 / -1 !important; }
 }
 @media (max-width: 760px) {
   .pp { overflow-y: auto; } .pp-in { height: auto; }
@@ -2377,17 +2384,16 @@ function secDeal() {
   }
   const lens = LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] != null).map(l => [l.label, p[l.ffee]]);
   const [lo, hi] = p.fair_fee_range || [p.fair_fee, p.fair_fee], vals = [...lens.map(x => x[1]), lo, hi, p.fair_fee, ...(ask > 0 ? [ask] : [])].filter(x => x > 0);
-  const a = Math.log(Math.min(...vals) * .8), b = Math.log(Math.max(...vals) * 1.25), W = 460, L = 84, R = 16, rowH = 22, T = 20, H = T + lens.length * rowH + 26;
+  const a = Math.log(Math.min(...vals) * .8), b = Math.log(Math.max(...vals) * 1.25), W = 520, L = 84, R = 84, rowH = 22, T = 12, H = T + lens.length * rowH + 26;
   const X = v => (L + (Math.log(v) - a) / (b - a) * (W - L - R)).toFixed(1);
   const dc = v => ask == null ? 'var(--text2)' : v >= ask ? C.good : C.bad;
   return `${h3i('cost', 'The deal equation', 'where each model prices him · line = asking · band = fair range')}
     <svg class="deq" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Asking ${ask == null ? 'not for sale' : money(ask)}; fair value ${money(p.fair_fee)} (range ${money(lo)} to ${money(hi)}); ${lens.map(([n, v]) => `${n} ${money(v)}`).join(', ')}`)}">
       <rect x="${X(lo)}" y="${T - 6}" width="${(X(hi) - X(lo)).toFixed(1)}" height="${lens.length * rowH + 6}" rx="4" fill="color-mix(in srgb, var(--accent) 14%, transparent)" stroke="color-mix(in srgb, var(--accent) 45%, transparent)"/>
-      <text class="ax fair" x="${X(p.fair_fee)}" y="${T - 9}" text-anchor="middle">fair ${money(p.fair_fee)} · range ${money(lo)}–${money(hi)}</text>
       <line x1="${X(p.fair_fee)}" x2="${X(p.fair_fee)}" y1="${T - 6}" y2="${H - 18}" stroke="var(--accent)" stroke-dasharray="3 3"/>
       ${ask > 0 ? `<line x1="${X(ask)}" x2="${X(ask)}" y1="${T - 6}" y2="${H - 18}" stroke="var(--text)" stroke-width="2"/>` : ''}
       ${lens.map(([n, v], i) => { const y = T + i * rowH + 6; return `<text class="lb" x="0" y="${y + 4}">${n}</text><line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" stroke="#1a242d"/>
-        <circle cx="${X(v)}" cy="${y}" r="5.5" fill="${dc(v)}"/><text class="vl" x="${+X(v) + 9}" y="${y + 4}">${money(v)}</text>`; }).join('')}
+        <circle cx="${X(v)}" cy="${y}" r="5.5" fill="${dc(v)}"/><text class="vl" x="${+X(v) + 9}" y="${y + 4}">${money(v)}</text>${ask > 0 ? `<text class="ax" x="${W}" y="${y + 4}" text-anchor="end" fill="${dc(v)}">${ask / v >= 1 ? `asks ${(ask / v).toFixed(1)}×` : `${(v / ask).toFixed(1)}× asking`}</text>` : ''}`; }).join('')}
       <text class="ax" x="${ask > 0 ? X(ask) : L}" y="${H - 6}" text-anchor="middle">${ask > 0 ? 'asking ' + money(ask) : 'not for sale: no asking line'}</text>
     </svg>`;
 }
@@ -2653,9 +2659,9 @@ function sideBody(k) {
 // Profile pages per mode: [id, tab label, cards]. Overview and the stats page with the beeswarm place cards by named grid areas (CSS).
 const PP_PAGES = {
   full: [['over', 'Overview', ['role', 'simmini', 'attr', 'canvas', 'sg', 'dev']], ['report', 'Scouting report', ['rarch', 'rvs', 'rfit', 'rmind', 'rrisk', 'ruse']], ['stats', 'Statistics', ['swarm', 'pizza', 'stats']],
-    ['similar', 'Similar players', ['similar', 'apx']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
-  fair: [['over', 'Overview', ['role', 'simmini', 'attr', 'canvas', 'sg', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
-  moneyball: [['over', 'Overview', ['canvas', 'swarm', 'role', 'pizza', 'simmini']], ['stats', 'Statistics', ['swarm', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['deal', 'price']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
+    ['similar', 'Similar players', ['similar', 'apx']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
+  fair: [['over', 'Overview', ['role', 'simmini', 'attr', 'canvas', 'sg', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
+  moneyball: [['over', 'Overview', ['canvas', 'swarm', 'role', 'pizza', 'simmini']], ['stats', 'Statistics', ['swarm', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
 };
 const ppPages = () => PP_PAGES[MODE] || PP_PAGES.full;
 const ppCards = () => ppPages().flatMap(x => x[2]);
@@ -2677,8 +2683,7 @@ function simMini(n, more = true) {
   const s = ppx.sim; if (!s) return '<span class="sk" style="height:120px;width:100%"></span>';
   return s.rows.length ? `<div class="sim-mini">${s.rows.slice(0, n).map(r => simRow(r)).join('')}</div>${more ? '<button class="link" data-ppgo="similar">All similar players →</button>' : ''}` : '<p class="note">No close match found.</p>';
 }
-const PP_FN = { kpis: secKpis, hero: secHero, deal: () => secDeal() + (MODE === 'full' ? histChart('CA and PA over time', [['ca', 'CA'], ['pa', 'PA', true]])
-    : MODE === 'fair' ? histChart('Average attribute over time', [['attr_avg', 'Avg']], v => v == null ? '–' : v.toFixed(1)) : ''), sg: secSG, dev: secDev, attr: secAttr, role: secRole, canvas: secCanvas, swarm: secSwarm, pizza: secPizza,
+const PP_FN = { kpis: secKpis, hero: secHero, deal: secDeal, sg: secSG, dev: secDev, attr: secAttr, role: secRole, canvas: secCanvas, swarm: secSwarm, pizza: secPizza,
   radar: () => profileInner(ppx.p), rarch: secArch, rvs: secVs, rfit: secFit, rmind: secMind, rrisk: secRisk, ruse: secUse, simmini: () => h3i('similar', 'Similar players', '<button class="link" data-ppgo="similar">See all →</button>') + simMini(MODE === 'moneyball' ? 4 : 3, false) };
 // Development over the snapshots ScoutSheet keeps each time this career's save is loaded (server: snapshot()).
 // series: [key, label, dashed]; one small line chart, one shared scale (CA and PA, or one measure alone).
@@ -2693,14 +2698,42 @@ function histChart(title, series, fmt = v => v) {
   const line = ([k, l, dash], i) => { const pts = h.filter(r => r[k] != null);
     return `<g><polyline points="${pts.map(r => `${X(+new Date(r.date)).toFixed(1)},${Y(r[k]).toFixed(1)}`).join(' ')}" fill="none" stroke="${i ? C.muted : 'var(--mode)'}" stroke-width="2"${dash ? ' stroke-dasharray="5 3"' : ''}/>
       ${pts.map(r => `<circle cx="${X(+new Date(r.date)).toFixed(1)}" cy="${Y(r[k]).toFixed(1)}" r="4" fill="${i ? C.muted : 'var(--mode)'}" stroke="var(--panel)" stroke-width="2"><title>${l} ${fmt(r[k])} · ${dDate(r.date)}</title></circle>`).join('')}
-      <text x="${W - R}" y="${Y(pts.at(-1)[k]) + (series.length > 1 && !i ? 14 : -6)}" text-anchor="end" font-size="10" fill="var(--text2)">${l} ${fmt(pts.at(-1)[k])}</text></g>`; };
-  return `<div class="hist"><h4>${title}</h4><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(series.map(([k, l]) => `${l}: ${h.map(r => `${fmt(r[k])} on ${dDate(r.date)}`).join(', ')}`).join('; '))}">
+      ${series.length > 1 ? '' : `<text x="${W - R}" y="${Y(pts.at(-1)[k]) - 6}" text-anchor="end" font-size="10" fill="var(--text2)">${l} ${fmt(pts.at(-1)[k])}</text>`}</g>`; };
+  const last = series.length > 1 ? ' · ' + series.map(([k, l]) => `${l} ${fmt(h.filter(r => r[k] != null).at(-1)?.[k])}`).join(' · ') : '';
+  return `<div class="hist"><h4>${title}${last}</h4><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(series.map(([k, l]) => `${l}: ${h.map(r => `${fmt(r[k])} on ${dDate(r.date)}`).join(', ')}`).join('; '))}">
     <line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" stroke="var(--line)"/>
     <text x="${L - 4}" y="${Y(hi) + 3}" text-anchor="end" font-size="9" fill="var(--muted)">${fmt(hi)}</text><text x="${L - 4}" y="${Y(lo) + 3}" text-anchor="end" font-size="9" fill="var(--muted)">${fmt(lo)}</text>
     <text x="${L}" y="${H - 4}" font-size="9" fill="var(--muted)">${dDate(h[0].date)}</text><text x="${W - R}" y="${H - 4}" text-anchor="end" font-size="9" fill="var(--muted)">${dDate(h.at(-1).date)}</text>
     ${series.map(line).join('')}</svg></div>`;
 }
-PP_FN.price = () => `<h3>${ppIcon('cost')}<span class="h3l">${PP_SIDE_L.price}</span></h3><div class="sd-body">${sideBody('price')}</div>${histChart('Value over time', [['value', 'Value']], money)}`;
+// Price page cards. Lens agreement = how far apart the lenses' fair fees are (max / min).
+const lensSpread = p => { const v = LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] > 0).map(l => p[l.ffee]); return v.length > 1 ? Math.max(...v) / Math.min(...v) : null; };
+PP_FN.pverdict = () => {
+  const { p } = ppx, f = p.fair_fee, ask = p.free_agent ? 0 : p.transfer_value, hi = (p.fair_fee_range || [f, f])[1];
+  const facts = `<div class="pv-facts"><span>Contract <b>${p.free_agent ? 'free agent' : p.months_left == null ? '–' : leftTxt(Math.max(p.months_left, 0))}</b>${p.contract_end ? ` · until ${esc(String(p.contract_end))}` : ''}</span>
+    <span>Wage <b>${wage(p.contract_wage)}</b>${FAIR && p.fair_wage != null ? ` · fair <b>${wage(p.fair_wage)}</b>` : ''}</span></div>`;
+  if (MODE === 'moneyball' && (p.s_minutes || 0) < FAIR_MIN) return h3i('cost', 'Is he worth it?') + minsGate(p.s_minutes || 0, FAIR_MIN, true) + facts;
+  if (!FAIR || f == null) return `${h3i('cost', 'Price', FAIR ? 'no fair value for him' : 'fair prices off')}<span class="pv-word" style="--c:var(--text)">${feeHTML(p)}</span>
+    <p class="pv-act">${FAIR ? 'No model could price him.' : 'Turn on Fair prices to see whether he is worth it.'}</p>${facts}`;
+  const [w, c, act] = p.free_agent ? [dealTag(p.deal_score ?? 0), dealColor(p.deal_score ?? 0), `Free agent: no fee. He earns <b>${wage(p.contract_wage)}</b>, fair wage <b>${wage(p.fair_wage)}</b>.`]
+    : ask == null ? ['Not for sale', C.muted, `Fair value <b>${money(f)}</b>, but his club won't sell.`]
+    : ask <= f ? [dealTag(p.deal_score ?? 0), dealColor(p.deal_score ?? 0), `Pay the asking <b>${money(ask)}</b>: ${money(f - ask)} under his fair value.`]
+    : ask <= hi ? ['Fair', C.warn, `Asking is inside the fair range. Open at <b>${money(f)}</b>, stop at <b>${money(hi)}</b>.`]
+    : ['Over', C.bad, `Asking is ${(ask / f).toFixed(1)}× his fair value. Walk away above <b>${money(hi)}</b>.`];
+  const sp = lensSpread(p), conf = sp == null ? null : sp <= 1.5 ? ['good', 'Lenses agree'] : sp <= 3 ? ['warn', 'Lenses split'] : ['bad', `Lenses disagree: ×${sp.toFixed(1)} apart`];
+  return `${h3i('cost', 'Is he worth it?')}<span class="pv-word" style="--c:${c}">${w}</span><p class="pv-act">${act}</p>${priceBar(p)}
+    ${conf ? `<span class="tag ${conf[0]} pv-conf" title="How far apart the lenses' fair fees are">${conf[1]}</span>` : ''}
+    ${ask ? `<div class="pv-bids pp-kpis"><div class="kpi"><span>Open at</span><b>${money(Math.min(ask, (p.fair_fee_range || [f])[0]))}</b><small>bottom of the fair range</small></div>
+      <div class="kpi"><span>Walk away above</span><b>${money(hi)}</b><small>top of the fair range</small></div></div>` : ''}${facts}`;
+};
+PP_FN.plens = () => { const { p } = ppx, ask = p.free_agent ? 0 : p.transfer_value, ls = LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] > 0);
+  const up = ls.filter(l => ask > 0 && p[l.ffee] >= ask).map(l => l.label), dn = ls.filter(l => ask > 0 && p[l.ffee] < ask).map(l => l.label);
+  return secDeal().replace(h3i('cost', 'The deal equation', 'where each model prices him · line = asking · band = fair range'), h3i('vs', 'How sure is the model?', 'dot = one lens\'s fair fee · line = asking · band = fair range'))
+    + (up.length && dn.length ? `<p class="note">${up.join(', ')} price him above the asking; ${dn.join(', ')} below${dn.some(l => /Form|Performance/.test(l)) && up.some(l => /Ability|Attributes/.test(l)) ? ': you pay for the player, not this season' : ''}.</p>` : ''); };
+PP_FN.pmarket = () => { const { p, grp, bench } = ppx, pool = bench?.pool || [];
+  return h3i('level', 'Against the market', `vs ${plural(grp)}`) + (bench ? strip('Asking value', pool.map(r => r.transfer_value), p.free_agent ? 0 : p.transfer_value, money, grp) + strip('Wage', pool.map(r => r.contract_wage), p.contract_wage, wage, grp) : '<span class="sk" style="height:120px;width:100%"></span>'); };
+PP_FN.phist = () => h3i('dev', 'How his price moved', 'one snapshot per save load') + `<div class="hist-sm">${histChart('Value', [['value', 'Value']], money)}${MODE === 'full' ? histChart('Ability', [['ca', 'CA'], ['pa', 'PA', true]])
+  : MODE === 'fair' ? histChart('Average attribute', [['attr_avg', 'Avg']], v => v == null ? '–' : v.toFixed(1)) : ''}</div>`;
 const PP_SIDE_I = { contract: 'clock', clauses: 'sign', club: 'club', traits: 'good' };  // contract page headings get the icon the other pages have
 const ppCard = k => PP_FN[k] ? PP_FN[k]() : `<h3>${PP_SIDE_I[k] ? ppIcon(PP_SIDE_I[k]) : ''}<span class="h3l">${PP_SIDE_L[k]}</span></h3><div class="sd-body">${sideBody(k)}</div>`;
 const setPpTab = t => {
@@ -2729,7 +2762,7 @@ function openProfile(uid) {
 async function renderProfile() {
   const box = $('#player'), uid = st.pp, seq = ++ppSeq, alive = () => seq === ppSeq && st.page === 'player';
   ppPlayer = null; ppx = null;
-  const pages = ppPages(), area = (id, ks, k) => id === 'over' || ks.includes('swarm') ? ` style="grid-area:${k}"` : '';
+  const pages = ppPages(), area = (id, ks, k) => id === 'over' || id === 'price' || ks.includes('swarm') ? ` style="grid-area:${k}"` : '';
   box.innerHTML = `<div class="pp-in"><div class="pp-head"><div class="pp-id"><span class="sk" style="height:30px;width:40%"></span><span class="sk" style="margin-top:10px;width:30%"></span></div></div>
     <div class="pp-body pg-over m-${MODE}">${pages[0][2].map(k => `<section class="pp-card"${area('over', [], k)}><span class="sk" style="width:40%"></span><span class="sk" style="margin-top:12px;height:120px;width:100%"></span></section>`).join('')}</div></div>`;
   let p;
