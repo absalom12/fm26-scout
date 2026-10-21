@@ -462,10 +462,11 @@ def add_stat_score():
              s AS ({parts}),
              lv AS (SELECT s_league_id, percent_rank() OVER (ORDER BY league_strength) AS lvl
                     FROM (SELECT DISTINCT s_league_id, league_strength FROM players WHERE league_strength IS NOT NULL)),
-             r AS (SELECT s.uid, s.perf,
+             r AS (SELECT s.uid, s.perf, lv.lvl IS NULL AS est,
                           coalesce(lv.lvl, percent_rank() OVER (PARTITION BY p.gender ORDER BY coalesce(p.s_league_rep, 0))) AS lvl
                    FROM s JOIN p ON p.uid = s.uid LEFT JOIN lv ON lv.s_league_id = p.s_league_id)
-        SELECT p.*, round(100 * r.perf * (0.4 + 0.6 * r.lvl), 1) AS stat_score
+        SELECT p.*, round(100 * r.perf * (0.4 + 0.6 * r.lvl), 1) AS stat_score,
+               round(100 * r.perf) AS stat_perf, round(100 * r.lvl) AS stat_level, r.est AS stat_level_est  -- the profile's "output vs level"
         FROM p LEFT JOIN r USING (uid)""")
 
 

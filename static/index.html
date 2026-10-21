@@ -347,7 +347,16 @@ details[open] summary::before { content: "−"; }
 /* left column: Role fit over its own Similar players panel */
 .pg-over.m-full, .pg-over.m-fair { grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(300px, 380px); grid-template-rows: minmax(0, 1fr) minmax(0, .55fr) auto; grid-template-areas: "role attr sg" "role canvas radar" "simmini canvas radar"; }
 .pg-over.m-full { grid-template-areas: "role attr sg" "role canvas dev" "simmini canvas dev"; }
-.pg-over.m-moneyball { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(270px, 320px); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "canvas role pizza" "canvas swarm simmini"; }
+.pg-over.m-moneyball { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(300px, 360px); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "read read pizza" "role simmini pizza"; }
+.rd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 8px 28px; align-items: start; } @media (max-width: 900px) { .rd-grid { grid-template-columns: 1fr; } }
+.rd-id { margin: 0 0 8px; font-size: 15px; } .rd-pos, .rd-chips { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin: 0 0 8px; } .rd-pos small { color: var(--muted); }
+.rd-conf { margin: 6px 0 0; font-size: 12.5px; color: var(--muted); }
+.ovl { margin: 2px 0 8px; } .ovl p { margin: 0 0 5px; } .ovl .note { margin: 5px 0 0; }
+.ovl-tr { position: relative; height: 12px; border-radius: 6px; background: linear-gradient(90deg, #151e27 33%, #18222c 33% 66%, #1b2631 66%); }
+.ovl-tr .md { position: absolute; left: 50%; top: -3px; bottom: -3px; border-left: 1px dashed var(--faint); }
+.ovl-p, .ovl-l, .ovl-k { position: absolute; top: 0; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; }
+.ovl-p, .ovl-k.p { background: var(--accent); box-shadow: 0 0 0 2px var(--panel); } .ovl-l, .ovl-k.l { border: 2px solid var(--text2); background: var(--panel); box-sizing: border-box; }
+.ovl-k { position: static; display: inline-block; width: 9px; height: 9px; margin: 0 2px 0 0; vertical-align: -1px; }
 .pp-card[data-pp="canvas"] { background: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 140%27 preserveAspectRatio=%27none%27 fill=%27none%27 stroke=%27rgba(255,255,255,0.10)%27 stroke-width=%270.4%27%3E%3Crect x=%274%27 y=%273%27 width=%2792%27 height=%27134%27/%3E%3Cpath d=%27M4 70h92%27/%3E%3Ccircle cx=%2750%27 cy=%2770%27 r=%2711%27/%3E%3Crect x=%2727%27 y=%273%27 width=%2746%27 height=%2720%27/%3E%3Crect x=%2727%27 y=%27117%27 width=%2746%27 height=%2720%27/%3E%3C/svg%3E") center / 100% 100% no-repeat, repeating-linear-gradient(180deg, var(--pitch) 0 9.09%, var(--pitch2) 9.09% 18.18%); border-color: #1d3d2a; }
 .pp-card[data-pp="canvas"] .phz { background: color-mix(in srgb, var(--panel) 88%, transparent); border-color: var(--line); }
 .pp-card { position: relative; min-width: 0; min-height: 0; overflow: hidden auto; display: flex; flex-direction: column; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }
@@ -2439,37 +2448,9 @@ function apxScatter() {
   </svg><p class="note">Grey = ${rows.length} ${plural(ppx.grp)} with a value (sample) · gold rings = similar players (click) · not for sale = top edge.</p>`;
 }
 // Fair play pitch canvas: familiarity on the pitch, and what he brings in each phase from his attributes (vs peer average).
-// In-game stats grouped by phase of play. Each line: [label, ranking fn (per 90 or %), display fn (optional), lower-is-better].
-const f2 = x => x == null ? '–' : x.toFixed(2), pctS = x => x == null ? '–' : Math.round(x) + '%';
-const PHASES = {
-  fin: ['Finishing', [['Goals / xG', M.goals[1], p => `${p.s_goals ?? 0} / ${p.s_expected_goals?.toFixed(1) ?? '–'}`], ['Goals per 90', M.goals[1]], ['Shots on target', p => p.s_shots ? p.s_shots_on_target / p.s_shots * 100 : null, p => pctS(p.s_shots ? p.s_shots_on_target / p.s_shots * 100 : null)],
-    ['Goals minus xG / 90', p => p.s_minutes && p.s_goals != null && p.s_expected_goals != null ? (p.s_goals - p.s_expected_goals) * 90 / p.s_minutes : null], ['Shots per 90', M.shots[1]]]],
-  cre: ['Creating', [['Assists / xA', M.assists[1], p => `${p.s_assists ?? 0} / ${p.s_expected_assists?.toFixed(1) ?? '–'}`], ['Key passes / 90', M.kp[1]], ['Clear-cut chances / 90', M.ccc[1]], ['xA per 90', M.xa[1]], ['Crosses completed / 90', M.crs[1]]]],
-  car: ['Carrying', [['Dribbles / 90', M.drb[1]], ['Progressive passes / 90', M.prog[1]], ['Pass completion', M.passpct[1], p => pctS(p.s_pass_pct)], ['Possession lost / 90', per90('s_possession_lost'), null, true]]],
-  def: ['Defending', [['Tackles won / 90', M.tck[1], p => `${f2(M.tck[1](p))} · ${pctS(p.s_tackle_pct)}`], ['Interceptions / 90', M.int[1]], ['Possession won / 90', M.won[1]], ['Pressures / 90', M.press[1]],
-    ['Headers won / 90', M.hdr[1], p => `${f2(M.hdr[1](p))} · ${pctS(p.s_header_pct)}`], ['Clearances · blocks / 90', M.clr[1], p => `${f2(M.clr[1](p))} · ${f2(M.blk[1](p))}`]]],
-  wrk: ['Workload & discipline', [['Distance / 90', per90('s_distance_km'), p => { const v = per90('s_distance_km')(p); return v == null ? '–' : v.toFixed(1) + ' km'; }], ['Yellow cards / 90', per90('s_yellow_cards'), null, true], ['Player of match rate', p => p.s_apps ? (p.s_player_of_the_match || 0) / p.s_apps * 100 : null, p => pctS(p.s_apps ? (p.s_player_of_the_match || 0) / p.s_apps * 100 : null)]]],
-  gks: ['Shot stopping', [['xG prevented / 90', M.xgp[1]], ['Saves / 90', M.saves[1]], ['Shots on target faced / 90', per90('s_shots_on_target_faced')]]],
-  gka: ['Goals against', [['Conceded / 90', M.conc[1], null, true], ['Clean sheet rate', M.cs[1], p => pctS(M.cs[1](p))], ['Clean sheets', p => p.s_clean_sheets, p => p.s_clean_sheets ?? 0]]],
-  gkd: ['Distribution', [['Pass completion', M.passpct[1], p => pctS(p.s_pass_pct)], ['Progressive passes / 90', M.prog[1]]]],
-};
-// Negative stats (lower is better, percentile inverted), the ones that matter for his position.
-const NEG_L = { lost: ['Possession lost / 90', per90('s_possession_lost'), null, true], mist: ['Errors leading to goal', per90('s_mistakes_leading_to_goal'), p => p.s_mistakes_leading_to_goal ?? 0, true],
-  foul: ['Fouls / 90', per90('s_fouls_made'), null, true], off: ['Offsides / 90', per90('s_offsides'), null, true], card: ['Yellow · red cards', per90('s_yellow_cards'), p => `${p.s_yellow_cards ?? 0} · ${p.s_red_cards ?? 0}`, true] };
-// Possession lost sits in the Carrying panel; the keeper's panel has no carrying, so it lists it here.
-const NEG = { ST: ['off', 'mist', 'foul', 'card'], W: ['off', 'mist', 'foul', 'card'], AM: ['mist', 'foul', 'card'], CM: ['mist', 'foul', 'card'],
-  DM: ['mist', 'foul', 'card'], FB: ['mist', 'foul', 'card'], CB: ['mist', 'foul', 'card'], GK: ['mist', 'card', 'lost'] };
 // Which job comes first depends on his position: attackers start with finishing, defenders with defending, keepers with shot stopping.
 const PHASE_ORDER = { ST: ['fin', 'cre', 'car', 'def'], W: ['fin', 'cre', 'car', 'def'], AM: ['cre', 'fin', 'car', 'def'], CM: ['cre', 'car', 'def', 'fin'],
   DM: ['def', 'car', 'cre', 'fin'], FB: ['def', 'cre', 'car', 'fin'], CB: ['def', 'car', 'cre', 'fin'], GK: ['gks', 'gka', 'gkd', 'neg'] };
-function statPanel(key) {
-  const { p, grp, bench, all } = ppx, small = (p.s_minutes || 0) < PERF_MIN, pos = bench?.pool || [], ap = all?.rows || [];
-  const pc = (rows, fn, v, lower) => { const xs = rows.map(fn).filter(x => x != null); return small || v == null || xs.length < 20 ? null : pctOf(xs, v, lower); };
-  const [t, lines] = key === 'neg' ? ['Mistakes & discipline', (NEG[grp] || NEG.CM).map(k => NEG_L[k])] : PHASES[key];
-  return `<div class="phz st"><h5>${t}</h5>${lines.map(([n, fn, fmt, lower]) => { const v = fn(p), a = pc(pos, fn, v, lower), b = pc(ap, fn, v, lower);
-    const tip = a == null ? (small ? `Percentiles need ${PERF_MIN} min (${p.s_minutes || 0})` : 'No peer data') : `Better than ${a}% of ${plural(grp)}${b != null ? ` and ${b}% of all positions` : ''}`;
-    return `<div title="${esc(n + ': ' + tip)}"><span>${n}</span><b>${fmt ? fmt(p) : f2(v)}</b>${a == null ? '<span class="pill">–</span>' : `<span class="pill" style="--c:${pctColor(a)}">${a}${b != null ? `<i style="left:${b}%" aria-hidden="true"></i>` : ''}</span>`}</div>`; }).join('')}</div>`;
-}
 // "All stats" card: every season stat by phase of play. Row = [label, total(p), per90(p) or null, lowerIsBetter, kind] — kind: 1 = one decimal, '%' = rate, 'r' = rating, 'x' = context (no percentile).
 const cntS = (l, k, lower, kind) => [l, p => p[k], per90(k), lower, kind];
 const rateS = (l, fn) => [l, fn, null, false, '%'];
@@ -2494,19 +2475,24 @@ const ALL_STATS = {
   gka: ['Goals against', [cntS('Conceded', 's_goals_allowed', true), cntS('Clean sheets', 's_clean_sheets'), rateS('Clean sheet rate', ratio('s_clean_sheets', 's_apps'))]],
   gkd: ['Distribution', [cntS('Passes completed', 's_passes_completed'), cntS('Passes attempted', 's_passes_attempted'), rateS('Pass completion', p => p.s_pass_pct), cntS('Progressive passes', 's_progressive_passes')]],
 };
-function allStats() {
-  const { p, grp, bench } = ppx, gk = grp === 'GK', small = (p.s_minutes || 0) < PERF_MIN, pool = small ? [] : bench?.pool || [];
-  if (!p.s_minutes) return '<p class="note">No league minutes this season: no stats to show yet.</p>';
-  const order = gk ? ['gks', 'gka', 'gkd', 'wrk', 'def', 'cre', 'fin'] : [...(PHASE_ORDER[grp] || PHASE_ORDER.CM), 'wrk'];
-  const fmtT = (v, kind) => v == null ? '–' : kind === '%' ? Math.round(v) + '%' : kind === 'r' ? v.toFixed(2) : kind === 1 ? (Math.abs(v) < 100 ? v.toFixed(1) : Math.round(v).toLocaleString()) : Math.round(v).toLocaleString();
-  const all = [];
+// Every season stat by phase with his percentile vs his position (PERF_MIN+ peers), plus his top 5 / bottom 5:
+// shared by All stats and Moneyball's Profile read, so the two never disagree.
+function statPhases(p, grp, pool) {
+  const order = grp === 'GK' ? ['gks', 'gka', 'gkd', 'wrk', 'def', 'cre', 'fin'] : [...(PHASE_ORDER[grp] || PHASE_ORDER.CM), 'wrk'], all = [];
   const phases = order.map(g => { const [t, specs] = ALL_STATS[g];
     return [t, specs.map(([l, tot, p90, lower, kind, show]) => {
       const T = tot(p), N = p90 ? p90(p) : null, rk = p90 || tot, v = rk(p);
       const xs = kind === 'x' || v == null ? [] : pool.map(rk).filter(x => x != null), pc = xs.length >= 20 ? pctOf(xs, v, lower) : null;
-      const r = { l, g: t, T, N, pc, kind, show, lower }; if (pc != null) all.push(r); return r; })]; });
+      const r = { l, g: t, T, N, pc, kind, show, lower }; if (pc != null) all.push(r); return r; }), g]; });
   // Only his 5 best and 5 worst rows light up, so they jump out even for an all-green star.
   const top = all.filter(r => r.pc >= 70 && !r.lower).sort((a, b) => b.pc - a.pc).slice(0, 5), low = all.filter(r => r.pc <= 30).sort((a, b) => a.pc - b.pc).slice(0, 5);
+  return { phases, top, low };
+}
+function allStats() {
+  const { p, grp, bench } = ppx, small = (p.s_minutes || 0) < PERF_MIN, pool = small ? [] : bench?.pool || [];
+  if (!p.s_minutes) return '<p class="note">No league minutes this season: no stats to show yet.</p>';
+  const { phases, top, low } = statPhases(p, grp, pool);
+  const fmtT = (v, kind) => v == null ? '–' : kind === '%' ? Math.round(v) + '%' : kind === 'r' ? v.toFixed(2) : kind === 1 ? (Math.abs(v) < 100 ? v.toFixed(1) : Math.round(v).toLocaleString()) : Math.round(v).toLocaleString();
   const groups = phases.map(([t, rows]) => {
     if (rows.every(r => !r.T && !r.N)) return '';  // phase empty for him (keepers' saves for an outfielder, etc.)
     const ps = rows.map(r => r.pc).filter(x => x != null), md = ps.length ? median(ps) : null;
@@ -2548,13 +2534,31 @@ function cmpPitch(A, B) {
       <text class="pl" x="${cx}" y="${(cy + (w ? h : 3) + 5.5).toFixed(1)}" text-anchor="middle" font-size="4.6" font-weight="700" font-family="var(--f-display)">${k}</text></g>`; }).join('')}</svg>`;
 }
 const famLegend = () => `<div class="cnv-lg" aria-hidden="true">${FAMIL.map(([, n, c]) => `<span><i style="background:${c}"></i>${n}</span>`).join('')}</div>`;
+// Moneyball Overview's first card: who he is on the numbers, how strong his league is, what stands out, and how far to
+// trust it. Percentiles vs his position (save-wide, PERF_MIN+); output vs level are the two halves of stat_score.
+function secRead() {
+  const { p, grp, bench } = ppx, mins = p.s_minutes || 0, small = mins < PERF_MIN;
+  const best = Object.keys(META.roles || {}).filter(r => p['srole_' + r] != null).sort((x, y) => p['srole_' + y] - p['srole_' + x])[0];
+  const sp = !small && bench ? statPhases(p, grp, bench.pool || []) : null;
+  const md = sp ? sp.phases.filter(([, , g]) => g !== 'wrk').map(([t, rows]) => [t, median(rows.map(r => r.pc))]).filter(x => x[1] != null).sort((x, y) => y[1] - x[1])[0] : null;
+  const pos = POSITIONS.map(k => [k, p[posKey(k)] ?? 0]).filter(x => x[1] >= 9).sort((x, y) => y[1] - x[1]);
+  const conf = mins >= FAIR_MIN ? ['High', C.good] : small ? ['Low', C.bad] : ['Medium', C.warn];
+  const word = (v, hi, mid, lo) => v >= 66 ? hi : v >= 33 ? mid : lo;
+  const ovl = p.stat_perf == null ? '' : (() => { const pf = p.stat_perf, lv = p.stat_level, base = p.stat_level_est ? 'league level (estimated from his clubs)' : 'league level among the save\'s leagues';
+    return `<div class="ovl"><p><b>${word(pf, 'Strong', 'Solid', 'Weak')} numbers in a ${word(lv, 'top', 'mid', 'lower')} league</b></p>
+      <div class="ovl-tr" role="img" aria-label="${esc(`Output in his league: ${ordN(pf)} percentile among his position. ${base}: ${ordN(lv)} percentile`)}"><i class="md"></i>
+        <i class="ovl-l" style="left:${lv}%" title="${esc(`${base}: ${ordN(lv)} percentile`)}"></i><i class="ovl-p" style="left:${pf}%" title="${esc(`Output vs ${plural(grp)} of his league: ${ordN(pf)} percentile`)}"></i></div>
+      <p class="note"><i class="ovl-k p"></i> output vs his league's ${plural(grp)} <b>${pf}</b> · <i class="ovl-k l"></i> ${p.stat_level_est ? 'level (est.)' : 'league level'} <b>${lv}</b></p></div>`; })();
+  const chip = r => `<span class="pill" style="--c:${pctColor(r.pc)}" title="${esc(`${r.g}: better than ${r.pc}% of ${plural(grp)}${r.lower ? ' (fewer is better)' : ''}`)}">${esc(r.l)} <b>${r.pc}</b></span>`;
+  const chips = sp && (sp.top.length || sp.low.length) ? `<div class="rd-chips">${sp.top.length ? `<span class="ast-t">Best</span>${sp.top.slice(0, 3).map(chip).join('')}` : ''}${sp.low.length ? `<span class="ast-t">Weakest</span>${sp.low.slice(0, 2).map(chip).join('')}` : ''}</div>` : '';
+  return `${h3i('where', 'Profile read', small ? `from ${PERF_MIN} min` : `percentiles vs ${plural(grp)} with ${PERF_MIN}+ min`)}
+    <div class="rd-grid"><div><p class="rd-id">${best ? `Plays like a <b>${esc(label('role_' + best))}</b>` : 'No stats role yet'}${md ? ` · strongest at <b>${esc(md[0])}</b>` : ''}</p>
+    ${pos.length ? `<div class="rd-pos">${pos.map(([k, v]) => `<span class="tag" title="${esc(`${k}: ${famTxt(v)}`)}">${k} <small>${famTxt(v)}</small></span>`).join('')}</div>` : ''}
+    <p class="rd-conf"><b style="color:${conf[1]}">${conf[0]} confidence</b> · ${mins.toLocaleString()} min · ${p.s_starts ?? 0} starts · ${p.s_substitute_appearances ?? 0} sub</p></div>
+    <div>${small ? minsNote(mins) : ovl + chips}</div></div>`;
+}
 function secCanvas() {
   const { p, grp, bench } = ppx, pool = bench?.pool || [];
-  if (MODE === 'moneyball') {
-    const o = PHASE_ORDER[grp] || PHASE_ORDER.CM;
-    return `${h3i('where', 'Where he plays and what he does', (p.s_minutes || 0) < PERF_MIN ? `pills from ${PERF_MIN} min · he has ${(p.s_minutes || 0).toLocaleString()}` : `pill = percentile vs ${plural(grp)} · tick = vs all`)}
-      <div class="cnv mb"><div class="cnv-s">${statPanel(o[0])}${statPanel(o[2])}</div><div class="cnv-p">${bigPitch(p)}</div><div class="cnv-s">${statPanel(o[1])}${statPanel(o[3])}</div>${grp === 'GK' ? '' : `<div class="cnv-w">${statPanel('neg')}</div>`}</div>${famLegend()}`;
-  }
   const ph = PHASE_ATTR[grp === 'GK' ? 'gk' : 'out'];
   const hl = v => v >= 15 ? C.good : v <= 5 ? C.bad : 'var(--text)';  // FM's own colouring: 15+ green, 5 or less red
   const panel = ([t, ks]) => { const av = mean(ks.map(k => p['attributes_' + k])), pm = mean(ks.map(k => mean(pool.map(r => r['attributes_' + k]))));
@@ -2687,7 +2691,7 @@ const PP_PAGES = {
   full: [['over', 'Overview', ['role', 'simmini', 'attr', 'canvas', 'sg', 'dev']], ['report', 'Scouting report', ['rarch', 'rvs', 'rfit', 'rmind', 'rrisk', 'ruse']], ['stats', 'Statistics', ['swarm', 'pizza', 'stats']],
     ['similar', 'Similar players', ['similar', 'apx']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
   fair: [['over', 'Overview', ['role', 'simmini', 'attr', 'canvas', 'sg', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
-  moneyball: [['over', 'Overview', ['canvas', 'swarm', 'role', 'pizza', 'simmini']], ['stats', 'Statistics', ['swarm', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
+  moneyball: [['over', 'Overview', ['read', 'role', 'pizza', 'simmini']], ['stats', 'Statistics', ['swarm', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
 };
 const ppPages = () => PP_PAGES[MODE] || PP_PAGES.full;
 const ppCards = () => ppPages().flatMap(x => x[2]);
@@ -2709,8 +2713,8 @@ function simMini(n, more = true) {
   const s = ppx.sim; if (!s) return '<span class="sk" style="height:120px;width:100%"></span>';
   return s.rows.length ? `<div class="sim-mini">${s.rows.slice(0, n).map(r => simRow(r)).join('')}</div>${more ? '<button class="link" data-ppgo="similar">All similar players →</button>' : ''}` : '<p class="note">No close match found.</p>';
 }
-const PP_FN = { kpis: secKpis, hero: secHero, deal: secDeal, sg: secSG, dev: secDev, attr: secAttr, role: secRole, canvas: secCanvas, swarm: secSwarm, pizza: secPizza,
-  radar: () => profileInner(ppx.p), rarch: secArch, rvs: secVs, rfit: secFit, rmind: secMind, rrisk: secRisk, ruse: secUse, simmini: () => h3i('similar', 'Similar players', '<button class="link" data-ppgo="similar">See all →</button>') + simMini(MODE === 'moneyball' ? 4 : 3, false) };
+const PP_FN = { kpis: secKpis, hero: secHero, deal: secDeal, sg: secSG, dev: secDev, attr: secAttr, role: secRole, canvas: secCanvas, read: secRead, swarm: secSwarm, pizza: secPizza,
+  radar: () => profileInner(ppx.p), rarch: secArch, rvs: secVs, rfit: secFit, rmind: secMind, rrisk: secRisk, ruse: secUse, simmini: () => h3i('similar', 'Similar players', '<button class="link" data-ppgo="similar">See all →</button>') + simMini(MODE === 'moneyball' ? 7 : 3, false) };
 // Development over the snapshots ScoutSheet keeps each time this career's save is loaded (server: snapshot()).
 // series: [key, label, dashed]; one small line chart, one shared scale (CA and PA, or one measure alone).
 const dDate = d => new Date(d + 'T00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });

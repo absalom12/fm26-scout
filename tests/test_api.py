@@ -296,6 +296,9 @@ def test_performance_index_and_peer_percentiles_start_at_perf_min(scout, monkeyp
     scout.add_stat_score()
     ss = dict(con.execute("SELECT uid, stat_score FROM players WHERE uid <= 2").fetchall())
     assert ss[1] is None and ss[2] is not None
+    # the halves of the index, kept for the profile's "output vs level": no league here, so level is estimated
+    top = con.execute("SELECT stat_perf, stat_level, stat_level_est, stat_score FROM players WHERE uid = 40").fetchone()
+    assert top[0] == 100 and top[1] == 100 and top[2] is True and top[3] == 100
     # peer pool for strengths counts the 400-minute player, not the 399 one
     con.execute("ALTER TABLE players ADD COLUMN s_goals_p90 DOUBLE")
     con.execute("UPDATE players SET s_goals_p90 = CASE WHEN uid <= 2 THEN 1.0 ELSE 2.0 END")
