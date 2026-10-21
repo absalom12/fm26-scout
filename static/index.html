@@ -1881,14 +1881,17 @@ const shown = uid => drawerPlayer?.uid === uid ? drawerPlayer : ppPlayer?.uid ==
 const posKey = k => 'positions_' + (k === 'ST' ? 'stc' : k.toLowerCase());
 const FAMIL = [[18, 'Natural', C.good], [15, 'Accomplished', C.ok], [12, 'Competent', C.warn], [9, 'Unconvincing', C.orange]];  // FM's familiarity bands, 1-20
 const famil = v => FAMIL.find(f => v >= f[0]);
+// Fair play and Moneyball show what the game shows the manager: a word, not the hidden 1-20 number.
+const famNum = () => MODE === 'full', famLv = v => v >= 18 ? 3 : v >= 15 ? 2 : v >= 9 ? 1 : 0, FAM_WORD = ["Can't play", 'Can play', 'Good', 'Natural'];
+const famTxt = v => famNum() ? `${v} (${famil(v)?.[1] || 'Awkward'})` : FAM_WORD[famLv(v ?? 0)];
 // My Club starter shown with a caveat: out of position (nobody in the squad is rated there) or no index yet.
 const stand = (st, pos) => !st ? null
-  : st.out_of_position ? (f => ({ c: f[2], t: `Out of position · ${f[1]} ${st.familiarity ?? 0}/20`, tip: `Nobody in the squad is rated for ${pos}: best by familiarity` }))(famil(st.familiarity ?? 0) || [0, 'Awkward', C.bad])
+  : st.out_of_position ? (f => ({ c: f[2], t: `Out of position · ${famNum() ? `${f[1]} ${st.familiarity ?? 0}/20` : FAM_WORD[famLv(st.familiarity ?? 0)]}`, tip: `Nobody in the squad is rated for ${pos}: best by familiarity` }))(famil(st.familiarity ?? 0) || [0, 'Awkward', C.bad])
   : st.fit == null ? { c: C.muted, t: 'No index yet', tip: `Under ${PERF_MIN} league minutes: no performance index yet` } : null;
 function pitchMap(p) {
   const pts = POSITIONS.map(k => [k, p[posKey(k)]]).filter(x => x[1] != null);
   const known = pts.filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]);
-  const aria = known.length ? 'Position familiarity: ' + known.map(([k, v]) => `${k} ${v} (${famil(v)[1]})`).join(', ') : 'No position familiarity in this save';
+  const aria = known.length ? 'Position familiarity: ' + known.map(([k, v]) => `${k} ${famTxt(v)}`).join(', ') : 'No position familiarity in this save';
   return `<div class="pitch"><svg viewBox="0 0 68 92" role="img" aria-label="${esc(aria)}">
       <g fill="none" stroke="rgba(255,255,255,.16)" stroke-width=".5"><rect x="2" y="2" width="64" height="88" rx="1"/><path d="M2 46h64"/><circle cx="34" cy="46" r="8"/><rect x="17" y="2" width="34" height="13"/><rect x="17" y="77" width="34" height="13"/></g>
       ${pts.map(([k, v]) => { const [x, y] = PITCH[k], f = famil(v), cx = (x * .68).toFixed(1), cy = (y * .92).toFixed(1);
@@ -2523,7 +2526,7 @@ const PHASE_ATTR = { out: [['Finishing', ['finishing', 'composure', 'off_the_bal
 function bigPitch(p) {
   const pts = POSITIONS.map(k => [k, p[posKey(k)]]).filter(x => x[1] != null);
   const known = pts.filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]);
-  return `<svg class="lane" viewBox="0 0 140 124" role="img" aria-label="${esc(known.length ? 'Position familiarity: ' + known.map(([k, v]) => `${k} ${v} (${famil(v)[1]})`).join(', ') : 'No position familiarity in this save')}">
+  return `<svg class="lane" viewBox="0 0 140 124" role="img" aria-label="${esc(known.length ? 'Position familiarity: ' + known.map(([k, v]) => `${k} ${famTxt(v)}`).join(', ') : 'No position familiarity in this save')}">
     ${pts.map(([k, v]) => { const [x0, y0] = PITCH[k], f = v >= 9 ? famil(v) : null, cx = (70 + (x0 - 50) * 1.35).toFixed(1), cy = (y0 * 1.18 + 5).toFixed(1), r = f ? (7.6 + (v - 9) * .35).toFixed(1) : 4;
       return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${f ? f[2] : 'rgba(255,255,255,.05)'}" stroke="rgba(255,255,255,.18)" stroke-width=".3"><title>${k} · ${f ? f[1] : 'Unfamiliar'}</title></circle><text x="${cx}" y="${+cy + 1.8}" text-anchor="middle" font-size="${f ? 5.2 : 3}" font-weight="700" font-family="var(--f-display)" fill="${f ? '#04110a' : 'rgba(255,255,255,.45)'}" pointer-events="none">${k}</text>`; }).join('')}
   </svg>`;
@@ -2531,11 +2534,11 @@ function bigPitch(p) {
 // Compare's shared pitch: per slot, A's disc left and B's right in the player colours, size and number = familiarity;
 // under 9 a grey dot. Each slot opens Roles at that position.
 function cmpPitch(A, B) {
-  const X = k => 100 + (PITCH[k][0] - 50) * 1.7, Y = k => PITCH[k][1] * 1.6 + 12, rad = v => 6 + (v - 9) * .3;
+  const X = k => 100 + (PITCH[k][0] - 50) * 1.7, Y = k => PITCH[k][1] * 1.6 + 12, num = famNum(), rad = v => num ? 6 + (v - 9) * .3 : [0, 6, 8, 9.6][famLv(v)];  // no number: size = band
   return `<svg class="cmp-pitch" viewBox="0 0 200 180" role="group" aria-label="Positions of both players">${POSITIONS.map(k => {
     const a = A[posKey(k)], b = B[posKey(k)], ok = v => v != null && v >= 9, cx = X(k), cy = Y(k);
-    const who = (x, v) => `${x.name} ${v ?? '–'}${ok(v) ? ' ' + famil(v)[1] : ''}`, txt = `${k}: ${who(A, a)}, ${who(B, b)}`;
-    const disc = (v, x, c) => ok(v) ? `<circle cx="${x.toFixed(1)}" cy="${cy}" r="${rad(v).toFixed(1)}" fill="${c}"/><text x="${x.toFixed(1)}" y="${(cy + 1.9).toFixed(1)}" text-anchor="middle" font-size="${(rad(v) * .85).toFixed(1)}" font-weight="700" font-family="var(--f-mono)" fill="#04110a">${v}</text>`
+    const who = (x, v) => `${x.name} ${famTxt(v ?? 0)}`, txt = `${k}: ${who(A, a)}, ${who(B, b)}`;
+    const disc = (v, x, c) => ok(v) ? `<circle cx="${x.toFixed(1)}" cy="${cy}" r="${rad(v).toFixed(1)}" fill="${c}"/>${num ? `<text x="${x.toFixed(1)}" y="${(cy + 1.9).toFixed(1)}" text-anchor="middle" font-size="${(rad(v) * .85).toFixed(1)}" font-weight="700" font-family="var(--f-mono)" fill="#04110a">${v}</text>` : ''}`
       : `<circle cx="${x.toFixed(1)}" cy="${cy}" r="2.4" fill="rgba(255,255,255,.18)"/>`;
     const ra = ok(a) ? rad(a) : 2.4, rb = ok(b) ? rad(b) : 2.4, w = ok(a) || ok(b), h = Math.max(ra, rb);
     const pair = w ? disc(a, cx - ra - .8, 'var(--pa)') + disc(b, cx + rb + .8, 'var(--pb)') : `<circle cx="${cx}" cy="${cy}" r="3" fill="rgba(255,255,255,.18)"/>`;
@@ -2672,7 +2675,7 @@ function sideBody(k) {
   if (k === 'map') return !sim ? '<span class="sk" style="height:200px;width:100%"></span>' : sim.rows.length ? `<p class="note" style="margin:0 0 6px">Similar players: value (log) against ${simMetric(p)[0].toLowerCase()} · him = ring · click a dot.</p>${MODE === 'fair' ? scatter(p, sim.rows, 330, 1300) : scatter(p, sim.rows, 480, 760)}` : '<p class="note">No close match found.</p>';
   if (k === 'position') {
     const fam = POSITIONS.map(x => [x, p[posKey(x)]]).filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]);
-    return `<div class="sd-pos"><div>${pitchMap(p)}</div><div><div class="fbs">${fam.map(([x, v]) => { const f = famil(v); return fbar(x, v, v / 20, f[2], f[1]); }).join('')}</div>
+    return `<div class="sd-pos"><div>${pitchMap(p)}</div><div><div class="fbs">${fam.map(([x, v]) => { const f = famil(v); return famNum() ? fbar(x, v, v / 20, f[2], f[1]) : fbar(x, FAM_WORD[famLv(v)], famLv(v) / 3, f[2], ''); }).join('')}</div>
       ${mb ? '' : `<h4>Role fit</h4>${roleBars(roleList(p))}`}</div></div>`;
   }
   if (k === 'stats') return allStats();
@@ -3628,7 +3631,7 @@ function cmpRoles(A, B, pos) {
   cmpRolePos = pos;
   const rs = Object.keys(META.roles || {}).filter(r => rolePos(r).includes(pos)).map(r => [r, A[pre + r], B[pre + r]])
     .filter(x => x[1] != null || x[2] != null).sort((x, y) => Math.max(y[1] ?? 0, y[2] ?? 0) - Math.max(x[1] ?? 0, x[2] ?? 0)).slice(0, mb ? 8 : 12);
-  return `<section class="pp-card">${h3i('role', `Roles at ${pos}`, `familiarity <i class="ka">●</i> ${A[posKey(pos)] ?? '–'} · <i class="kb">◆</i> ${B[posKey(pos)] ?? '–'} · a score assumes he plays there`)}
+  return `<section class="pp-card">${h3i('role', `Roles at ${pos}`, `<i class="ka">●</i> ${famNum() ? A[posKey(pos)] ?? '–' : famTxt(A[posKey(pos)] ?? 0)} · <i class="kb">◆</i> ${famNum() ? B[posKey(pos)] ?? '–' : famTxt(B[posKey(pos)] ?? 0)} · a score assumes he plays there`)}
     <div class="seg cmp-posbar" role="group" aria-label="Position">${POSITIONS.map(k => `<button type="button" data-cmp-pos="${k}" aria-pressed="${k === pos}">${k}</button>`).join('')}</div>
     ${rs.map(([r, a, b]) => cmpFly(label('role_' + r), a == null ? null : Math.round(a), b == null ? null : Math.round(b), { max: 100, attrs: mb ? `data-cmp-srole="${r}" title="Compare the stats this role needs"` : `data-cmp-role="${r}" title="Compare the attributes this role needs"` })).join('')
       || `<p class="note">${mb ? `Stats roles need ${PERF_MIN} league minutes at a position he plays (15+ familiarity).` : 'No role scores at this position.'}</p>`}</section>`;
@@ -3713,8 +3716,9 @@ async function cmpShow(uid) {
   const best = x => POSITIONS.reduce((m, k) => (x[posKey(k)] ?? 0) > (x[posKey(m)] ?? 0) ? k : m, POSITIONS[0]), pos = best(A);
   const fam = (x, k) => x[posKey(k)] ?? 0, duelPos = POSITIONS.filter(k => Math.max(fam(A, k), fam(B, k)) >= 9).sort((x, y) => Math.max(fam(A, y), fam(B, y)) - Math.max(fam(A, x), fam(B, x))).slice(0, 4);
   // One pitch for both (owner, overruling [17]'s two pitches), then the top 4 positions as duels.
-  body.pos = `<div class="cmp-grid cmp-posgrid">${card('where', `<i class="ka">●</i> ${esc(A.name)} · <i class="kb">◆</i> ${esc(B.name)}`, 'familiarity 1-20 · click a position for roles', cmpPitch(A, B), '', 'canvas')}
-    ${card('vs', 'Position duel', 'their best 4 · click for roles', duelPos.map(k => cmpFly(k, A[posKey(k)] ?? null, B[posKey(k)] ?? null, { attrs: `data-cmp-pos="${k}"` })).join(''))}</div>`;
+  body.pos = `<div class="cmp-grid cmp-posgrid">${card('where', `<i class="ka">●</i> ${esc(A.name)} · <i class="kb">◆</i> ${esc(B.name)}`, famNum() ? 'familiarity 1-20 · click a position for roles' : 'bigger = more at home · click a position for roles', cmpPitch(A, B), '', 'canvas')}
+    ${card('vs', 'Position duel', 'their best 4 · click for roles', duelPos.map(k => famNum() ? cmpFly(k, A[posKey(k)] ?? null, B[posKey(k)] ?? null, { attrs: `data-cmp-pos="${k}"` })
+      : cmpFly(k, famLv(fam(A, k)), famLv(fam(B, k)), { max: 3, f: v => ['–', 'Can play', 'Good', 'Natural'][v], attrs: `data-cmp-pos="${k}"` })).join(''))}</div>`;
   body.role = cmpRoles(A, B, pos);
   cmpSeaPos = pos; cmpSeaRole = null; body.sea = cmpSea();  // opened directly: All stats
   // Price and contract.
