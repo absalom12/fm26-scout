@@ -5,6 +5,7 @@ import numpy as np
 from nations import NATIONS
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from datadir import FILES, data_dir, list_saves, replace_data, resolve_save
+from pathlib import Path
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -31,7 +32,7 @@ def _step(frac, next_frac, step):
 _ingest_lock = threading.Lock()  # one load at a time (startup load or a save load)
 LAST_PING, BYE_AT = time.monotonic(), None
 OPEN_PATHS = {"/", "/api/status", "/api/saves", "/api/load-save", "/api/upload", "/api/ping", "/api/bye", "/api/telemetry",
-              "/api/track"}
+              "/api/track", "/api/save-watch"}
 
 
 def need_data(request: Request):
@@ -1090,6 +1091,7 @@ def player(uid: int, mode: str = "full", fair_play: bool = False):
     p = _player(uid, mode)
     telemetry.record("profile", mode)
     extra = {"stat_roles": stat_roles(p)} if mode == "moneyball" else {}
+    extra["history"] = history(uid, mode)
     return {**p, "fair_fee_range": fair_range(p.get("fair_fee"), p.get("gender"), mode), **extra}
 
 
@@ -1123,7 +1125,100 @@ def meta():
                         for k, (g, l, d, w, _, v) in PRESETS.items()]}
 
 
-def ingest(src):
+# Development history: one row per player and game date, per career (the managed club, else the save's file name).
+# Written on every save load, never by a plain app start; a same-date reload replaces that date. Lives beside the
+# data files but is not one of them (FILES), so loading another save keeps it.
+def history_path():
+    return data_dir() / "history.parquet"
+
+
+def career(save_name):
+    return f"club{CLUB['club_uid']}" if CLUB else f"file:{save_name}"
+
+
+def snapshot(save_name):
+    path, tmp, key = history_path(), data_dir() / "history.tmp.parquet", career(save_name)
+    old = f"SELECT * FROM read_parquet('{path}') WHERE NOT (career = $1 AND date = $2)" if path.exists() else \
+        "SELECT NULL::VARCHAR AS career, NULL::DATE AS date, NULL::BIGINT AS uid, NULL::INT AS ca, NULL::INT AS pa, NULL::BIGINT AS value, NULL::DOUBLE AS attr_avg LIMIT 0"
+    have = {r[0] for r in con().execute("DESCRIBE players").fetchall()}
+    sel = ", ".join(c if c in have else f"NULL AS {c}" for c in ("ability_current", "ability_potential", "transfer_value", "attr_avg"))
+    try:  # the history is a bonus: a failed snapshot never fails the load
+        con().execute(f"""COPY (({old}) UNION ALL (SELECT $1, CAST($2 AS DATE), uid, {sel} FROM players)) TO '{tmp}' (FORMAT parquet)""", [key, GAME_DATE])
+        os.replace(tmp, path)
+    except (duckdb.Error, OSError) as e:
+        print("history snapshot failed:", e, file=sys.stderr)
+
+
+def history(uid, mode):
+    try:
+        name = json.loads(tracked_path().read_text())["name"]
+    except (OSError, ValueError, KeyError):
+        name = None
+    if not history_path().exists() or not (CLUB or name):
+        return []
+    rows = con().execute(f"SELECT date, ca, pa, value, attr_avg FROM read_parquet('{history_path()}') WHERE career = ? AND uid = ? ORDER BY date",
+                         [career(name), uid]).fetchall()
+    keep = {"full": ("date", "ca", "pa", "value", "attr_avg"), "fair": ("date", "value", "attr_avg"), "moneyball": ("date", "value")}[mode]
+    return [{k: v for k, v in zip(("date", "ca", "pa", "value", "attr_avg"), r) if k in keep} for r in rows]
+
+
+# Save tracking: the save loaded from FM's folder is remembered; /api/save-watch tells the page when FM wrote it again
+# (or wrote a newer save of the same club) so it can offer a reload. Nothing reloads on its own.
+def tracked_path():
+    return data_dir() / "tracked.json"
+
+
+def track_save(src):
+    if src is None:
+        tracked_path().unlink(missing_ok=True)
+        return
+    st = Path(src).stat()
+    tracked_path().write_text(json.dumps({"name": Path(src).name, "mtime": st.st_mtime, "size": st.st_size,
+                                          "club_uid": CLUB and CLUB["club_uid"], "game_date": str(GAME_DATE)}))
+    WATCH["seen"].clear()
+
+
+WATCH = {"seen": {}, "club": {}}  # name -> last (mtime, size) seen; (name, mtime) -> (club uid, club name, game date)
+
+
+def _stable(name, now):
+    """True once the same new (mtime, size) is seen on two checks in a row: FM has finished writing it."""
+    was, WATCH["seen"][name] = WATCH["seen"].get(name), now
+    return was == now
+
+
+def _club_of(path, mtime):
+    k = (path.name, mtime)
+    if k not in WATCH["club"]:
+        try:
+            with fmsave.open(str(path)) as s:
+                mc = next(iter(s.managed_clubs()), None)
+                WATCH["club"][k] = (mc and mc.club_uid, mc and mc.club_name, str(s.info.game_date))
+        except Exception:  # a save FM is still writing, or not a save: try again next time
+            return None
+    return WATCH["club"][k]
+
+
+@app.get("/api/save-watch")
+def save_watch():
+    try:
+        t = json.loads(tracked_path().read_text())
+    except (OSError, ValueError):
+        return {}
+    saves = list_saves() or []
+    cur = next((r for r in saves if r["name"] == t["name"]), None)
+    if cur and (cur["mtime"], cur["size"]) != (t["mtime"], t["size"]) and _stable(t["name"], (cur["mtime"], cur["size"])):
+        return {"changed": t["name"]}
+    for r in saves:  # newest first: a newer save of the same career under another name
+        if r["mtime"] <= t["mtime"] or r["name"] == t["name"] or not _stable(r["name"], (r["mtime"], r["size"])):
+            continue
+        c = _club_of(resolve_save(r["name"]), r["mtime"])
+        if c and t.get("club_uid") and c[0] == t["club_uid"]:
+            return {"newer": r["name"], "club": c[1], "game_date": c[2]}
+    return {}
+
+
+def ingest(src, tracked=False):
     """Extract a .fm save and make it the only loaded data. One at a time; failures keep the old data."""
     global STATUS
     if not _ingest_lock.acquire(blocking=False):
@@ -1149,6 +1244,8 @@ def ingest(src):
             raise
         STATUS = "ready"
         telemetry.record("save_loaded")
+        snapshot(Path(src).name)
+        track_save(src if tracked else None)
         return {"rows": con().execute("SELECT count(*) FROM players").fetchone()[0], "game_date": GAME_DATE}
     finally:
         _ingest_lock.release()
@@ -1162,7 +1259,7 @@ def upload(file: UploadFile = File(...)):  # fallback picker: the browser sends 
         src = os.path.join(d, "s.fm")
         with open(src, "wb") as f:
             shutil.copyfileobj(file.file, f)
-        return ingest(src)
+        return ingest(src)  # a copy: nothing to track
 
 
 class SaveReq(BaseModel):
@@ -1175,7 +1272,7 @@ def load_save(q: SaveReq):
         src = resolve_save(q.name)
     except ValueError as e:
         raise HTTPException(400, str(e))
-    return ingest(src)
+    return ingest(src, tracked=True)
 
 
 @app.get("/api/status")

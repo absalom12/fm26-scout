@@ -306,7 +306,6 @@ details[open] summary::before { content: "−"; }
 .pp-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .pp-body[hidden] { display: none; }
 .pp-body:not(.pg-over) { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); grid-auto-rows: minmax(0, 1fr); }
-.pg-price.m-fair { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }  /* Fair play: value map full width, price strips under it */
 .pg-stats.m-moneyball { grid-template-columns: minmax(0, .9fr) minmax(0, 1.6fr); grid-template-areas: "swarm stats"; }
 .pg-stats.m-full, .pg-stats.m-fair { grid-template-columns: minmax(0, .95fr) minmax(0, 1.5fr) minmax(0, .8fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "swarm stats pizza"; }
 .pg-stats [data-pp="pizza"] { justify-content: center; } .pg-stats [data-pp="pizza"] > h3 { position: absolute; top: 10px; left: 14px; right: 14px; } .pg-stats [data-pp="pizza"] .pizza { flex: none; height: auto; }
@@ -862,6 +861,7 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .qf.bad { border-color: var(--bad); color: var(--bad); }
 .slot.oop .disc { outline: 2px dashed var(--fam); outline-offset: 2px; }
 .es-pctsw { margin: 2px 0 6px; }
+.hist { margin-top: 10px; } .hist h4 { margin: 0 0 4px; font: 700 11px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); } .hist svg { width: 100%; max-height: 130px; display: block; }
 .nat-wrap { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 18px; align-items: start; }
 .nat-list { max-height: 230px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-sm); display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 .nat-list label { display: flex; align-items: center; gap: 8px; padding: 4px 10px; font-size: 13px; cursor: pointer; min-height: 36px; }
@@ -2668,8 +2668,30 @@ function simMini(n, more = true) {
   const s = ppx.sim; if (!s) return '<span class="sk" style="height:120px;width:100%"></span>';
   return s.rows.length ? `<div class="sim-mini">${s.rows.slice(0, n).map(r => simRow(r)).join('')}</div>${more ? '<button class="link" data-ppgo="similar">All similar players →</button>' : ''}` : '<p class="note">No close match found.</p>';
 }
-const PP_FN = { kpis: secKpis, hero: secHero, deal: secDeal, sg: secSG, dev: secDev, attr: secAttr, role: secRole, canvas: secCanvas, swarm: secSwarm, pizza: secPizza,
+const PP_FN = { kpis: secKpis, hero: secHero, deal: () => secDeal() + (MODE === 'full' ? histChart('CA and PA over time', [['ca', 'CA'], ['pa', 'PA', true]])
+    : MODE === 'fair' ? histChart('Average attribute over time', [['attr_avg', 'Avg']], v => v == null ? '–' : v.toFixed(1)) : ''), sg: secSG, dev: secDev, attr: secAttr, role: secRole, canvas: secCanvas, swarm: secSwarm, pizza: secPizza,
   radar: () => profileInner(ppx.p), rarch: secArch, rvs: secVs, rfit: secFit, rmind: secMind, rrisk: secRisk, ruse: secUse, simmini: () => h3i('similar', 'Similar players', '<button class="link" data-ppgo="similar">See all →</button>') + simMini(MODE === 'moneyball' ? 4 : 3, false) };
+// Development over the snapshots ScoutSheet keeps each time this career's save is loaded (server: snapshot()).
+// series: [key, label, dashed]; one small line chart, one shared scale (CA and PA, or one measure alone).
+const dDate = d => new Date(d + 'T00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+function histChart(title, series, fmt = v => v) {
+  const h = ppx?.p?.history || [];
+  if (h.length < 2) return `<div class="hist"><h4>${title}</h4><p class="note">${h.length ? `First look saved on ${dDate(h[0].date)}. Load this save again later in the season to see how he develops.`
+    : 'Tracking starts the next time you load this save: each load keeps a snapshot.'}</p></div>`;
+  const W = 300, H = 96, L = 34, R = 8, T = 8, B = 18, xs = h.map(r => +new Date(r.date)), x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const vals = series.flatMap(([k]) => h.map(r => r[k])).filter(v => v != null), lo = Math.min(...vals), hi = Math.max(...vals), pad = (hi - lo) * .15 || 1;
+  const X = t => L + (t - x0) / ((x1 - x0) || 1) * (W - L - R), Y = v => T + (1 - (v - (lo - pad)) / (hi - lo + 2 * pad)) * (H - T - B);
+  const line = ([k, l, dash], i) => { const pts = h.filter(r => r[k] != null);
+    return `<g><polyline points="${pts.map(r => `${X(+new Date(r.date)).toFixed(1)},${Y(r[k]).toFixed(1)}`).join(' ')}" fill="none" stroke="${i ? C.muted : 'var(--mode)'}" stroke-width="2"${dash ? ' stroke-dasharray="5 3"' : ''}/>
+      ${pts.map(r => `<circle cx="${X(+new Date(r.date)).toFixed(1)}" cy="${Y(r[k]).toFixed(1)}" r="4" fill="${i ? C.muted : 'var(--mode)'}" stroke="var(--panel)" stroke-width="2"><title>${l} ${fmt(r[k])} · ${dDate(r.date)}</title></circle>`).join('')}
+      <text x="${W - R}" y="${Y(pts.at(-1)[k]) + (series.length > 1 && !i ? 14 : -6)}" text-anchor="end" font-size="10" fill="var(--text2)">${l} ${fmt(pts.at(-1)[k])}</text></g>`; };
+  return `<div class="hist"><h4>${title}</h4><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(series.map(([k, l]) => `${l}: ${h.map(r => `${fmt(r[k])} on ${dDate(r.date)}`).join(', ')}`).join('; '))}">
+    <line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" stroke="var(--line)"/>
+    <text x="${L - 4}" y="${Y(hi) + 3}" text-anchor="end" font-size="9" fill="var(--muted)">${fmt(hi)}</text><text x="${L - 4}" y="${Y(lo) + 3}" text-anchor="end" font-size="9" fill="var(--muted)">${fmt(lo)}</text>
+    <text x="${L}" y="${H - 4}" font-size="9" fill="var(--muted)">${dDate(h[0].date)}</text><text x="${W - R}" y="${H - 4}" text-anchor="end" font-size="9" fill="var(--muted)">${dDate(h.at(-1).date)}</text>
+    ${series.map(line).join('')}</svg></div>`;
+}
+PP_FN.price = () => `<h3>${ppIcon('cost')}<span class="h3l">${PP_SIDE_L.price}</span></h3><div class="sd-body">${sideBody('price')}</div>${histChart('Value over time', [['value', 'Value']], money)}`;
 const PP_SIDE_I = { contract: 'clock', clauses: 'sign', club: 'club', traits: 'good' };  // contract page headings get the icon the other pages have
 const ppCard = k => PP_FN[k] ? PP_FN[k]() : `<h3>${PP_SIDE_I[k] ? ppIcon(PP_SIDE_I[k]) : ''}<span class="h3l">${PP_SIDE_L[k]}</span></h3><div class="sd-body">${sideBody(k)}</div>`;
 const setPpTab = t => {

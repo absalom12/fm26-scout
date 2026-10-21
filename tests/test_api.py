@@ -415,3 +415,40 @@ def test_stat_percentiles_rank_inside_position_and_minutes(scout):
     scout.add_stat_pcts()
     pct = dict(con.execute("SELECT uid, pct_s_goals_p90 FROM players").fetchall())
     assert pct == {1: 0.0, 2: 50.0, 3: 100.0, 4: None, 5: 0.0}
+
+
+def test_history_snapshots_per_career_and_date(squad, client, monkeypatch):
+    import datetime
+    monkeypatch.setattr(squad, "GAME_DATE", datetime.date(2026, 8, 12))
+    squad.snapshot("a.fm")
+    squad.snapshot("a.fm")  # same date again: replaced, not doubled
+    squad.con().execute("UPDATE players SET ability_current = 128 WHERE uid = 1")
+    monkeypatch.setattr(squad, "GAME_DATE", datetime.date(2027, 1, 5))
+    squad.snapshot("renamed.fm")  # same club: same career
+    h = client.get("/api/player/1").json()["history"]
+    assert [(x["date"], x["ca"]) for x in h] == [("2026-08-12", 120), ("2027-01-05", 128)]
+    assert "ca" not in client.get("/api/player/1", params={"mode": "fair"}).json()["history"][0]
+    assert set(client.get("/api/player/1", params={"mode": "moneyball"}).json()["history"][0]) == {"date", "value"}
+
+
+def test_save_watch_reports_only_a_finished_write(scout, client, tmp_path, monkeypatch):
+    import json, os
+    saves = tmp_path / "saves"
+    (saves / "career.fm").write_bytes(b"v1")
+    monkeypatch.setattr(scout, "CLUB", {"club_uid": 7, "club_name": "Us", "formation": []})
+    scout.track_save(saves / "career.fm")
+    assert client.get("/api/save-watch").json() == {}
+    (saves / "career.fm").write_bytes(b"v2 longer")  # FM saved again
+    os.utime(saves / "career.fm", (2e9, 2e9))
+    assert client.get("/api/save-watch").json() == {}  # first sight: may still be writing
+    assert client.get("/api/save-watch").json() == {"changed": "career.fm"}
+    # a newer save of another club is ignored; of the same club, offered
+    for name, club in (("other.fm", (9, "Them", "2027-01-01")), ("career 2.fm", (7, "Us", "2027-02-01"))):
+        (saves / name).write_bytes(b"x")
+        os.utime(saves / name, (2.1e9, 2.1e9))
+        scout.WATCH["club"][(name, 2.1e9)] = club
+    scout.track_save(saves / "career.fm")
+    client.get("/api/save-watch")
+    assert client.get("/api/save-watch").json() == {"newer": "career 2.fm", "club": "Us", "game_date": "2027-02-01"}
+    scout.track_save(None)
+    assert client.get("/api/save-watch").json() == {}
