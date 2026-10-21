@@ -452,3 +452,9 @@ def test_save_watch_reports_only_a_finished_write(scout, client, tmp_path, monke
     assert client.get("/api/save-watch").json() == {"newer": "career 2.fm", "club": "Us", "game_date": "2027-02-01"}
     scout.track_save(None)
     assert client.get("/api/save-watch").json() == {}
+
+
+def test_roles_weigh_preferred_attributes_half(scout):
+    w = scout.ROLES["centre_back"][2]
+    assert w["marking"] == 1 and w["pace"] == 0.5 and w["aggression"] == 0.5
+    assert set(scout.ROLE_SECONDARY) == set(scout.ROLES)  # every role has its second tier

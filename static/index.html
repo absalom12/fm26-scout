@@ -2193,7 +2193,7 @@ function roleSelect(roles, role, p) {
   const rest = roles.filter(([r]) => !canPlay(p, r));
   return `<label class="rl-pick"><span class="sr">Role</span><select id="ppRole">${roles.filter(([r]) => canPlay(p, r)).map(opt).join('')}${rest.length ? `<optgroup label="Other positions">${rest.map(opt).join('')}</optgroup>` : ''}</select></label>`;
 }
-const FIT_RULE = 'Fit 0-100 from the role\'s FM26 key attributes. Position = his most familiar position for that role (familiarity 1-20: 18+ natural, 15+ accomplished, 12+ competent). "Not trained" = fit 75+ but familiarity under 12.';
+const FIT_RULE = 'Fit 0-100 from the role\'s FM26 attributes: key ones count fully, preferred ones half. Position = his most familiar position for that role (familiarity 1-20: 18+ natural, 15+ accomplished, 12+ competent). "Not trained" = fit 75+ but familiarity under 12.';
 function secFit() {
   const { p, grp } = ppx, gk = grp === 'GK';
   const roles = Object.keys(META.roles).filter(r => (META.roles[r] === 'GK') === gk).map(r => [r, p['role_' + r]]).filter(x => x[1] != null).sort((x, y) => y[1] - x[1]);
@@ -3650,7 +3650,7 @@ async function cmpShow(uid) {
     const pick = `<select id="cmpRoleSel" class="in" aria-label="Focus on a role"><option value="">All attributes</option>${roles.map(x => `<option value="${x}"${x === r ? ' selected' : ''}>${label('role_' + x)} (${roleTag(x)}) · ${Math.round(A['role_' + x])}</option>`).join('')}</select>`;
     const recap = card('level', 'By type', `${pick}`, TYPES.map(([t, list]) => [t, typeAvg(A, list, rs), typeAvg(B, list, rs)]).filter(([t, a, b]) => !rs || a != null || t !== 'Hidden')  // a role never uses hidden attributes
       .map(([t, a, b]) => cmpFly(t, a, b, { max: 20, f: v => v == null ? '–' : v.toFixed(1) })).join('')
-      + (rs ? `<p class="note"><i class="dot r-key"></i> primary · <i class="dot r-sec"></i> secondary attribute of ${label('role_' + r)}${META.role_secondary ? '' : ' (secondary attributes not loaded yet)'}; the recap counts only these.</p>` : ''));
+      + (rs ? `<p class="note"><i class="dot r-key"></i> primary · <i class="dot r-sec"></i> secondary attribute of ${label('role_' + r)}${META.role_secondary ? '' : ' '}; the recap counts only these.</p>` : ''));
     return `<div class="cmp-stack">${recap}${grid(3, phase('attr', TYPES[0][0], TYPES[0][1], 'attr', rs, score), phase('attr', 'Mental', ATTR.mental, 'attr', rs, score), phase('attr', 'Physical', ATTR.physical, 'attr', rs, score))}</div>`; };
   if (!roles.includes(cmpRole)) cmpRole = roles.includes(A.best_role) ? A.best_role : null;
   body.attr = MODE === 'moneyball' ? '' : cmpAttr(cmpRole, true);

@@ -93,7 +93,7 @@ POS = {
 # Single positions the search can also filter on (they sit inside a group above).
 EXACT_POS = {p: [p.lower()] for p in ("DL", "DR", "WBL", "WBR", "ML", "MR", "AML", "AMR")}
 # FM26's in-possession roles, with the game's names and key attributes (as listed by fmsidekick.com's FM26 role
-# database). Role -> (name, positions it is played from, {attribute: weight}); score 0-100 = mean key attribute x 5.
+# database). Role -> (name, positions it is played from, {attribute: weight}); score 0-100 = weighted mean x 5 (key attributes 1, preferred 0.5: ROLE_SECONDARY).
 # The first position decides the role's group (Advanced Playmaker: AM, though central midfielders play it too).
 def _role(name, positions, attrs):
     return name, positions.split(), dict.fromkeys(attrs.split(), 1)
@@ -139,6 +139,51 @@ ROLES = {
     "poacher": _role("Poacher", "stc", "finishing heading off_the_ball anticipation acceleration composure concentration"),
     "target_forward": _role("Target Forward", "stc", "finishing heading off_the_ball strength jumping_reach balance bravery aggression"),
 }
+# FM26's second tier of role attributes (blue in the game's role screen, "Preferred"), weight 0.5 next to the key
+# ones (green, weight 1). Source: sortitoutsi, "FM26: Important Attributes for Every Role" (Nov 2025),
+# https://sortitoutsi.net/content/75078/fm26-important-attributes-for-every-role
+ROLE_SECONDARY = {
+    "goalkeeper": "kicking one_on_ones throwing anticipation decisions",
+    "ball_playing_goalkeeper": "eccentricity one_on_ones throwing anticipation composure decisions passing",
+    "no_nonsense_goalkeeper": "one_on_ones anticipation decisions",
+    "centre_back": "aggression bravery composure concentration decisions pace",
+    "ball_playing_centre_back": "first_touch technique aggression bravery concentration decisions vision pace",
+    "no_nonsense_centre_back": "aggression bravery concentration pace",
+    "advanced_centre_back": "dribbling first_touch aggression bravery concentration vision pace stamina",
+    "full_back": "crossing dribbling passing technique decisions work_rate agility pace stamina",
+    "inside_full_back": "dribbling aggression bravery composure concentration decisions work_rate acceleration agility jumping_reach pace stamina",
+    "wing_back": "dribbling first_touch passing technique anticipation concentration decisions off_the_ball positioning agility balance",
+    "inside_wing_back": "first_touch marking technique concentration work_rate agility pace stamina",
+    "playmaking_wing_back": "crossing dribbling marking anticipation concentration off_the_ball positioning work_rate agility pace stamina",
+    "advanced_wing_back": "first_touch marking passing tackling anticipation decisions flair positioning balance",
+    "defensive_midfielder": "first_touch marking passing aggression composure decisions work_rate stamina strength",
+    "deep_lying_playmaker": "marking tackling anticipation concentration off_the_ball positioning work_rate balance stamina",
+    "half_back": "first_touch passing aggression bravery composure decisions work_rate stamina",
+    "box_to_box_midfielder": "dribbling finishing first_touch long_shots technique aggression anticipation composure decisions positioning acceleration balance pace strength",
+    "box_to_box_playmaker": "dribbling marking tackling anticipation positioning acceleration agility balance pace",
+    "central_midfielder": "technique anticipation composure concentration off_the_ball positioning vision work_rate stamina",
+    "midfield_playmaker": "dribbling tackling anticipation flair positioning work_rate agility stamina",
+    "wide_central_midfielder": "crossing dribbling technique anticipation composure concentration off_the_ball positioning vision work_rate agility stamina",
+    "advanced_playmaker": "crossing dribbling anticipation flair acceleration agility",
+    "attacking_midfielder": "crossing dribbling finishing anticipation decisions vision acceleration agility",
+    "channel_midfielder": "dribbling long_shots anticipation decisions flair vision agility pace stamina",
+    "free_role": "crossing finishing anticipation decisions acceleration agility",
+    "second_striker": "dribbling long_shots passing technique concentration decisions work_rate agility pace stamina",
+    "winger": "first_touch passing anticipation flair off_the_ball work_rate balance stamina",
+    "inside_winger": "crossing long_shots passing anticipation flair off_the_ball vision work_rate balance pace stamina",
+    "playmaking_winger": "anticipation flair work_rate agility pace stamina",
+    "wide_midfielder": "dribbling first_touch anticipation composure off_the_ball vision acceleration agility",
+    "inside_forward": "crossing finishing long_shots passing flair vision work_rate balance pace stamina",
+    "wide_forward": "crossing finishing passing composure flair work_rate balance stamina",
+    "centre_forward": "dribbling passing anticipation decisions agility balance jumping_reach pace",
+    "channel_forward": "crossing heading passing anticipation decisions agility balance pace stamina",
+    "deep_lying_forward": "dribbling passing anticipation decisions teamwork vision balance",
+    "false_nine": "finishing anticipation flair agility balance",
+    "poacher": "first_touch technique decisions balance",
+    "target_forward": "first_touch anticipation decisions teamwork",
+}
+for _r, _attrs in ROLE_SECONDARY.items():
+    ROLES[_r][2].update({a: 0.5 for a in _attrs.split() if a not in ROLES[_r][2]})
 ROLE_GROUP = {r: next(g for g, ps in POS.items() if pos[0] in ps) for r, (_, pos, _) in ROLES.items()}
 role_pos_sql = lambda r: ", ".join(f"positions_{p}" for p in ROLES[r][1])
 
@@ -1108,7 +1153,8 @@ def meta():
             "roles": ROLE_GROUP, "role_names": {r: n for r, (n, _, _) in ROLES.items()},
             "role_pos": {r: ps for r, (_, ps, _) in ROLES.items()},
             # Key attributes per role, heaviest first (for showing why a role score is what it is).
-            "role_attributes": {r: [a for a, _ in sorted(w.items(), key=lambda kv: -kv[1])] for r, (_, _, w) in ROLES.items()},
+            "role_attributes": {r: [a for a, v in w.items() if v == 1] for r, (_, _, w) in ROLES.items()},  # key (green)
+            "role_secondary": {r: [a for a, v in w.items() if v < 1] for r, (_, _, w) in ROLES.items()},  # preferred (blue), weight 0.5
             "stat_groups": list(STAT_METRICS),
             "role_stats": {k: [l, u, low] for k, (l, u, _, low) in ROLE_STATS.items()}, "role_limit_pct": ROLE_LIMIT_PCT,
             # ends of the money sliders (value, weekly wage): 0 -> the save's max
