@@ -15,7 +15,7 @@
   --r-sm: 6px; --r: 10px; --r-lg: 14px; --r-pill: 999px;
   --shadow: 0 18px 50px rgba(0,0,0,.5);
   --ease: cubic-bezier(.2,.8,.2,1); --t-fast: 120ms; --t: 200ms; --t-slow: 360ms;
-  --f-body: 'Barlow', 'Twemoji Country Flags', system-ui, sans-serif; --f-display: 'Barlow Condensed', 'Barlow', sans-serif; --f-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --f-body: 'Barlow', system-ui, sans-serif; --f-display: 'Barlow Condensed', 'Barlow', sans-serif; --f-mono: 'JetBrains Mono', ui-monospace, monospace;
   --top: 52px;
   color-scheme: dark;
 }
@@ -88,7 +88,7 @@ body.mode-fair { --mode: var(--good); } body.mode-moneyball { --mode: var(--gold
 /* Nationality */
 .nat-n { overflow: hidden; text-overflow: ellipsis; }
 .nat { display: inline-flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.flag { font-size: 15px; line-height: 1; font-family: "Twemoji Country Flags", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+.flag { display: inline-block; font-size: 15px; line-height: 1; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
 /* Key attribute / stat chips */
 .kchips { display: inline-flex; gap: 4px; overflow: hidden; vertical-align: middle; align-items: center; }
 .ac { display: inline-flex; gap: 4px; align-items: baseline; font: 600 11px var(--f-display); letter-spacing: .04em; color: var(--muted); background: #151e27; border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
@@ -412,7 +412,7 @@ details[open] summary::before { content: "−"; }
 .vread { margin: 4px 0 0; font-size: 12.5px; line-height: 1.4; color: var(--text2); }
 .dv-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; } .dv-head small { font-size: 11.5px; color: var(--muted); }
 /* Scouting report page (Full): 3 x 2 analysis cards. rs-* = shared rows, ra = profile, vs = attributes vs output, tf = tactical fit, rk = risks, ru = usage. */
-.pg-report.m-full { grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
+.pg-report.m-full, .pg-report.m-fair { grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
 .pg-report .pp-card { padding: 10px 16px; } .pg-report .pp-card h3 { font-size: 14px; margin-bottom: 5px; } .pg-report .pp-card > .note { margin-top: auto; padding-top: 6px; }
 .pg-report [title] { cursor: help; }
 .rs-a { font-size: 12.5px; color: var(--text2); white-space: nowrap; } .rs-a b { font: 700 12.5px var(--f-mono); }
@@ -795,7 +795,8 @@ dialog::backdrop { background: rgba(3,6,9,.6); backdrop-filter: blur(2px); }
 .reco { display: grid; grid-template-columns: 26px minmax(150px, 1fr) auto auto auto 36px; gap: 12px; align-items: center; padding: 10px 8px; border-bottom: 1px solid var(--line); animation: slotIn .4s var(--ease) both; }
 .reco { cursor: pointer; } .reco:hover { background: var(--bg2); } .reco:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .reco .i { font: 700 13px var(--f-mono); color: var(--faint); text-align: right; }
-.reco .nm { text-align: left; font-weight: 700; font-size: 15px; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reco .nm { text-align: left; font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; color: var(--text); }
+.reco .nm .flag { flex: none; } .reco .nm .pname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } 
 .reco .nm:hover { color: var(--accent); }
 .reco .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .reco .rep { font-size: 13px; }
@@ -2776,7 +2777,7 @@ function sideBody(k) {
 const PP_PAGES = {
   full: [['over', 'Overview', ['role', 'simmini', 'attr', 'canvas', 'sg', 'dev']], ['report', 'Scouting report', ['rarch', 'rvs', 'rfit', 'rmind', 'rrisk', 'ruse']], ['stats', 'Statistics', ['swarm', 'pizza', 'stats']],
     ['similar', 'Similar players', ['similar', 'apx']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
-  fair: [['over', 'Overview', ['role', 'simmini', 'attr', 'canvas', 'sg', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
+  fair: [['over', 'Overview', ['role', 'simmini', 'attr', 'canvas', 'sg', 'radar']], ['report', 'Scouting report', ['rarch', 'rvs', 'rfit', 'rmind', 'rrisk', 'ruse']], ['stats', 'Statistics', ['swarm', 'pizza', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
   moneyball: [['over', 'Overview', ['read', 'role', 'pizza', 'simmini']], ['stats', 'Statistics', ['swarm', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
 };
 // Moneyball under PERF_MIN: the Overview swaps to a gated grid (ui-ux-designer, owner-approved), g1 = some minutes, g0 = none.
@@ -4190,9 +4191,11 @@ async function init() {
     } },
   });
   renderViews(); renderLists(); renderLenses(); applyColumns(); renderSummary();
-  // Back / forward: this tab's entry index survives a reload; the view itself starts fresh.
+  // Back / forward: this tab's entry index survives a reload, and so does the page (not its filters).
   const pq = +new URLSearchParams(location.search).get('p');  // a bookmarked or reloaded profile
   if (pq) { navRestoring = true; st.pp = pq; setPage('player'); navRestoring = false; }
+  else if (['club', 'offers', 'deals'].includes(history.state?.page) && (history.state.page !== 'deals' || FAIR)) {  // a reload (Cmd+R) stays on its page
+    navRestoring = true; if (history.state.lens) st.lens = history.state.lens; setPage(history.state.page); navRestoring = false; }
   const hi = history.state?.i;
   try { navTop = hi == null ? 0 : Math.max(hi, +sessionStorage.getItem('fm26_nav_top') || 0); } catch {}
   history.replaceState({ ...navNow(), f: clone(F), i: hi ?? 0 }, ''); navArrows();
@@ -4305,6 +4308,7 @@ document.addEventListener('auxclick', e => {
   const uid = +(t.dataset.player || t.dataset.profile || t.getAttribute('row-id'));
   if (uid) { e.preventDefault(); openProfile(uid); }
 });
+document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'r') { e.preventDefault(); location.reload(); } });  // the desktop window has no reload shortcut of its own
 document.addEventListener('click', e => { const c = e.target.closest('.cap[data-capk]'); if (c && !e.target.closest('.cap-x, input')) capEdit(c); });
 document.addEventListener('keydown', e => { if (!e.target.dataset?.cap) return;  // on the tile: Enter or a digit / currency sign starts typing
   if (e.key === 'Enter') { e.preventDefault(); capEdit(e.target.closest('.cap')); } else if (/^[\d£€$]$/.test(e.key)) { e.preventDefault(); capEdit(e.target.closest('.cap'), e.key); } });

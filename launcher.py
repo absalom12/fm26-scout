@@ -76,7 +76,7 @@ def native_window(url, ready) -> bool:
         webview.settings["ALLOW_DOWNLOADS"] = True  # CSV export
         webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = True  # update link, GitHub
         w = webview.create_window("ScoutSheet", html=SPLASH, width=1440, height=900, min_size=(1000, 680),
-                                  background_color="#0b0f13")
+                                  background_color="#0b0f13", text_select=True)  # pywebview blocks selection by default
         # Not private: shortlist and saved searches live in localStorage, kept next to the data.
         def shown():
             print("native window", flush=True)  # the smoke test waits for this line
