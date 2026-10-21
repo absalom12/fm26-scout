@@ -939,12 +939,12 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .ac-list { position: absolute; left: 0; right: 0; top: calc(100% + 4px); background: var(--raise); border: 1px solid var(--line2); border-radius: var(--r); box-shadow: var(--shadow); z-index: 10; padding: 4px; }
 .ac-list:empty { display: none; }
 /* Sized by its content, like dialog.pal: a top margin and an auto bottom one (WebKit collapses fit-content here). */
-dialog.es.set.cmp { width: min(820px, calc(100vw - 32px)); } dialog.es.set.cmp[open] { display: block; }
-dialog.cmp { --pa: #1aa0b4; --pb: #b866e8; }
-dialog.es.set.cmp { width: min(980px, calc(100vw - 32px)); height: min(700px, calc(100vh - 48px)); max-height: none; margin: auto; overflow: hidden; }
-dialog.cmp .es-in { display: flex; flex-direction: column; height: 100%; position: relative; }
-dialog.cmp .es-head { position: absolute; right: 8px; top: 6px; padding: 0; z-index: 1; } dialog.cmp .es-head h2 { font-size: 0; }
-dialog.cmp #cmpBody { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px 22px 10px; overflow: hidden; }
+dialog.es.set.cmpd { width: min(820px, calc(100vw - 32px)); } dialog.es.set.cmpd[open] { display: block; }
+dialog.cmpd { --pa: #1aa0b4; --pb: #b866e8; }
+dialog.es.set.cmpd { width: min(980px, calc(100vw - 32px)); height: min(700px, calc(100vh - 48px)); max-height: none; margin: auto; overflow: hidden; }
+dialog.cmpd .es-in { display: flex; flex-direction: column; height: 100%; position: relative; }
+dialog.cmpd .es-head { position: absolute; right: 8px; top: 6px; padding: 0; z-index: 1; } dialog.cmpd .es-head h2 { font-size: 0; }
+dialog.cmpd #cmpBody { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px 22px 10px; overflow: hidden; }
 .cmp-tabs { justify-content: center; border-bottom: 1px solid var(--line); margin-top: 8px; flex: none; }
 .cmp-tabs button { padding: 0 12px; } .cmp-tabs small { font: 600 11px var(--f-mono); letter-spacing: 0; margin-left: 6px; } .cmp-tabs small i { font-style: normal; }
 .cmp-pgs { flex: 1; min-height: 0; } .cmp-pg { height: 100%; overflow: auto; padding-top: 10px; } .cmp-pg:focus-visible { outline: none; }
@@ -1209,7 +1209,7 @@ dialog.es.set { width: min(660px, calc(100vw - 32px)); height: auto; max-height:
     <footer class="es-foot set-foot"><button class="btn" value="off">No thanks</button><button class="btn" value="on">Share usage stats</button></footer>
   </form>
 </dialog>
-<dialog id="cmp" class="es set cmp" aria-labelledby="cmpTitle">
+<dialog id="cmp" class="es set cmpd" aria-labelledby="cmpTitle">
   <div class="es-in">
     <header class="es-head"><h2 id="cmpTitle">Compare</h2><button type="button" class="icon-btn" data-cmp-close aria-label="Close">×</button></header>
     <div id="cmpBody" class="es-body"></div>
