@@ -864,17 +864,15 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .es-pair > span { color: var(--faint); font: 500 12px var(--f-mono); text-align: center; }
 .es-row { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; margin-top: 14px; }
 .es-row .check { min-height: 32px; }
-.es-lg { display: grid; gap: 6px; margin-top: 4px; grid-column: 1 / -1; } .es-lg .ac-wrap input { height: 36px; font-size: 14px; }
+.es-lg { display: grid; gap: 6px; } .es-lg .ac-wrap input { height: 36px; font-size: 14px; }
+.es-where { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; align-items: start; }
+.es-status { margin-top: 0; gap: 12px 28px; align-items: end; } .es-status .fld { display: grid; gap: 6px; font-size: 13px; color: var(--text2); }
+.es-gen .es-sub:first-child { margin-top: 0; }
+@media (max-width: 900px) { .es-gen, .es-where { grid-template-columns: 1fr; } .es-pitch { max-width: 420px; } }
 .qf.bad { border-color: var(--bad); color: var(--bad); }
 .slot.oop .disc { outline: 2px dashed var(--fam); outline-offset: 2px; }
 .es-pctsw { margin: 2px 0 6px; }
 .hist { margin-top: 10px; } .hist h4 { margin: 0 0 4px; font: 700 11px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); } .hist svg { width: 100%; max-height: 130px; display: block; }
-.nat-wrap { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 18px; align-items: start; }
-.nat-list { max-height: 230px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-sm); display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
-.nat-list label { display: flex; align-items: center; gap: 8px; padding: 4px 10px; font-size: 13px; cursor: pointer; min-height: 36px; }
-.nat-list label:hover { background: var(--raise); }
-.nat-list label:has(:checked) { background: color-mix(in srgb, var(--mode) 12%, transparent); color: var(--text); }
-.nat-list .n { margin-left: auto; font: 500 11px var(--f-mono); color: var(--faint); }
 /* attribute tiles: the tile IS the slider (a native range stretched over it, so arrows / Home / End / Page keys work) */
 .es-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 6px; }
 .rg { --c: var(--line2); position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; height: 50px; padding: 7px 9px; border-radius: var(--r-sm); background: var(--bg); border: 1px solid var(--line); overflow: hidden; font-size: 12px; transition: border-color var(--t-fast); }
@@ -954,7 +952,7 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 /* Sized by its content, like dialog.pal: a top margin and an auto bottom one (WebKit collapses fit-content here). */
 dialog.es.set.cmpd { width: min(820px, calc(100vw - 32px)); } dialog.es.set.cmpd[open] { display: block; }
 dialog.cmpd { --pa: #1aa0b4; --pb: #b866e8; }
-dialog.es.set.cmpd { width: min(980px, calc(100vw - 32px)); height: min(700px, calc(100vh - 48px)); max-height: none; margin: auto; overflow: hidden; }
+dialog.es.set.cmpd { width: min(980px, calc(100vw - 32px)); height: min(700px, calc(100vh - 48px)); max-height: none; inset: 0; margin: auto; overflow: hidden; }  /* inset 0: centred (the .set base sets bottom: auto) */
 dialog.cmpd .es-in { display: flex; flex-direction: column; height: 100%; position: relative; }
 dialog.cmpd .es-head { position: absolute; right: 8px; top: 6px; padding: 0; z-index: 1; } 
 dialog.cmpd #cmpBody { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px 22px 10px; overflow: hidden; }
@@ -2967,11 +2965,11 @@ const PZN = { GK: 'Goalkeeper', CB: 'Centre-back', FB: 'Full-back / wing-back', 
   CM: 'Central midfielder', W: 'Winger (left or right, midfield or attack)', ML: 'Left midfielder', MR: 'Right midfielder', AML: 'Left winger', AMR: 'Right winger', AM: 'Attacking midfielder', ST: 'Striker' };
 const PITCH_SVG = `<svg viewBox="0 0 105 68" preserveAspectRatio="none" fill="none" stroke="rgba(255,255,255,.18)" stroke-width=".4" aria-hidden="true"><rect x="1.5" y="1.5" width="102" height="65" rx=".8"/><path d="M52.5 1.5v65"/><circle cx="52.5" cy="34" r="9.15"/><rect x="1.5" y="13.85" width="16.5" height="40.3"/><rect x="1.5" y="24.85" width="5.5" height="18.3"/><rect x="87" y="13.85" width="16.5" height="40.3"/><rect x="98" y="24.85" width="5.5" height="18.3"/><path d="M18 27.5a8 8 0 0 1 0 13M87 27.5a8 8 0 0 0 0 13"/></svg>`;
 // Order = the squad-gap flow: who and budget, then the role, then the detail (one order for every mode)
-const ES_SECS = [['gen', 'General'], ['roles', 'Roles'], ['attr', 'Attributes'], ['hidden', 'Hidden'], ['stats', 'Statistics'], ['money', 'Contract'], ['nat', 'Nationality']];
+const ES_SECS = [['gen', 'General'], ['roles', 'Roles'], ['attr', 'Attributes'], ['hidden', 'Hidden'], ['stats', 'Statistics'], ['money', 'Contract']];  // nationality lives in General
 const esSecs = () => ES_SECS.filter(([k]) => MODE === 'moneyball' ? !['attr', 'roles', 'hidden'].includes(k) : k !== 'hidden' || MODE === 'full');
 function esCounts() {
   const m = D.min, x = D.max, has = (o, k) => o[k] != null && !hid(k), nn = (...v) => v.filter(z => z != null).length, keys = o => Object.keys(o).filter(k => !hid(k));
-  return { gen: (D.age_min != null || D.age_max != null) + D.positions.length + has(m, 'height_cm') + has(x, 'height_cm') + (D.value_max != null || has(m, 'transfer_value')) + (D.wage_max != null || has(m, 'contract_wage')) + (D.leagues || []).filter(lgKnown).length + !!D.home_grown + !!D.free_agent, nat: D.nations.length,
+  return { gen: (D.age_min != null || D.age_max != null) + D.positions.length + has(m, 'height_cm') + has(x, 'height_cm') + (D.value_max != null || has(m, 'transfer_value')) + (D.wage_max != null || has(m, 'contract_wage')) + (D.leagues || []).filter(lgKnown).length + !!D.home_grown + !!D.free_agent + D.nations.length,
     money: nn(D.months_max) + ['months_left', 'deal_score'].filter(k => has(m, k)).length + !!D.squad + !!D.on_loan,
     attr: keys(m).filter(k => k.startsWith('attributes_') && !HID_A.includes(k)).length, stats: STATS_F.filter(([c]) => has(m, c) || has(m, 'pct_' + c)).length,
     roles: keys(m).filter(k => k.startsWith('role_')).length,
@@ -2981,8 +2979,6 @@ const sec = (k, n, title, sub, body, tools = '') => `<section class="es-sec" dat
 function renderES() {
   const cols = new Set(META.columns), noAttr = MODE === 'moneyball', full = MODE === 'full';
   const g = $('#gender [aria-pressed="true"]').dataset.g;
-  const natQ = ($('#esNatQ')?.value || '').toLowerCase();
-  const nats = (META.nations || []).filter(n => !natQ || n.name.toLowerCase().includes(natQ)).slice(0, natQ ? 60 : 30);
   const nf = (k, ph, al = '') => `<input class="in" data-esf="${k}" type="text" inputmode="decimal" value="${D[k] ?? ''}" placeholder="${ph}"${al ? ` aria-label="${al}"` : ''}>`;
   const mi = (c, ph, al, money) => `<input class="in" ${money ? 'data-esminm' : 'data-esmin'}="${c}" type="${money ? 'text' : 'number'}" ${money ? 'inputmode="decimal"' : 'min="0" step="any"'} value="${D.min[c] ?? ''}" placeholder="${ph}" aria-label="${al}">`;
   const pair = (name, lo, hi) => `<div class="fld"><span>${name}</span><div class="es-pair">${lo}<span>to</span>${hi}</div></div>`;
@@ -2998,25 +2994,27 @@ function renderES() {
   $('#esRail').innerHTML = esSecs().map(([k, l]) => `<button type="button" data-esgo="${k}" aria-current="false"><i aria-hidden="true">${String(n[k]).padStart(2, '0')}</i>${l}<b></b></button>`).join('')
     + `<p>Every criterion must match. The count below updates as you go.</p>`;
   const parts = [
-    sec('gen', n.gen, 'General', 'position, age, budget, where they play', `<div class="es-gen">
-      <div><div class="es-pitch" role="group" aria-label="Positions">${PITCH_SVG}${esPos.filter(p => PZ[p]).map(p => PZ[p].map(([x, y], j) =>
+    // General = the squad-gap brief, top to bottom: position, age and build, budget, origin, status.
+    sec('gen', n.gen, 'General', 'position, age, budget, where he plays, where he\'s from', `<div class="es-gen">
+      <div><h4 class="es-sub">Position</h4><div class="es-pitch" role="group" aria-label="Positions">${PITCH_SVG}${esPos.filter(p => PZ[p]).map(p => PZ[p].map(([x, y], j) =>
         `<button type="button" class="pz" data-espos="${p}" aria-pressed="${D.positions.includes(p)}" style="left:${x}%;top:${y}%" title="${PZN[p]}"${j ? ' tabindex="-1" aria-hidden="true"' : ` aria-label="${posTxt(p)}, ${PZN[p]}"`}>${posTxt(p)}</button>`).join('')).join('')}</div>
         ${unknownPos.length ? `<div class="chips" style="margin-top:8px">${unknownPos.map(p => `<button type="button" class="chip" data-espos="${p}" aria-pressed="${D.positions.includes(p)}">${p}</button>`).join('')}</div>` : ''}
         <div class="es-note">Pick several: a player qualifies if he can play any of them.</div></div>
-      <div>${dual('age', 'Age')}<div class="es-moneys">${esMoney('es_value', 'value', esFor === 'club' ? 'Value · budget' : 'Value')}${esMoney('es_wage', 'wage', esFor === 'club' ? 'Wage · max wage' : 'Wage')}</div>${dual('height', 'Height')}
-        <div class="es-fields">
+      <div><h4 class="es-sub">Age &amp; build</h4>${dual('age', 'Age')}${dual('height', 'Height')}
+        <h4 class="es-sub">Budget</h4><div class="es-moneys">${esMoney('es_value', 'value', esFor === 'club' ? 'Value · budget' : 'Value')}${esMoney('es_wage', 'wage', esFor === 'club' ? 'Wage · max wage' : 'Wage')}</div></div></div>
+      <h4 class="es-sub">Origin</h4>
+      <div class="es-where">
           <div class="fld es-lg">League <span class="muted">or a country, several allowed</span>
             <div class="ac-wrap"><input id="esLgQ" class="in" placeholder="Eredivisie, Serie A or a country…" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="esLgList" aria-autocomplete="list" aria-label="Find a league or a country"><div id="esLgList" class="ac-list" role="listbox"></div></div>
             <div class="chips" style="margin-top:6px">${(D.leagues || []).filter(lgKnown).map(k => `<span class="crit-chip">${k.startsWith('c:') ? `<span class="flag">${flag(natCode(k.slice(2)))}</span>` : ''}${esc(lgName(k))}<button type="button" data-eslg-rm="${esc(k)}" aria-label="Remove ${esc(lgName(k))}">×</button></span>`).join('')}</div></div>
-          <label class="fld">Home-grown <select class="in" data-esf="home_grown">${Object.entries({ '': 'Any', club: 'At my club', nation: 'In my nation' }).map(([v, l]) => `<option value="${v}" ${(D.home_grown || '') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-        </div>
-        <div class="es-row"><label class="check"><input type="checkbox" data-esb="free_agent" ${D.free_agent ? 'checked' : ''}> Free agents only</label></div>
-        <div class="fld" style="margin-bottom:6px">Gender</div>
-        <div class="seg">${[['', 'All'], ['Men', 'Men'], ['Women', 'Women']].map(([v, l]) => `<button type="button" data-esg="${v}" aria-pressed="${(D.gender ?? g) === v}">${l}</button>`).join('')}</div></div></div>`),
-    sec('nat', n.nat, 'Nationality', 'first or second nationality', `<div class="nat-wrap">
-      <div><input id="esNatQ" class="in" placeholder="Find a nation…" style="width:100%;height:36px" value="${esc($('#esNatQ')?.value || '')}" aria-label="Find a nation">
-        <div class="chips" style="margin-top:10px">${D.nations.map(x => `<span class="crit-chip"><span class="flag">${flag(natCode(x))}</span>${esc(x)}<button type="button" data-esnat-rm="${esc(x)}" aria-label="Remove ${esc(x)}">×</button></span>`).join('') || '<span class="muted" style="font-size:13px">Any nation. Tick one or more on the right.</span>'}</div></div>
-      <div class="nat-list">${nats.map(x => `<label><input type="checkbox" data-esnat="${esc(x.name)}" ${D.nations.includes(x.name) ? 'checked' : ''}><span class="flag">${flag(x.code)}</span>${esc(x.name)}<span class="n">${x.players.toLocaleString()}</span></label>`).join('') || `<p class="muted" style="padding:10px;margin:0;font-size:13px">No nation called “${esc(natQ)}”.</p>`}</div></div>`),
+          <div class="fld es-lg">Nationality <span class="muted">first or second passport</span>
+            <div class="ac-wrap"><input id="esNatQ" class="in" placeholder="Brazil, Japan…" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="esNatList" aria-autocomplete="list" aria-label="Find a nation"><div id="esNatList" class="ac-list" role="listbox"></div></div>
+            <div class="chips" style="margin-top:6px">${D.nations.map(x => `<span class="crit-chip"><span class="flag">${flag(natCode(x))}</span>${esc(x)}<button type="button" data-esnat-rm="${esc(x)}" aria-label="Remove ${esc(x)}">×</button></span>`).join('')}</div></div></div>
+      <h4 class="es-sub">Status</h4>
+      <div class="es-row es-status">
+        <div class="fld">Home-grown <div class="seg">${[['', 'Any'], ['club', 'My club'], ['nation', 'My nation']].map(([v, l]) => `<button type="button" data-eshg="${v}" aria-pressed="${(D.home_grown || '') === v}">${l}</button>`).join('')}</div></div>
+        <div class="fld">Gender <div class="seg">${[['', 'All'], ['Men', 'Men'], ['Women', 'Women']].map(([v, l]) => `<button type="button" data-esg="${v}" aria-pressed="${(D.gender ?? g) === v}">${l}</button>`).join('')}</div></div>
+        <label class="check"><input type="checkbox" data-esb="free_agent" ${D.free_agent ? 'checked' : ''}> Free agents only</label></div>`),
     sec('money', n.money, 'Contract', 'months left, squad status, loans', `<div class="es-fields">
         ${pair('Months left on contract', mi('months_left', 'from', 'Months left at least'), nf('months_max', 'to', 'Months left at most'))}
         ${FAIR ? `<label class="fld">Deal ≥ <span class="muted">% under fair price</span><input class="in" data-esmin="deal_score" type="number" step="1" value="${D.min.deal_score ?? ''}" placeholder="any"></label>` : ''}
@@ -3111,6 +3109,17 @@ function lgSuggest() {
     || '<p class="muted" style="padding:8px 10px;margin:0;font-size:13px">No league or country matches.</p>';
   $('#esLgQ').setAttribute('aria-expanded', 'true');
 }
+// Nation suggestions, same ranking as leagues.
+function natSuggest() {
+  const q = $('#esNatQ').value.trim().toLowerCase(), box = $('#esNatList');
+  if (!q) { box.innerHTML = ''; $('#esNatQ').setAttribute('aria-expanded', 'false'); return; }
+  const rank = t => { t = t.toLowerCase(); return t.startsWith(q) ? 0 : t.split(/[\s-]+/).some(w => w.startsWith(q)) ? 1 : t.includes(q) ? 2 : 9; };
+  const out = (META.nations || []).map(n => ({ ...n, r: rank(n.name) })).filter(n => n.r < 9 && !D.nations.includes(n.name)).sort((a, b) => a.r - b.r || b.players - a.players).slice(0, 8);
+  box.innerHTML = out.map((n, i) => `<button type="button" class="ac-item${i ? '' : ' on'}" role="option" aria-selected="${!i}" data-esnat="${esc(n.name)}"><b><span class="flag">${flag(n.code)}</span> ${esc(n.name)}</b><span class="mono muted">${n.players.toLocaleString()}</span></button>`).join('')
+    || '<p class="muted" style="padding:8px 10px;margin:0;font-size:13px">No nation matches.</p>';
+  $('#esNatQ').setAttribute('aria-expanded', 'true');
+}
+function natPick(x) { if (!D.nations.includes(x)) D.nations = [...D.nations, x]; renderES(); const q = $('#esNatQ'); q.value = ''; q.focus(); }
 function lgPick(k) { if (!D.leagues.includes(k)) D.leagues = [...D.leagues, k]; renderES(); const q = $('#esLgQ'); q.value = ''; q.focus(); }
 let esPct = false;  // Statistics shows percentile boxes (reopens that way when one is set)
 function openES(target = 'grid') {
@@ -4135,6 +4144,8 @@ $('#es').addEventListener('click', e => {
   else if (d.esg != null) { D.gender = d.esg; $$('[data-esg]').forEach(b => b.setAttribute('aria-pressed', b === t)); esLive(); }
   else if (d.espctmode != null) { esPct = d.espctmode === '1'; renderES(); }
   else if (d.eslg) lgPick(d.eslg);
+  else if (d.esnat) natPick(d.esnat);
+  else if (d.eshg != null) { D.home_grown = d.eshg; renderES(); }
   else if (d.eslgRm) { D.leagues = D.leagues.filter(x => x !== d.eslgRm); renderES(); }
   else if (d.esnatRm) { D.nations = D.nations.filter(x => x !== d.esnatRm); renderES(); }
   else if (d.espick) { const k = d.espick, v = +d.v; capSet(k, capVal(k) === v ? { m: 'none' } : { m: 'custom', v }); }
@@ -4155,7 +4166,7 @@ $('#es').addEventListener('input', e => {
   const t = e.target, d = t.dataset;
   if (!D || t.id === 'esName' || d.cap) return;  // cap tiles go through capSet (document listener): a repaint here first would reset the thumb
   if (t.id === 'esLgQ') { lgSuggest(); return; }
-  if (t.id === 'esNatQ') { const pos = t.selectionStart; renderES(); const q = $('#esNatQ'); q.focus(); q.setSelectionRange(pos, pos); return; }
+  if (t.id === 'esNatQ') { natSuggest(); return; }
   if (d.esf) D[d.esf] = d.esf === 'squad' || d.esf === 'home_grown' ? t.value : esNum(t.value);
   else if (d.esminm) { const v = esNum(t.value); if (v == null) delete D.min[d.esminm]; else D.min[d.esminm] = v; }
   else if (d.esb) D[d.esb] = t.checked;
@@ -4164,7 +4175,6 @@ $('#es').addEventListener('input', e => {
     tile.querySelector('output').textContent = v || '–'; tile.classList.toggle('on', v > 0); tile.dataset.t = v ? tierOf(v, 200) : '';
     tile.style.setProperty('--v', v / 200); t.setAttribute('aria-valuetext', v || 'any');
   }
-  else if (d.esnat) { D.nations = t.checked ? [...D.nations, d.esnat] : D.nations.filter(x => x !== d.esnat); }
   else if (d.esmin) { if (t.value === '') delete D.min[d.esmin]; else D.min[d.esmin] = Number(t.value); }
   else if (d.espct) { const n = Math.round(Number(t.value)); if (t.value === '') delete D.min['pct_' + d.espct]; else if (n >= 1 && n <= 99) D.min['pct_' + d.espct] = 100 - n; }
   else if (d.esmax) { if (t.value === '') delete D.max[d.esmax]; else D.max[d.esmax] = Number(t.value); }
@@ -4189,8 +4199,8 @@ $('#es').addEventListener('input', e => {
 });
 $('#es').addEventListener('keydown', e => {  // Enter in the league field takes the first suggestion
   if (e.target.id === 'esLgQ' && e.key === 'Enter') { e.preventDefault(); const b = $('#esLgList [data-eslg]'); if (b) lgPick(b.dataset.eslg); }
+  if (e.target.id === 'esNatQ' && e.key === 'Enter') { e.preventDefault(); const b = $('#esNatList [data-esnat]'); if (b) natPick(b.dataset.esnat); }
 });
-$('#es').addEventListener('change', e => { if (D && e.target.dataset.esnat) renderES(); });
 $('#es').addEventListener('close', () => { D = null; });
 $('#esBody').addEventListener('scroll', esSpy, { passive: true });
 $('#esForm').addEventListener('submit', e => { e.preventDefault(); if (D) applyES(); });
