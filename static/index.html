@@ -855,6 +855,7 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .es-pair > span { color: var(--faint); font: 500 12px var(--f-mono); text-align: center; }
 .es-row { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; margin-top: 14px; }
 .es-row .check { min-height: 32px; }
+.es-lg { display: grid; gap: 6px; margin-top: 4px; grid-column: 1 / -1; } .es-lg .ac-wrap input { height: 36px; font-size: 14px; }
 .nat-wrap { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 18px; align-items: start; }
 .nat-list { max-height: 230px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-sm); display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 .nat-list label { display: flex; align-items: center; gap: 8px; padding: 4px 10px; font-size: 13px; cursor: pointer; min-height: 36px; }
@@ -1484,8 +1485,13 @@ try { shortlist = new Set(JSON.parse(localStorage.getItem('fm26_shortlist') || '
 const saveSL = () => { try { localStorage.setItem('fm26_shortlist', JSON.stringify([...shortlist])); } catch {} renderLists(); };
 // All search criteria live in F; the quick bar and the Edit search dialog both edit it.
 const F0 = () => ({ positions: [], age_min: null, age_max: null, value_max: null, wage_max: null, ca_min: null, pa_min: null, risks: false,
-  nations: [], months_max: null, squad: '', club_country: '', home_grown: '', free_agent: false, on_loan: false, similar: null, min: {}, max: {} });
+  nations: [], months_max: null, squad: '', leagues: [], home_grown: '', free_agent: false, on_loan: false, similar: null, min: {}, max: {} });
 let F = F0();
+// League picks: league keys from META.leagues ("db29-Men") or "c:<country>" = every club there. Old searches saved
+// a Club country: it becomes that country's entry.
+const migF = f => f.club_country ? { ...f, leagues: [...(f.leagues || []), 'c:' + f.club_country], club_country: undefined } : f;
+const lgName = k => k.startsWith('c:') ? `${k.slice(2)} (all clubs)` : META.leagues?.find(l => l.key === k)?.name;
+const lgKnown = k => k.startsWith('c:') || !!META.leagues?.some(l => l.key === k);
 const HG = { club: 'Home-grown at my club', nation: 'Home-grown in my nation' };  // FM's two rules, server: Query.home_grown
 let saved = []; try { saved = JSON.parse(localStorage.getItem('fm26_searches') || '[]'); } catch {}
 const saveSearches = () => { try { localStorage.setItem('fm26_searches', JSON.stringify(saved)); } catch {} };
@@ -1566,7 +1572,6 @@ function query(extra = {}, f = F) {
   const filters = {};
   if (f.months_max != null) filters.months_left = num('lessThanOrEqual', f.months_max);
   if (f.squad) filters.contract_squad_status = { filterType: 'text', type: 'equals', filter: f.squad };
-  if (f.club_country) filters.club_country = { filterType: 'text', type: 'equals', filter: f.club_country };
   if (f.free_agent) filters.free_agent = num('equals', 1);
   if (f.on_loan) filters.on_loan = num('equals', 1);
   Object.entries(f.min).forEach(([c, v]) => { if (!hid(c)) filters[c] = num('greaterThanOrEqual', v); });
@@ -1577,7 +1582,7 @@ function query(extra = {}, f = F) {
     shortlist: !deals && st.preset === '__shortlist' ? [...shortlist] : null,
     positions: f.positions, age: [f.age_min, f.age_max], value_max: f.value_max, wage_max: f.wage_max,
     ca_min: hid('ability_current') ? null : f.ca_min, pa_min: hid('ability_potential') ? null : f.pa_min,
-    hide_hidden_risks: MODE === 'full' && f.risks, gender: gender(), nations: f.nations, home_grown: f.home_grown || null, mode: MODE, similar_to: f.similar?.uid ?? null,
+    hide_hidden_risks: MODE === 'full' && f.risks, gender: gender(), nations: f.nations, home_grown: f.home_grown || null, leagues: (f.leagues || []).filter(lgKnown), mode: MODE, similar_to: f.similar?.uid ?? null,
     ...extra, filters: { ...filters, ...(extra.filters || {}) } };
 }
 const refresh = () => grid && grid.purgeInfiniteCache();
@@ -1686,7 +1691,7 @@ function navGo(s) {
   navRestoring = true;
   try {
     const fChanged = s.f && JSON.stringify(s.f) !== JSON.stringify(F);
-    if (fChanged) { F = clone(s.f); renderSummary(); }
+    if (fChanged) { F = migF({ ...F0(), ...clone(s.f) }); renderSummary(); }
     const page = s.page === 'deals' && !FAIR ? 'scout' : s.page;
     const lz = LENSES.find(l => l.id === s.lens), lensId = lz && lensOk(lz) ? s.lens : 'blend';
     if (page === 'player') { if (st.page !== 'player' || st.pp !== s.pp) { st.pp = s.pp; st.page === 'player' ? renderProfile() : setPage('player'); } }
@@ -1753,7 +1758,7 @@ function critList(f = F, cash = false) {
   f.nations.forEach(n => L.push([`<span class="flag">${flag(natCode(n))}</span> ${esc(n)}`, () => f.nations = f.nations.filter(x => x !== n)]));
   if (f.months_max != null) L.push([`≤ ${f.months_max} months left`, () => f.months_max = null]);
   if (f.squad) L.push([esc(label(f.squad)), () => f.squad = '']);
-  if (f.club_country) L.push([`Plays in ${esc(f.club_country)}`, () => f.club_country = '']);
+  (f.leagues || []).filter(lgKnown).forEach(k => L.push([`Plays in ${esc(lgName(k))}`, () => f.leagues = f.leagues.filter(x => x !== k)]));
   if (f.home_grown) L.push([HG[f.home_grown], () => f.home_grown = '']);
   if (f.similar) L.push([`Most similar to ${esc(f.similar.name)}`, () => f.similar = null]);
   if (f.free_agent) L.push(['Free agents', () => f.free_agent = false]);
@@ -2891,7 +2896,7 @@ const ES_SECS = [['gen', 'General'], ['roles', 'Roles'], ['attr', 'Attributes'],
 const esSecs = () => ES_SECS.filter(([k]) => MODE === 'moneyball' ? !['attr', 'roles', 'hidden'].includes(k) : k !== 'hidden' || MODE === 'full');
 function esCounts() {
   const m = D.min, x = D.max, has = (o, k) => o[k] != null && !hid(k), nn = (...v) => v.filter(z => z != null).length, keys = o => Object.keys(o).filter(k => !hid(k));
-  return { gen: (D.age_min != null || D.age_max != null) + D.positions.length + has(m, 'height_cm') + has(x, 'height_cm') + (D.value_max != null || has(m, 'transfer_value')) + (D.wage_max != null || has(m, 'contract_wage')) + !!D.club_country + !!D.home_grown + !!D.free_agent, nat: D.nations.length,
+  return { gen: (D.age_min != null || D.age_max != null) + D.positions.length + has(m, 'height_cm') + has(x, 'height_cm') + (D.value_max != null || has(m, 'transfer_value')) + (D.wage_max != null || has(m, 'contract_wage')) + (D.leagues || []).filter(lgKnown).length + !!D.home_grown + !!D.free_agent, nat: D.nations.length,
     money: nn(D.months_max) + ['months_left', 'deal_score'].filter(k => has(m, k)).length + !!D.squad + !!D.on_loan,
     attr: keys(m).filter(k => k.startsWith('attributes_') && !HID_A.includes(k)).length, stats: STATS_F.filter(([c]) => has(m, c)).length,
     roles: keys(m).filter(k => k.startsWith('role_')).length,
@@ -2923,7 +2928,9 @@ function renderES() {
         <div class="es-note">Pick several: a player qualifies if he can play any of them.</div></div>
       <div>${dual('age', 'Age')}<div class="es-moneys">${esMoney('es_value', 'value', esFor === 'club' ? 'Value · budget' : 'Value')}${esMoney('es_wage', 'wage', esFor === 'club' ? 'Wage · max wage' : 'Wage')}</div>${dual('height', 'Height')}
         <div class="es-fields">
-          <label class="fld">Club country <select class="in" data-esf="club_country"><option value="">Any</option>${(META.nations || []).map(x => x.name).sort().map(x => `<option ${D.club_country === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></label>
+          <div class="fld es-lg">League <span class="muted">or a country, several allowed</span>
+            <div class="ac-wrap"><input id="esLgQ" class="in" placeholder="Eredivisie, Serie A or a country…" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="esLgList" aria-autocomplete="list" aria-label="Find a league or a country"><div id="esLgList" class="ac-list" role="listbox"></div></div>
+            <div class="chips" style="margin-top:6px">${(D.leagues || []).filter(lgKnown).map(k => `<span class="crit-chip">${k.startsWith('c:') ? `<span class="flag">${flag(natCode(k.slice(2)))}</span>` : ''}${esc(lgName(k))}<button type="button" data-eslg-rm="${esc(k)}" aria-label="Remove ${esc(lgName(k))}">×</button></span>`).join('')}</div></div>
           <label class="fld">Home-grown <select class="in" data-esf="home_grown">${Object.entries({ '': 'Any', club: 'At my club', nation: 'In my nation' }).map(([v, l]) => `<option value="${v}" ${(D.home_grown || '') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
         </div>
         <div class="es-row"><label class="check"><input type="checkbox" data-esb="free_agent" ${D.free_agent ? 'checked' : ''}> Free agents only</label></div>
@@ -3009,8 +3016,25 @@ function esLive() {
 const CLUB_CAPS = [['budget', 'value_max'], ['wage_max', 'wage_max'], ['age_max', 'age_max']];
 let esCap0 = [];
 let esFor = 'grid';  // whose criteria the dialog edits: the Scout / Deal Finder list (F) or My Club's targets (CF)
+// League suggestions while typing: name starts with the query, then a word does, then it is inside; most players first.
+// A country's "(all clubs)" entry sits right after its leagues.
+function lgSuggest() {
+  const q = $('#esLgQ').value.trim().toLowerCase(), box = $('#esLgList');
+  if (!q) { box.innerHTML = ''; $('#esLgQ').setAttribute('aria-expanded', 'false'); return; }
+  const rank = t => { t = (t || '').toLowerCase(); return t.startsWith(q) ? 0 : t.split(/[\s·().-]+/).some(w => w.startsWith(q)) ? 1 : t.includes(q) ? 2 : 9; };
+  const lg = (META.leagues || []).map(l => ({ ...l, r: Math.min(rank(l.name), rank(l.nation) + 1) })).filter(l => l.r < 9 && !D.leagues.includes(l.key))
+    .sort((a, b) => a.r - b.r || b.players - a.players).slice(0, 8);
+  const cn = (META.club_nations || []).map(c => ({ key: 'c:' + c.name, name: `${c.name} (all clubs)`, nation: c.name, players: c.players, r: rank(c.name) }))
+    .filter(c => c.r < 9 && !D.leagues.includes(c.key)).sort((a, b) => a.r - b.r || b.players - a.players).slice(0, 4);
+  const out = [...lg];
+  cn.forEach(c => { const i = out.map(l => l.nation).lastIndexOf(c.nation); out.splice(i < 0 ? out.length : i + 1, 0, c); });
+  box.innerHTML = out.slice(0, 8).map((l, i) => `<button type="button" class="ac-item${i ? '' : ' on'}" role="option" aria-selected="${!i}" data-eslg="${esc(l.key)}"><b><span class="flag">${flag(natCode(l.nation))}</span> ${esc(l.name)}</b><span class="mono muted">${l.players.toLocaleString()}</span></button>`).join('')
+    || '<p class="muted" style="padding:8px 10px;margin:0;font-size:13px">No league or country matches.</p>';
+  $('#esLgQ').setAttribute('aria-expanded', 'true');
+}
+function lgPick(k) { if (!D.leagues.includes(k)) D.leagues = [...D.leagues, k]; renderES(); const q = $('#esLgQ'); q.value = ''; q.focus(); }
 function openES(target = 'grid') {
-  esFor = target; D = clone(target === 'club' ? CF : F); esCrit = [];
+  esFor = target; D = migF(clone(target === 'club' ? CF : F)); D.leagues ??= []; esCrit = [];
   $('#esName').value = ''; $('#esNatQ') && ($('#esNatQ').value = '');
   if (target === 'club') esCap0 = CLUB_CAPS.map(([k, f]) => D[f] = capVal(k));  // the header tiles ARE these filters while the dialog is open
   if (target === 'grid' && st.page !== 'scout' && st.page !== 'deals') { st.page = '-'; setPage('scout'); }
@@ -3024,7 +3048,7 @@ function applyES() {
     lsSet('fm26_club_caps', CAPS); CF = D; D = null; lsSet('fm26_club_filter', CF); $('#es').close(); renderClub(); loadRecos(); return; }
   F = D; D = null; $('#es').close(); renderSummary(); refresh();
 }
-function loadSearch(s) { F = { ...F0(), ...clone(s.f) }; renderSummary(); refresh(); toast(`Search “${s.name}” loaded`); }
+function loadSearch(s) { F = migF({ ...F0(), ...clone(s.f) }); renderSummary(); refresh(); toast(`Search “${s.name}” loaded`); }
 const esNum = v => { if (v === '' || v == null) return null; const m = parseMoney(v); return Number.isNaN(m) ? null : m; };
 
 // ---------- My Club ----------
@@ -3033,7 +3057,7 @@ let recoT, recoSeq = 0;
 // and Edit search criteria for the targets (CF: same shape as F; positions are left to the slot).
 const ls = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
-let BASIS = ls('fm26_club_basis', 'attributes'), PINS = ls('fm26_pins', {}), CF = { ...F0(), ...ls('fm26_club_filter', {}) };
+let BASIS = ls('fm26_club_basis', 'attributes'), PINS = ls('fm26_pins', {}), CF = migF({ ...F0(), ...ls('fm26_club_filter', {}) });
 const basis = () => MODE === 'moneyball' ? 'performance' : BASIS;
 // My Club's Edit search criteria as [text, remove] pairs. Budget, max wage and max age live in the header tiles (CAPS), not in CF.
 const cfCrit = () => [...(CF.age_min != null ? [[`Age ${CF.age_min}+`, () => { CF.age_min = null; }]] : []), ...critList(CF, 'club')];
@@ -4004,9 +4028,11 @@ $('#es').addEventListener('click', e => {
   else if (d.esrm != null) { const i = +d.esrm, top = $('#esBody').scrollTop; esCrit[i]?.[1](); renderES(); $('#esBody').scrollTop = top;
     ($(`#esStrip [data-esrm="${Math.min(i, esCrit.length - 1)}"]`) || $('#esRail button'))?.focus(); }
   else if (d.esg != null) { D.gender = d.esg; $$('[data-esg]').forEach(b => b.setAttribute('aria-pressed', b === t)); esLive(); }
+  else if (d.eslg) lgPick(d.eslg);
+  else if (d.eslgRm) { D.leagues = D.leagues.filter(x => x !== d.eslgRm); renderES(); }
   else if (d.esnatRm) { D.nations = D.nations.filter(x => x !== d.esnatRm); renderES(); }
   else if (d.espick) { const k = d.espick, v = +d.v; capSet(k, capVal(k) === v ? { m: 'none' } : { m: 'custom', v }); }
-  else if (d.esload != null) { D = { ...F0(), ...clone(saved[+d.esload].f) }; $('#esName').value = saved[+d.esload].name; renderES(); }
+  else if (d.esload != null) { D = migF({ ...F0(), ...clone(saved[+d.esload].f) }); $('#esName').value = saved[+d.esload].name; renderES(); }
   else if (d.esdel != null) { saved.splice(+d.esdel, 1); saveSearches(); renderES(); }
   else if (t.id === 'esApply') applyES();
   else if (t.id === 'esClear') { D = F0(); renderES(); }
@@ -4022,8 +4048,9 @@ $('#es').addEventListener('click', e => {
 $('#es').addEventListener('input', e => {
   const t = e.target, d = t.dataset;
   if (!D || t.id === 'esName' || d.cap) return;  // cap tiles go through capSet (document listener): a repaint here first would reset the thumb
+  if (t.id === 'esLgQ') { lgSuggest(); return; }
   if (t.id === 'esNatQ') { const pos = t.selectionStart; renderES(); const q = $('#esNatQ'); q.focus(); q.setSelectionRange(pos, pos); return; }
-  if (d.esf) D[d.esf] = d.esf === 'squad' || d.esf === 'club_country' || d.esf === 'home_grown' ? t.value : esNum(t.value);
+  if (d.esf) D[d.esf] = d.esf === 'squad' || d.esf === 'home_grown' ? t.value : esNum(t.value);
   else if (d.esminm) { const v = esNum(t.value); if (v == null) delete D.min[d.esminm]; else D.min[d.esminm] = v; }
   else if (d.esb) D[d.esb] = t.checked;
   else if (d.esab) {  // CA / PA gauge: 0 = any
@@ -4052,6 +4079,9 @@ $('#es').addEventListener('input', e => {
     o.textContent = dualTxt(L, H, u); o.classList.toggle('on', L != null || H != null);
   }
   esLive();
+});
+$('#es').addEventListener('keydown', e => {  // Enter in the league field takes the first suggestion
+  if (e.target.id === 'esLgQ' && e.key === 'Enter') { e.preventDefault(); const b = $('#esLgList [data-eslg]'); if (b) lgPick(b.dataset.eslg); }
 });
 $('#es').addEventListener('change', e => { if (D && e.target.dataset.esnat) renderES(); });
 $('#es').addEventListener('close', () => { D = null; });

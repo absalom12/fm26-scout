@@ -370,3 +370,23 @@ def test_home_grown_filter_matches_exact_ids(squad, client):
     assert uids("club") == [100]
     assert uids("nation") == [101]
     assert len(uids(None)) == 15
+
+
+def test_league_keys_name_merge_and_fall_back(scout):
+    rows = [(1, 29, "Netherlands", "Men", 6000), (2, 30, "Netherlands", "Men", 4000),
+            (3, 74, "Argentina", "Men", 5000), (4, 74, "Argentina", "Men", 4900),  # two zones of one league: merged
+            (5, 130284, "Türkiye", "Men", 6300), (6, 130284, "Türkiye", "Men", 4600),  # same id, far weaker: not merged
+            (7, 104551, "Croatia", "Men", 5000), (8, 104551, "Australia", "Men", 4000),  # one id over two nations: bad id
+            (9, 2000148115, "Germany", "Women", 3000)]
+    k = scout.league_keys(rows)
+    assert k[1] == ("db29-Men", "Eredivisie") and k[2] == ("db30-Men", "Eerste Divisie")
+    assert k[3] == k[4] == ("db74-Men", "Liga Profesional")
+    assert k[5] == ("db130284-Men", "Süper Lig") and k[6] == ("t6", "Türkiye · Tier 2")
+    assert k[7] == ("t7", "Croatia · Tier 1") and k[8] == ("t8", "Australia · Tier 1")
+    assert k[9] == ("db2000148115-Women", "Germany · Tier 1 · Women")
+
+
+def test_club_leagues_ignore_reserve_sides(scout):
+    # Ajax (1) plays the Eredivisie (18 clubs); Jong Ajax shares its club_uid in the Eerste Divisie (20): rows of
+    # reserve sides are dropped by the caller, so only first teams reach club_leagues
+    assert scout.club_leagues([("ere", 18, [1, 2]), ("eerste", 20, [3])]) == {1: "ere", 2: "ere", 3: "eerste"}

@@ -270,9 +270,11 @@ def extract(save_path, out_dir, players=True):
         # a domestic league has clubs from one nation; continental tournaments that promote/relegate (women's
         # champions league) span several. Many top flights (Portugal, Saudi Arabia, Mexico, Argentina) have no rules
         # entry in the save at all: no rules = keep, only rules without promotion or relegation (cups) drop a table.
-        leagues = club_leagues((i, t.club_count, [r.club_uid for r in t.rows]) for i, t in enumerate(tables)
+        # a club's reserve side (Jong Ajax, team_slot 1) shares its club_uid: only the first team places the club
+        leagues = club_leagues((i, t.club_count, [r.club_uid for r in t.rows if r.team_slot in (0, None)]) for i, t in enumerate(tables)
                                if ((r := rules.get(t.competition_id)) is None or r.promotion_places or r.relegation_places)
                                and len({nation.get(r.club_uid) for r in t.rows} - {None}) <= 1)
+        db = {c.id: c.database_id for c in s.competitions()}  # FM's database id: stable across saves, names a league
         groups = [[r.team_id for r in t.rows] for t in tables]
         groups += [[f.home_team_id, f.away_team_id] for f in s.fixtures()]
         lab = club_genders(list(s.clubs()), groups)
@@ -286,10 +288,45 @@ def extract(save_path, out_dir, players=True):
     with open(os.path.join(out_dir, "club_gender.csv"), "w", newline="") as f:
         w = csv.writer(f); w.writerow(["club_uid", "gender"]); w.writerows(lab.items())
     with open(os.path.join(out_dir, "club_league.csv"), "w", newline="") as f:
-        w = csv.writer(f); w.writerow(["club_uid", "league_id"]); w.writerows(leagues.items())
+        w = csv.writer(f); w.writerow(["club_uid", "league_id", "db_id"])
+        w.writerows((c, lg, db.get(tables[lg].competition_id)) for c, lg in leagues.items())
 
 
 GAME_DATE = CLUB = None
+# FM database id -> league name, for the main men's leagues (the save stores no competition names). Others read
+# "<Nation> · Tier N". ponytail: hand list, extend it when players ask for a league by name.
+LEAGUE_NAMES = {11: "Premier League", 12: "Championship", 13: "League One", 67: "La Liga", 68: "LaLiga Hypermotion", 32: "Serie A",
+                33: "Serie B", 22: "Bundesliga", 23: "2. Bundesliga", 16: "Ligue 1", 17: "Ligue 2", 29: "Eredivisie", 30: "Eerste Divisie",
+                84: "Liga MX", 60: "Liga Portugal", 74: "Liga Profesional", 45: "Scottish Premiership", 130486: "Russian Premier League",
+                102428: "J1 League", 102426: "Brasileirão Série A", 130284: "Süper Lig", 129649: "Super League Greece",
+                131287: "Czech First League", 129558: "Ekstraklasa", 7920263: "Saudi Pro League", 215852: "Liga 1 (Peru)",
+                7520391: "NB I", 7540024: "Liga I", 7500000: "First League (Bulgaria)", 132321: "Serbian SuperLiga",
+                12015393: "Egyptian Premier League", 1018789: "Persian Gulf Pro League", 5314301: "Ukrainian Premier League", 7880000: "UAE Pro League"}
+
+
+def league_keys(rows):
+    """rows: (league_id, db_id, nation, gender, strength). -> {league_id: (key, name)}. The key is stable across saves
+    ("db29-Men") when FM's database id names one league; tables sharing it stay one league (Argentine zones) unless they
+    span nations or differ in level by more than 10% (a bad id); those fall back to the table ("t12", this save only)."""
+    by = {}
+    for r in rows:
+        by.setdefault((r[1], r[3]), []).append(r)
+    keyed = {}
+    for (dbid, g), rs in by.items():
+        top = max(x[4] or 0 for x in rs)
+        one = dbid is not None and len({x[2] for x in rs}) == 1
+        for x in rs:
+            keyed[x[0]] = f"db{dbid}-{g}" if one and (x[4] or 0) >= top * .9 else f"t{x[0]}"
+    lv, home = {}, {}  # key -> strength and (nation, gender), to rank tiers inside a nation and gender
+    for x in rows:
+        k = keyed[x[0]]; lv[k] = max(lv.get(k, 0), x[4] or 0); home[k] = (x[2], x[3])
+    out = {}
+    for x in rows:
+        k = keyed[x[0]]
+        tier = 1 + sum(1 for k2, v in lv.items() if v > lv[k] and home[k2] == home[k])
+        name = LEAGUE_NAMES.get(x[1]) if x[3] != "Women" and k.startswith("db") else None
+        out[x[0]] = (k, name or f"{x[2] or 'Unknown'} · Tier {tier}{' · Women' if x[3] == 'Women' else ''}")
+    return out
 # Season totals (OVERALL rows summed over every team the player turned out for this season).
 STAT_SUMS = ["starts", "substitute_appearances", "minutes", "goals", "assists", "expected_goals", "expected_assists",
              "shots", "shots_on_target", "passes_attempted", "passes_completed", "progressive_passes", "key_passes",
@@ -666,6 +703,14 @@ def load(d=None):
     has_l = os.path.exists(j("club_league.csv"))  # absent in data extracted by older versions: team-level scoring
     con().execute("CREATE OR REPLACE TEMP TABLE cl AS " + (f"SELECT * FROM read_csv_auto('{j('club_league.csv')}')" if has_l
                else "SELECT NULL::BIGINT AS club_uid, NULL::BIGINT AS league_id LIMIT 0"))
+    if "db_id" not in {r[0] for r in con().execute("DESCRIBE cl").fetchall()}:  # extracted before league names: no db ids
+        con().execute("ALTER TABLE cl ADD COLUMN db_id BIGINT")
+    lrows = con().execute("""SELECT cl.league_id, any_value(cl.db_id), any_value(r.nat), any_value(cg.gender), avg(r.rep)
+        FROM cl JOIN (SELECT club_uid, max(club_reputation) AS rep, any_value(club_nation_id) AS nat FROM raw GROUP BY 1) r USING (club_uid)
+        LEFT JOIN cg USING (club_uid) GROUP BY 1""").fetchall()
+    lk = league_keys([(i, db, NATIONS.get(n, (None,))[0], g, rep) for i, db, n, g, rep in lrows])
+    con().execute("CREATE OR REPLACE TEMP TABLE lk (league_id BIGINT, league_key VARCHAR, league VARCHAR)")
+    con().executemany("INSERT INTO lk VALUES (?, ?, ?)", [(i, k, n) for i, (k, n) in lk.items()])
     con().execute("CREATE OR REPLACE TEMP TABLE st AS " + (_stats_sql(j("season_stats.csv")) if has_s
                else "SELECT NULL::BIGINT AS player_uid LIMIT 0"))
     con().execute("CREATE OR REPLACE TEMP TABLE nat (id INT, name VARCHAR, code VARCHAR)")
@@ -690,11 +735,13 @@ def load(d=None):
                n1.name AS nationality, n1.code AS nationality_code, n3.name AS club_country,
                (SELECT string_agg(n2.name, ', ') FROM unnest(string_split(CAST(b.second_nation_ids AS VARCHAR), ';')) x(u)
                 JOIN nat n2 ON n2.id = try_cast(x.u AS INT)) AS second_nationalities,
+               lk.league_key, lk.league,
                st.* EXCLUDE (player_uid)
         FROM b LEFT JOIN cg ON cg.club_uid = b.club_uid LEFT JOIN st ON st.player_uid = b.uid
+             LEFT JOIN cl c2 ON c2.club_uid = b.club_uid LEFT JOIN lk ON lk.league_id = c2.league_id
              LEFT JOIN (SELECT club_uid AS parent_uid, max(club_reputation) AS parent_rep FROM raw GROUP BY 1) pc ON pc.parent_uid = b.loan_parent_club_uid
              LEFT JOIN nat n1 ON n1.id = b.nation_id LEFT JOIN nat n3 ON n3.id = b.club_nation_id""")
-    con().execute("DROP TABLE raw; DROP TABLE cg; DROP TABLE st; DROP TABLE nat; DROP TABLE cl")
+    con().execute("DROP TABLE raw; DROP TABLE cg; DROP TABLE st; DROP TABLE nat; DROP TABLE cl; DROP TABLE lk")
     _step(.5, 1, "Scoring players")
     if has_s:
         add_stat_score()
@@ -834,6 +881,7 @@ class Query(BaseModel):
     gender: str | None = None    # "Men" | "Women" | "Unknown"
     wage_max: int | None = None  # weekly
     nations: list[str] = []      # country names; matches first or second nationality
+    leagues: list[str] = []      # league keys ("db29-Men") or "c:<country>" (every club in that country); OR
     home_grown: str | None = None  # "club" | "nation": home-grown at the managed club / in its nation
     mode: str = "full"           # "full" | "fair" (no CA/PA/hidden) | "moneyball" (stats only)
     fair_play: bool = False      # legacy alias for mode="fair"
@@ -894,6 +942,9 @@ def build(q: Query):
     if q.nations:
         where.append("(list_contains(?, nationality) OR list_has_any(?, string_split(coalesce(second_nationalities, ''), ', ')))")
         args += [q.nations, q.nations]
+    if q.leagues:
+        lg, cn = [x for x in q.leagues if not x.startswith("c:")], [x[2:] for x in q.leagues if x.startswith("c:")]
+        where.append("(list_contains(?, league_key) OR list_contains(?, club_country))"); args += [lg, cn]
     if q.home_grown in ("club", "nation") and CLUB:  # exact id match: a substring search on "620" also hits 1620, 6201...
         col, val = ("home_grown_club_uids", "?") if q.home_grown == "club" else \
             ("home_grown_nation_ids", "(SELECT any_value(club_nation_id) FROM players WHERE club_uid = ?)")
@@ -1052,6 +1103,10 @@ def meta():
             "model_fit_r2": {f"{g}/{m}": r2 for (g, m), r2 in MODEL_FIT.items()},
             "nations": [{"name": n, "code": c, "players": k} for n, c, k in con().execute(
                 "SELECT nationality, any_value(nationality_code), count(*) FROM players WHERE nationality IS NOT NULL GROUP BY 1 ORDER BY 3 DESC").fetchall()],
+            "leagues": [{"key": k, "name": n, "nation": c, "players": x} for k, n, c, x in con().execute(
+                "SELECT league_key, any_value(league), any_value(club_country), count(*) FROM players WHERE league_key IS NOT NULL GROUP BY 1 ORDER BY 4 DESC").fetchall()],
+            "club_nations": [{"name": n, "players": x} for n, x in con().execute(
+                "SELECT club_country, count(*) FROM players WHERE club_country IS NOT NULL GROUP BY 1 ORDER BY 2 DESC").fetchall()],
             "presets": [{"id": k, "group": g, "label": l, "desc": d, "view": v, "uses_hidden": uses_hidden(w, "fair"),
                          "modes": [m for m in MODES if not uses_hidden(w, m)]}
                         for k, (g, l, d, w, _, v) in PRESETS.items()]}
