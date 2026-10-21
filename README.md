@@ -35,7 +35,7 @@ One click switches modes. Same save, same players, different eyes.
 
 ## 🚀 Download and first launch
 
-Get the latest version from **[Releases](https://github.com/absalom12/scoutsheetfm/releases/latest)**: `ScoutSheet-windows.zip` or `ScoutSheet-mac.zip` (Apple Silicon, M1 or later). Ready in about three minutes.
+Get the latest version from **[Releases](https://github.com/absalom12/scoutsheetfm/releases/latest)**: `ScoutSheet-windows.zip`, `ScoutSheet-mac.zip` (Apple Silicon, M1 or later) or `ScoutSheet-mac-intel.zip` (Intel Macs). Ready in about three minutes.
 
 - **Windows:** unzip the folder first (don't run it from inside the zip), then double-click `ScoutSheet.exe`. If Windows says it protected your PC, click **More info**, then **Run anyway**. That's the only time you'll see it.
 - **Mac:** unzip, drag ScoutSheet to Applications, then double-click it.
