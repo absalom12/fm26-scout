@@ -949,12 +949,15 @@ dialog.es.set.cmpd { width: min(820px, calc(100vw - 32px)); } dialog.es.set.cmpd
 dialog.cmpd { --pa: #1aa0b4; --pb: #b866e8; }
 dialog.es.set.cmpd { width: min(980px, calc(100vw - 32px)); height: min(700px, calc(100vh - 48px)); max-height: none; margin: auto; overflow: hidden; }
 dialog.cmpd .es-in { display: flex; flex-direction: column; height: 100%; position: relative; }
-dialog.cmpd .es-head { position: absolute; right: 8px; top: 6px; padding: 0; z-index: 1; } dialog.cmpd .es-head h2 { font-size: 0; }
+dialog.cmpd .es-head { position: absolute; right: 8px; top: 6px; padding: 0; z-index: 1; } 
 dialog.cmpd #cmpBody { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px 22px 10px; overflow: hidden; }
-.cmp-tabs { justify-content: center; border-bottom: 1px solid var(--line); margin-top: 8px; flex: none; }
+.cmp-tabs { justify-content: flex-start; margin-top: 8px; flex: none; } .cmp-tabs button:focus:not(:focus-visible) { outline: none; }
 .cmp-tabs button { padding: 0 12px; } .cmp-tabs small { font: 600 11px var(--f-mono); letter-spacing: 0; margin-left: 6px; } .cmp-tabs small i { font-style: normal; }
 .cmp-pgs { flex: 1; min-height: 0; } .cmp-pg { height: 100%; overflow: auto; padding-top: 10px; } .cmp-pg:focus-visible { outline: none; }
-.cmp-cols { display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); gap: 0 24px; align-items: start; }
+.cmp-grid { display: grid; gap: 10px; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); align-items: start; } .cmp-stack { display: grid; gap: 10px; }
+.cmp-vgrid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "shape tugs" "shape edges"; grid-template-rows: auto 1fr; }
+.cmp-pg .fly { min-height: 26px; } .cmp-pg .fly > span, .cmp-pg .fly > b { font-size: 13px; } .cmp-pg .pp-card { min-height: 0; }
+.fly .ba, .fly .bb, .tug > i, .rail-tr, .db-tr { background: #1a242d; }
 .fly.sm { grid-template-columns: 26px 1fr 96px 1fr 26px; min-height: 20px; gap: 6px; } .fly.sm > span { font-size: 11.5px; } .fly.sm .ba, .fly.sm .bb { height: 6px; } 
 button.fly, button.tug { width: 100%; border-radius: 6px; text-align: inherit; } button.fly:hover, button.tug:hover { background: var(--hover); }
 .cp-pitch svg { width: 100%; max-height: min(440px, calc(100vh - 300px)); display: block; } .cp-slot { cursor: pointer; } .cp-slot:hover .cp-hit { fill: rgba(255,255,255,.06); }
@@ -968,14 +971,18 @@ button.fly, button.tug { width: 100%; border-radius: 6px; text-align: inherit; }
 .rail-tr .bos { position: absolute; left: 0; top: 0; bottom: 0; background: repeating-linear-gradient(45deg, #2a3744 0 3px, transparent 3px 6px); border-radius: 6px 0 0 6px; }
 .cmp-edges { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; } .cmp-edge { font-size: 12px; padding: 3px 9px; border: 1px solid var(--line2); border-radius: var(--r-pill); color: var(--text2); } .cmp-edge i { font-style: normal; } .cmp-edge b { font-family: var(--f-mono); }
 .cmp-ratio { text-align: center; font-size: 13px; color: var(--text2); margin: 4px 0; }
-@media (max-width: 760px) { .cmp-cols { --n: 1 !important; } }  /* the two players: validated pair on --panel (dataviz validator, dark) */
+@media (max-width: 760px) { .cmp-grid { --n: 1 !important; } .cmp-vgrid { grid-template-areas: "shape" "tugs" "edges"; grid-template-columns: 1fr; } }  /* the two players: validated pair on --panel (dataviz validator, dark) */
 .ka { color: var(--pa); font-style: normal; } .kb { color: var(--pb); font-style: normal; }
 .cmp-g { padding-left: 0; text-align: center; margin: 14px 0 4px; }
-.cmp-top { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center; }
-.cmp-pl { display: grid; gap: 3px; font-size: 12.5px; color: var(--muted); } .cmp-pl b { font: 700 15px var(--f-body); color: var(--text); } .cmp-pl b i { font-style: normal; } .cmp-pl.ka { text-align: right; justify-items: end; }
+.cmp-top { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: end; padding: 0 34px 10px 0; border-bottom: 1px solid var(--line); box-shadow: 0 1px 0 color-mix(in srgb, var(--mode) 30%, transparent); }
+.cmp-pl { display: grid; gap: 6px; min-width: 0; } .cmp-pl.ka, .cmp-pl.kb { color: var(--text); }  /* player colour on the glyph and the tile edge only */ .cmp-pl.ka { justify-items: end; text-align: right; } .cmp-pl.ka .pp-kpis { flex-direction: row-reverse; }
+.cmp-nm { margin: 0; font: 700 24px/1 var(--f-display); text-transform: uppercase; letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; } .cmp-nm i { font-style: normal; }
+.cmp-pl > p:not(.cmp-nm) { margin: 0; font-size: 12.5px; color: var(--muted); }
+.cmp-pl .kpi { min-width: 80px; } .cmp-pl.ka .kpi { box-shadow: inset 0 2px 0 var(--pa); } .cmp-pl.kb .kpi { box-shadow: inset 0 2px 0 var(--pb); }
 .cmp-score { display: grid; grid-template-columns: auto auto auto; gap: 0 10px; align-items: baseline; justify-items: center; }
-.cmp-score > b { font: 700 28px/1 var(--f-mono); } .cmp-score > i { color: var(--faint); font-style: normal; font-size: 24px; }
-.cmp-score small, .cmp-score .link { grid-column: 1 / -1; font-size: 11.5px; color: var(--muted); }
+.cmp-score::before { content: 'Compare'; grid-column: 1 / -1; font: 700 12px var(--f-display); letter-spacing: .14em; text-transform: uppercase; color: var(--mode); }
+.cmp-score > b { font: 700 40px/1 var(--f-mono); } .cmp-score > i { color: var(--faint); font-style: normal; font-size: 24px; }
+.cmp-score small { grid-column: 1 / -1; font-size: 11.5px; color: var(--muted); }
 .cmp-tugs { display: grid; gap: 4px; }
 .tug { display: grid; grid-template-columns: 24px 1fr 24px 110px; padding: 3px 4px; gap: 8px; align-items: center; font-size: 12.5px; }
 .tug > b:first-child { text-align: right; color: var(--pa); } .tug > b:nth-of-type(2) { color: var(--pb); } .tug > span { color: var(--muted); }
@@ -1219,7 +1226,7 @@ dialog.es.set { width: min(660px, calc(100vw - 32px)); height: auto; max-height:
 </dialog>
 <dialog id="cmp" class="es set cmpd" aria-labelledby="cmpTitle">
   <div class="es-in">
-    <header class="es-head"><h2 id="cmpTitle">Compare</h2><button type="button" class="icon-btn" data-cmp-close aria-label="Close">×</button></header>
+    <header class="es-head"><h2 id="cmpTitle" class="sr">Compare</h2><button type="button" class="icon-btn" data-cmp-close aria-label="Close">×</button></header>
     <div id="cmpBody" class="es-body"></div>
   </div>
 </dialog>
@@ -3557,15 +3564,15 @@ function cmpPitch(A, B) {
         <text x="${cx}" y="${cy - 4.6}" text-anchor="middle" font-size="2.8" font-weight="700" fill="rgba(255,255,255,.6)">${k}</text>
         <circle cx="${cx - 3.6}" cy="${cy}" r="3" fill="${fill(a)}" stroke="var(--pa)" stroke-width="${a > b ? 1 : .4}"/>
         <rect x="${cx + 1.5}" y="${cy - 2.2}" width="4.4" height="4.4" transform="rotate(45 ${cx + 3.7} ${cy})" fill="${fill(b)}" stroke="var(--pb)" stroke-width="${b > a ? 1 : .4}"/></g>`; }).join('')}
-  </svg><p class="note">Fill = familiarity: ${FAMIL.map(([, n, c]) => `<span style="color:${c}">${n}</span>`).join(' · ')}</p></div>`;
+  </svg></div>`;
 }
 // Roles at one position, paired role scores 0-100, best first.
 function cmpRoles(A, B, pos) {
   const rs = Object.keys(META.roles || {}).filter(r => rolePos(r).includes(pos)).map(r => [r, A['role_' + r], B['role_' + r]])
     .filter(x => x[1] != null || x[2] != null).sort((x, y) => Math.max(y[1] ?? 0, y[2] ?? 0) - Math.max(x[1] ?? 0, x[2] ?? 0)).slice(0, 12);
-  return `<div class="seg cmp-posbar" role="group" aria-label="Position">${POSITIONS.map(k => `<button type="button" data-cmp-pos="${k}" aria-pressed="${k === pos}">${k}</button>`).join('')}</div>
-    ${rs.map(([r, a, b]) => cmpFly(label('role_' + r), a == null ? null : Math.round(a), b == null ? null : Math.round(b), { max: 100, cls: 'sm' })).join('') || '<p class="note">No role scores at this position.</p>'}
-    <p class="note">Familiarity at ${pos}: <i class="ka">●</i> ${A[posKey(pos)] ?? '–'} · <i class="kb">◆</i> ${B[posKey(pos)] ?? '–'}. A role score assumes he plays there.</p>`;
+  return `<section class="pp-card">${h3i('role', `Roles at ${pos}`, `familiarity <i class="ka">●</i> ${A[posKey(pos)] ?? '–'} · <i class="kb">◆</i> ${B[posKey(pos)] ?? '–'} · a score assumes he plays there`)}
+    <div class="seg cmp-posbar" role="group" aria-label="Position">${POSITIONS.map(k => `<button type="button" data-cmp-pos="${k}" aria-pressed="${k === pos}">${k}</button>`).join('')}</div>
+    ${rs.map(([r, a, b]) => cmpFly(label('role_' + r), a == null ? null : Math.round(a), b == null ? null : Math.round(b), { max: 100 })).join('') || '<p class="note">No role scores at this position.</p>'}</section>`;
 }
 // Price rail: one money axis per measure; per player his asking mark, plus the fair band and tick when fair prices are on.
 function cmpRail(l, A, B, ask, fair, range, fmt) {
@@ -3587,15 +3594,16 @@ async function cmpShow(uid) {
   if (seq !== cmpSeq) return;
   cmpB = B; cmpScore = {};
   $('#cmpTitle').textContent = `Compare ${A.name} and ${B.name}`;
-  const pages = cmpPages().filter(([id]) => id !== 'hid' || ATTR.hidden.some(a => !hid(att(a)))), body = {}, cols = (n, ...c) => `<div class="cmp-cols" style="--n:${n}">${c.join('')}</div>`;
-  const h = t => `<h3 class="pal-g cmp-g">${t}</h3>`;
+  const pages = cmpPages().filter(([id]) => id !== 'hid' || ATTR.hidden.some(a => !hid(att(a)))), body = {};
+  // Cards like the profile's: icon heading, note on the right.
+  const card = (ic, t, sub, inner, area) => `<section class="pp-card"${area ? ` style="grid-area:${area}"` : ''}>${h3i(ic, t, sub)}${inner}</section>`;
+  const grid = (n, ...c) => `<div class="cmp-grid" style="--n:${n}">${c.join('')}</div>`;
   // Attributes: ability strip (Full), then one column per phase.
-  const phase = (t, list, ph = 'attr') => { const l = list.filter(a => !hid(att(a)) && (A[att(a)] != null || B[att(a)] != null));
-    return l.length ? `<div>${h(t)}${l.map(a => cmpFly(label(att(a)), A[att(a)], B[att(a)], { ph, cls: 'sm', lower: BAD.has(att(a)) })).join('')}</div>` : ''; };
-  const abil = hid('ability_current') ? '' : cmpFly('Current ability', A.ability_current, B.ability_current, { ph: 'attr', max: 200 }) + cmpFly('Potential ability', A.ability_potential, B.ability_potential, { ph: 'attr', max: 200 });
-  body.attr = abil + cols(3, phase(gk ? 'Goalkeeping' : 'Technical', gk ? ATTR.goalkeeping : ATTR.technical), phase('Mental', ATTR.mental), phase('Physical', ATTR.physical));
+  const phase = (ic, t, list, ph = 'attr') => { const l = list.filter(a => !hid(att(a)) && (A[att(a)] != null || B[att(a)] != null));
+    return l.length ? card(ic, t, 'scale 20', l.map(a => cmpFly(label(att(a)), A[att(a)], B[att(a)], { ph, lower: BAD.has(att(a)) })).join('')) : ''; };
+  body.attr = grid(3, phase('attr', gk ? 'Goalkeeping' : 'Technical', gk ? ATTR.goalkeeping : ATTR.technical), phase('attr', 'Mental', ATTR.mental), phase('attr', 'Physical', ATTR.physical));
   const pers = PERS.map(k => 'personality_' + k).filter(k => !hid(k) && (A[k] != null || B[k] != null));
-  body.hid = cols(2, phase('Hidden attributes', ATTR.hidden, 'hid'), pers.length ? `<div>${h('Personality')}${pers.map(k => cmpFly(label(k), A[k], B[k], { ph: 'hid', cls: 'sm', lower: BAD.has(k) })).join('')}</div>` : '');
+  body.hid = grid(2, phase('mind', 'Hidden', ATTR.hidden, 'hid'), pers.length ? card('use', 'Personality', 'scale 20', pers.map(k => cmpFly(label(k), A[k], B[k], { ph: 'hid', lower: BAD.has(k) })).join('')) : '');
   // Season: dumbbells on the percentile axis (vs the same position group), raw paired bars under PERF_MIN.
   const ks = METRICS[grp] || METRICS.CM, both = ks.filter(k => ba.pcs[k] != null && bb.pcs[k] != null);
   const bell = k => { const [l, fn, , , lower] = M[k], pa = ba.pcs[k], pb = bb.pcs[k], s = cmpScore.sea ??= { a: 0, b: 0, t: 0 }, d = pa === pb ? 0 : pa > pb ? 1 : -1, lo = Math.min(pa, pb), hi = Math.max(pa, pb);
@@ -3607,24 +3615,25 @@ async function cmpShow(uid) {
   const base = cmpFly('League minutes', A.s_minutes || 0, B.s_minutes || 0, { max: Math.max(A.s_minutes || 0, B.s_minutes || 0, 1), f: v => (v ?? 0).toLocaleString() })
     + cmpFly('Appearances', A.s_apps ?? null, B.s_apps ?? null, { max: Math.max(A.s_apps || 0, B.s_apps || 0, 1) });
   const rows = both.length >= 3 ? both.map(bell) : ks.map(k => { const [l, fn, , , lower] = M[k], a = fn(A), b = fn(B); return cmpFly(l, a, b, { ph: 'sea', max: Math.max(a ?? 0, b ?? 0) || 1, f: v => v == null ? '–' : fmtM(k, v), lower }); });
-  body.sea = base + h(`Per 90 · ${both.length >= 3 ? `percentile among ${plural(grp)} with ${PERF_MIN}+ min, right is better` : 'raw values'}`)
-    + (rows.length > 10 ? cols(2, rows.slice(0, Math.ceil(rows.length / 2)).join(''), rows.slice(Math.ceil(rows.length / 2)).join('')) : rows.join(''))
-    + (both.length >= 3 ? '<p class="note">Dashed = median · lower-is-better stats are turned around.</p>' : short.length ? `<p class="note">Percentiles need ${PERF_MIN} league minutes: ${short.join(', ')}.</p>` : '');
+  body.sea = `<div class="cmp-stack">${card('level', 'Volume', 'this season', base)}${card('pizza', 'Per 90', both.length >= 3 ? `percentile vs ${plural(grp)} with ${PERF_MIN}+ min · dashed = median` : 'raw values',
+    (rows.length > 10 ? grid(2, rows.slice(0, Math.ceil(rows.length / 2)).join(''), rows.slice(Math.ceil(rows.length / 2)).join('')) : rows.join(''))
+    + (both.length < 3 && short.length ? `<p class="note">Percentiles need ${PERF_MIN} league minutes: ${short.join(', ')}.</p>` : ''))}</div>`;
   // Positions and roles.
   const best = x => POSITIONS.reduce((m, k) => (x[posKey(k)] ?? 0) > (x[posKey(m)] ?? 0) ? k : m, POSITIONS[0]), pos = best(A);
   const duelPos = POSITIONS.filter(k => Math.max(A[posKey(k)] ?? 0, B[posKey(k)] ?? 0) >= 9);
-  body.pos = cols(2, cmpPitch(A, B), `<div>${h('Position duel · click for roles')}${duelPos.map(k => cmpFly(k, A[posKey(k)] ?? null, B[posKey(k)] ?? null, { cls: 'sm', attrs: `data-cmp-pos="${k}"` })).join('')}</div>`);
+  body.pos = grid(2, card('where', 'Positions', FAMIL.map(([, n, c]) => `<span style="color:${c}">${n}</span>`).join(' · '), cmpPitch(A, B)),
+    card('vs', 'Position duel', 'familiarity 1-20 · click for roles', duelPos.map(k => cmpFly(k, A[posKey(k)] ?? null, B[posKey(k)] ?? null, { attrs: `data-cmp-pos="${k}"` })).join('')));
   body.role = cmpRoles(A, B, pos);
   // Price and contract.
   const lensRows = FAIR ? LENSES.filter(l => lensOk(l) && (A[l.deal] != null || B[l.deal] != null)).map(l => cmpFly(`Deal · ${l.label}`, A[l.deal] ?? null, B[l.deal] ?? null,
-    { max: Math.max(A[l.deal] ?? 0, B[l.deal] ?? 0, 1), f: v => v == null ? '–' : `${v > 0 ? '+' : ''}${Math.round(v)}%` })).join('') : '';
+    { max: Math.max(A[l.deal] ?? 0, B[l.deal] ?? 0, 1), f: v => v == null ? '–' : v < -100 ? 'over' : `${v > 0 ? '+' : ''}${Math.round(v)}%` })).join('') : '';
   const mmax = Math.max(60, A.months_left ?? 0, B.months_left ?? 0), mat = n => (n / mmax * 100).toFixed(1) + '%';
   const clock = `<div class="rail" role="img" aria-label="${esc(`Contract: ${A.name} ${A.months_left ?? '–'} months left, ${B.name} ${B.months_left ?? '–'}`)}"><span aria-hidden="true">Contract</span><div aria-hidden="true">${[[A, 'ka'], [B, 'kb']].map(([x, k]) =>
     `<div class="rail-tr ${k}"><i class="bos" style="width:${mat(6)}"></i>${x.months_left != null ? `<i class="mk" style="left:${mat(x.months_left)}"></i>` : ''}</div>`).join('')}</div>
-    <b class="mono" aria-hidden="true"><i class="ka">●</i> ${A.months_left ?? '–'} mo<br><i class="kb">◆</i> ${B.months_left ?? '–'} mo</b></div><p class="note">${FAIR ? 'Mark = asking price · tick = fair value · shaded = fair range. ' : ''}Hatched = last 6 months: he can sign a pre-contract with a foreign club.</p>`;
-  body.price = cmpRail('Value', A, B, x => x.free_agent ? 0 : x.transfer_value, x => x.fair_fee, x => x.fair_fee_range, money)
-    + cmpRail('Wage', A, B, x => x.contract_wage, x => x.fair_wage, () => null, wage) + clock
-    + (lensRows ? h('Deal: % under fair value, per lens (no bar = overpriced)') + lensRows : `<p class="note">${FAIR ? '' : 'Turn on Fair prices to see fair value and deal % here.'}</p>`);
+    <b class="mono" aria-hidden="true"><i class="ka">●</i> ${A.months_left ?? '–'} mo<br><i class="kb">◆</i> ${B.months_left ?? '–'} mo</b></div><p class="note">Hatched = last 6 months: he can sign a pre-contract with a foreign club.</p>`;
+  body.price = `<div class="cmp-stack">${card('cost', 'Asking vs fair', FAIR ? 'mark = asking · tick = fair value · band = fair range' : 'asking price and wage',
+      cmpRail('Value', A, B, x => x.free_agent ? 0 : x.transfer_value, x => x.fair_fee, x => x.fair_fee_range, money) + cmpRail('Wage', A, B, x => x.contract_wage, x => x.fair_wage, () => null, wage))}
+    ${grid(2, card('clock', 'Contract', 'months left', clock), card('sign', 'Deal per lens', '% under fair value · over = overpriced', lensRows || `<p class="note">${FAIR ? 'No lens prices him.' : 'Turn on Fair prices to see fair value and deal % here.'}</p>`))}</div>`;
   // Verdict: shape and body on the left; page duels, each player's edges and price on the right.
   const avg = (x, ks) => { const v = ks.map(k => x[att(k)]).filter(v => v != null); return v.length ? v.reduce((s, y) => s + y, 0) / v.length : 0; };
   const axes = gk ? AXES_GK : AXES_OUT, names = Object.fromEntries(CMP_PAGES);
@@ -3637,12 +3646,20 @@ async function cmpShow(uid) {
       <i aria-hidden="true"><i class="ta" style="width:${pctW(s.a / n)}"></i><i class="tb" style="width:${pctW(s.b / n)}"></i></i><b class="mono" aria-hidden="true">${s.b}</b><span aria-hidden="true">${names[id]} →</span></button>`; };
   const bodyRows = cmpFly('Age', A.age, B.age, { max: 45, lower: true }).replace(/ w[ab]"/, '"') + (A.height_cm && B.height_cm ? cmpFly('Height', A.height_cm, B.height_cm, { max: 210, f: v => height(v) }) : '')
     + (A.reputation_current != null ? cmpFly('Reputation', A.reputation_current, B.reputation_current, { max: Math.max(A.reputation_current, B.reputation_current, 1), f: v => v == null ? '–' : (v / 1000).toFixed(1) }) : '');
-  body.ver = cols(2, `<div>${MODE === 'moneyball' ? '' : `<div class="cmp-shape">${radar(axes.map(([n, ks]) => [n, avg(A, ks)]), 20, 15, axes.map(([, ks]) => avg(B, ks)))}</div>`}${bodyRows}</div>`,
-    `<div>${h('Who wins where')}<div class="cmp-tugs">${Object.entries(cmpScore).filter(([id]) => pages.some(x => x[0] === id)).map(([id, s]) => tug(id, s)).join('')}</div>
-      <p class="note">Counts lines, not how much each matters.</p>${lines.length ? `${h('Biggest edges')}<div class="cmp-edges">${edge(1, 'ka')}</div><div class="cmp-edges">${edge(-1, 'kb')}</div>` : ''}
-      ${ratio ? `${h('Price')}<p class="cmp-ratio">${ratio}</p>` : ''}</div>`);
+  body.ver = `<div class="cmp-grid cmp-vgrid">${card('pizza', MODE === 'moneyball' ? 'Profile' : 'Shape', MODE === 'moneyball' ? '' : 'phase averages, scale 20',
+      `${MODE === 'moneyball' ? '' : `<div class="cmp-shape">${radar(axes.map(([n, ks]) => [n, avg(A, ks)]), 20, 15, axes.map(([, ks]) => avg(B, ks)))}</div>`}${bodyRows}`, 'shape')}
+    ${card('vs', 'Who wins where', 'lines won per page', `<div class="cmp-tugs">${Object.entries(cmpScore).filter(([id]) => pages.some(x => x[0] === id)).map(([id, s]) => tug(id, s)).join('')}</div>
+      <p class="note">Counts lines, not how much each matters.${ratio ? ` · ${ratio}.` : ''}</p>`, 'tugs')}
+    ${lines.length ? card('good', 'Biggest edges', 'attribute gaps', `<div class="cmp-edges">${edge(1, 'ka')}</div><div class="cmp-edges">${edge(-1, 'kb')}</div>`, 'edges') : ''}</div>`;
   const tot = Object.entries(cmpScore).filter(([id]) => pages.some(x => x[0] === id)).reduce((t, [, s]) => ({ a: t.a + s.a, b: t.b + s.b }), { a: 0, b: 0 });
-  const plate = (x, k) => `<div class="cmp-pl ${k}"><b><i class="${k}">${k === 'ka' ? '●' : '◆'}</i> ${flag(x.nationality_code)} ${esc(x.name)}</b><span>${esc(x.club_name || 'Free agent')} · ${x.age} yrs · ${posChips(x.natural_positions)}</span></div>`;
+  const kpis = x => { const t = (l, v, sm) => `<div class="kpi"><span>${l}</span><b>${v}</b><small>${sm}</small></div>`;
+    return t('Value', x.free_agent ? 'Free' : x.transfer_value == null ? 'NFS' : money(x.transfer_value), FAIR && x.deal_score != null ? `${Math.abs(Math.round(x.deal_score))}% ${x.deal_score >= 0 ? 'under' : 'over'} fair` : 'transfer value')
+      + t('Wage', wage(x.contract_wage), x.months_left != null ? `${x.months_left} mo left` : 'no contract')
+      + (!hid('ability_current') && x.ability_current != null ? t('CA / PA', `${x.ability_current} / ${x.ability_potential ?? '–'}`, 'ability')
+        : MODE !== 'moneyball' && x.best_role_score != null ? t('Best role', Math.round(x.best_role_score), esc(label('role_' + x.best_role)))
+        : t('Performance', x.stat_score != null ? Math.round(x.stat_score) : '–', 'index')); };
+  const plate = (x, k) => `<div class="cmp-pl ${k}"><p class="cmp-nm"><i class="${k}">${k === 'ka' ? '●' : '◆'}</i> ${esc(x.name)}</p>
+    <p>${flag(x.nationality_code)} ${esc(x.club_name || 'Free agent')} · ${x.age} yrs · ${posChips(x.natural_positions)}</p><div class="pp-kpis">${kpis(x)}</div></div>`;
   const cur = pages.some(x => x[0] === cmpTabId) ? cmpTabId : (cmpTabId = 'ver');
   $('#cmpBody').innerHTML = `<div class="cmp-top">${plate(A, 'ka')}<div class="cmp-score" role="img" aria-label="${esc(`${A.name} better on ${tot.a} lines, ${B.name} on ${tot.b}`)}"><b class="ka">${tot.a}</b><i>–</i><b class="kb">${tot.b}</b><small>lines won · <button class="link" data-cmp-again>change player</button></small></div>${plate(B, 'kb')}</div>
     <nav class="pp-tabs cmp-tabs" role="tablist" aria-label="Comparison pages">${pages.map(([id, l], i) => { const s = cmpScore[id];
