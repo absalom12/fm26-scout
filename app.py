@@ -1124,7 +1124,7 @@ def similar_order(uid, mode):
     else:
         for a in attr_strengths(p):
             t(f"attributes_{a}", 2)
-    return " + ".join(terms) or "0"
+    return " + ".join(terms) or "uid"  # nothing to measure (Moneyball, no minutes): any stable order; a bare "0" is ORDER BY column 0
 
 
 def _player(uid, mode):
