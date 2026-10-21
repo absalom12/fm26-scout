@@ -390,3 +390,16 @@ def test_club_leagues_ignore_reserve_sides(scout):
     # Ajax (1) plays the Eredivisie (18 clubs); Jong Ajax shares its club_uid in the Eerste Divisie (20): rows of
     # reserve sides are dropped by the caller, so only first teams reach club_leagues
     assert scout.club_leagues([("ere", 18, [1, 2]), ("eerste", 20, [3])]) == {1: "ere", 2: "ere", 3: "eerste"}
+
+
+def test_club_fills_every_slot(squad, client):
+    # no index for P11 (under the minutes gate): on the performance basis he still starts up front, scored "–"
+    squad.con().execute("UPDATE players SET stat_score = NULL WHERE uid IN (11, 12)")
+    d = client.get("/api/club", params={"basis": "performance"}).json()
+    st = d["slots"][10]["starter"]
+    assert st["uid"] in (11, 12) and st["fit"] is None and not st["out_of_position"]
+    # a shape with two wide midfielders the squad has none for: the most familiar spare players start there, flagged
+    d = client.get("/api/club", params={"formation": "GK,DR,DC,DC,DL,MR,MC,MC,ML,ST,ST"}).json()
+    assert all(s["starter"] for s in d["slots"])
+    assert d["slots"][5]["starter"]["out_of_position"] and d["slots"][8]["starter"]["out_of_position"]
+    assert len({s["starter"]["uid"] for s in d["slots"]}) == 11

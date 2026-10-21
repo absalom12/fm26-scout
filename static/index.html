@@ -860,6 +860,7 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .es-row .check { min-height: 32px; }
 .es-lg { display: grid; gap: 6px; margin-top: 4px; grid-column: 1 / -1; } .es-lg .ac-wrap input { height: 36px; font-size: 14px; }
 .qf.bad { border-color: var(--bad); color: var(--bad); }
+.slot.oop .disc { outline: 2px dashed var(--fam); outline-offset: 2px; }
 .nat-wrap { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 18px; align-items: start; }
 .nat-list { max-height: 230px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-sm); display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 .nat-list label { display: flex; align-items: center; gap: 8px; padding: 4px 10px; font-size: 13px; cursor: pointer; min-height: 36px; }
@@ -1856,6 +1857,10 @@ const shown = uid => drawerPlayer?.uid === uid ? drawerPlayer : ppPlayer?.uid ==
 const posKey = k => 'positions_' + (k === 'ST' ? 'stc' : k.toLowerCase());
 const FAMIL = [[18, 'Natural', C.good], [15, 'Accomplished', C.ok], [12, 'Competent', C.warn], [9, 'Unconvincing', C.orange]];  // FM's familiarity bands, 1-20
 const famil = v => FAMIL.find(f => v >= f[0]);
+// My Club starter shown with a caveat: out of position (nobody in the squad is rated there) or no index yet.
+const stand = (st, pos) => !st ? null
+  : st.out_of_position ? (f => ({ c: f[2], t: `Out of position · ${f[1]} ${st.familiarity ?? 0}/20`, tip: `Nobody in the squad is rated for ${pos}: best by familiarity` }))(famil(st.familiarity ?? 0) || [0, 'Awkward', C.bad])
+  : st.fit == null ? { c: C.muted, t: 'No index yet', tip: `Under ${PERF_MIN} league minutes: no performance index yet` } : null;
 function pitchMap(p) {
   const pts = POSITIONS.map(k => [k, p[posKey(k)]]).filter(x => x[1] != null);
   const known = pts.filter(x => x[1] >= 9).sort((a, b) => b[1] - a[1]);
@@ -3231,9 +3236,9 @@ function renderClub() {
             <rect x="15" y="2" width="38" height="14"/><rect x="25" y="2" width="18" height="5"/><path d="M28 16a7 5 0 0 0 12 0"/>
             <rect x="15" y="76" width="38" height="14"/><rect x="25" y="85" width="18" height="5"/><path d="M28 76a7 5 0 0 1 12 0"/>
           </svg>
-          ${formation.map((pos, i) => { const s = slotOf(i), g = s.pos === pos ? s.grade : null, fit = s.starter?.fit;
-            return `<button class="slot g-${g || 'none'} ${g === 'weak' ? 'weak' : ''}${s.pinned ? ' pinned' : ''}" style="left:${xy[i][0]}%;top:${xy[i][1]}%;animation-delay:${i * 35}ms" data-slot="${i}" aria-pressed="${slotSel === i}" draggable="true"
-              aria-label="${pos}: ${esc(s.starter?.name || 'nobody')}, ${fitWord()} ${fit != null ? fit.toFixed(0) : 'none'}, ${g || 'unrated'}. Show targets for this slot">
+          ${formation.map((pos, i) => { const s = slotOf(i), g = s.pos === pos ? s.grade : null, fit = s.starter?.fit, sd = stand(s.starter, pos);
+            return `<button class="slot g-${g || 'none'} ${g === 'weak' ? 'weak' : ''}${s.pinned ? ' pinned' : ''}${s.starter?.out_of_position ? ' oop' : ''}" style="left:${xy[i][0]}%;top:${xy[i][1]}%;animation-delay:${i * 35}ms${sd ? `;--fam:${sd.c}` : ''}"${sd ? ` title="${sd.tip}"` : ''} data-slot="${i}" aria-pressed="${slotSel === i}" draggable="true"
+              aria-label="${pos}: ${esc(s.starter?.name || 'nobody')}${sd ? ', ' + sd.t : ''}, ${fitWord()} ${fit != null ? fit.toFixed(0) : 'none'}, ${g || 'unrated'}. Show targets for this slot">
               <span class="lbl">${pos}</span><span class="disc">${fit != null ? fit.toFixed(0) : '–'}</span>
               <span class="nm">${esc(s.starter ? lastName(s.starter.name) : 'Nobody')}</span>${s.backup ? `<span class="bk">${esc(lastName(s.backup.name))}</span>` : ''}</button>`; }).join('')}
         </div>
@@ -3244,7 +3249,7 @@ function renderClub() {
         ${[...(CLUB.slots || [])].sort((a, b) => b.need - a.need).map((s, n) => `
           <button class="rank g-${s.grade || 'none'}" data-slot="${s.slot_index}" aria-pressed="${slotSel === s.slot_index}">
             <span class="i">${n + 1}</span><span class="p">${s.pos}</span>
-            <span class="w"><b>${esc(s.starter?.name || 'No one fits')}</b><span>${s.backup ? 'Backup ' + esc(lastName(s.backup.name)) : 'No backup'} · depth ${s.depth ?? 0}</span></span>
+            <span class="w"><b>${esc(s.starter?.name || 'No one fits')}</b><span>${(sd => sd ? `<b style="color:${sd.c}" title="${sd.tip}">${sd.t}</b> · ` : '')(stand(s.starter, s.pos))}${s.backup ? 'Backup ' + esc(lastName(s.backup.name)) : 'No backup'} · depth ${s.depth ?? 0}</span></span>
             <span class="f" style="color:${s.starter?.fit != null ? scoreColor(s.starter.fit) : C.muted}">${s.starter?.fit != null ? s.starter.fit.toFixed(0) : '–'}<small>need ${s.need?.toFixed(1) ?? '–'}</small></span>
           </button>`).join('')}
       </section>

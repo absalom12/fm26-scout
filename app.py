@@ -1243,6 +1243,7 @@ def idle_expired(now=None, hard=600):
 # ---- My Club: squad power ranking per formation slot, and transfer targets ----
 SLOT_GROUP = {"GK": "GK", "SW": "CB", "DC": "CB", "DL": "FB", "DR": "FB", "WBL": "FB", "WBR": "FB", "DM": "DM",
               "MC": "CM", "ML": "W", "MR": "W", "AML": "W", "AMR": "W", "AMC": "AM", "ST": "ST"}
+SLOT_COL = {"ST": "stc"}  # slot -> positions_ column
 SHAPES = {"4-2-3-1": "GK DR DC DC DL DM DM AMR AMC AML ST", "4-3-3": "GK DR DC DC DL DM MC MC AMR AML ST",
           "4-4-2": "GK DR DC DC DL MR MC MC ML ST ST", "3-5-2": "GK DC DC DC WBR DM MC MC WBL ST ST",
           "3-4-3": "GK DC DC DC WBR MC MC WBL AMR AML ST", "5-3-2": "GK DC DC DC WBR WBL DM MC MC ST ST"}
@@ -1298,21 +1299,25 @@ def squad_report(formation, mode="full", basis="attributes", pins=None):
     club = _club()
     pos_set = sorted(set(formation))
     cur = con().execute(f"SELECT uid, name, age, ability_current AS ca, ability_potential AS pa, transfer_value, contract_wage, "
-                        f"{', '.join(f'{fit_sql(p, mode, basis)} AS fit_{p}' for p in pos_set)} FROM players WHERE club_uid = ?", [club["club_uid"]])
+                        f"{', '.join(f'{fit_sql(p, mode, basis)} AS fit_{p}' for p in pos_set)}, "
+                        f"{', '.join(f'positions_{SLOT_COL.get(p, p.lower())} AS fam_{p}' for p in pos_set)} FROM players WHERE club_uid = ?", [club["club_uid"]])
     names = [d[0] for d in cur.description]
     squad = [dict(zip(names, r)) for r in cur.fetchall()]
 
     def card(p, pos):
         if not p:
             return None
-        c = {"uid": p["uid"], "name": p["name"], "age": p["age"], "fit": p[f"fit_{pos}"], "wage": p["contract_wage"], "value": p["transfer_value"]}
+        c = {"uid": p["uid"], "name": p["name"], "age": p["age"], "fit": p[f"fit_{pos}"], "wage": p["contract_wage"], "value": p["transfer_value"],
+             "familiarity": p[f"fam_{pos}"], "out_of_position": (p[f"fam_{pos}"] or 0) < 15}
         return {**c, "ca": p["ca"], "pa": p["pa"]} if mode == "full" else c
-    ranked = {p: sorted((s for s in squad if s[f"fit_{p}"] is not None), key=lambda s: -s[f"fit_{p}"]) for p in pos_set}
+    # Who can play a slot = familiarity >= 15, whatever the fit: on the performance basis a player under PERF_MIN
+    # minutes has no index (fit None) but can still start there, ranked after those with one.
+    ranked = {p: sorted((s for s in squad if (s[f"fam_{p}"] or 0) >= 15), key=lambda s: -(s[f"fit_{p}"] if s[f"fit_{p}"] is not None else -1)) for p in pos_set}
     taken, starters = set(), {}
     by_uid = {s["uid"]: s for s in squad}
     for i, uid in (pins or {}).items():  # a pin only holds if he can play there and isn't pinned twice
         p = by_uid.get(uid)
-        if 0 <= i < 11 and p and p[f"fit_{formation[i]}"] is not None and uid not in taken:
+        if 0 <= i < 11 and p and (p[f"fam_{formation[i]}"] or 0) >= 15 and uid not in taken:
             starters[i] = p; taken.add(uid)
     # Greedy XI: scarcest positions pick first so a versatile player isn't spent where others could play.
     for i in sorted((i for i in range(11) if i not in starters), key=lambda i: len(ranked[formation[i]])):
@@ -1320,13 +1325,19 @@ def squad_report(formation, mode="full", basis="attributes", pins=None):
         starters[i] = next((s for s in ranked[pos] if s["uid"] not in taken), None)
         if starters[i]:
             taken.add(starters[i]["uid"])
-    fits = [starters[i][f"fit_{formation[i]}"] if starters[i] else 0 for i in range(11)]
+    # Nobody left who can play it: the most familiar remaining player starts out of position (an XI has 11 players).
+    for i in range(11):
+        if not starters[i]:
+            starters[i] = max((s for s in squad if s["uid"] not in taken), key=lambda s: s[f"fam_{formation[i]}"] or 0, default=None)
+            if starters[i]:
+                taken.add(starters[i]["uid"])
+    fits = [(starters[i][f"fit_{formation[i]}"] or 0) if starters[i] and (starters[i][f"fam_{formation[i]}"] or 0) >= 15 else 0 for i in range(11)]
     team_fit = sum(fits) / 11
     slots = []
     for i, pos in enumerate(formation):
         st = starters[i]
         backup = next((s for s in ranked[pos] if s["uid"] not in taken), None)
-        sf, bf = fits[i], backup[f"fit_{pos}"] if backup else 0
+        sf, bf = fits[i], (backup[f"fit_{pos}"] or 0) if backup else 0
         need = round((team_fit - sf) + 0.3 * (sf - bf), 1)
         slots.append({"slot_index": i, "pos": pos, "starter": card(st, pos), "backup": card(backup, pos), "pinned": i in (pins or {}) and st is not None and st["uid"] == pins[i],
                       "depth": len(ranked[pos]), "need": need,
