@@ -939,18 +939,39 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .ac-list:empty { display: none; }
 /* Sized by its content, like dialog.pal: a top margin and an auto bottom one (WebKit collapses fit-content here). */
 dialog.es.set.cmp { width: min(820px, calc(100vw - 32px)); } dialog.es.set.cmp[open] { display: block; }
-dialog.cmp { --pa: #1aa0b4; --pb: #b866e8; }  /* the two players: validated pair on --panel (dataviz validator, dark) */
+dialog.cmp { --pa: #1aa0b4; --pb: #b866e8; }
+dialog.es.set.cmp { width: min(980px, calc(100vw - 32px)); height: min(700px, calc(100vh - 48px)); max-height: none; margin: auto; overflow: hidden; }
+dialog.cmp .es-in { display: flex; flex-direction: column; height: 100%; position: relative; }
+dialog.cmp .es-head { position: absolute; right: 8px; top: 6px; padding: 0; z-index: 1; } dialog.cmp .es-head h2 { font-size: 0; }
+dialog.cmp #cmpBody { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px 22px 10px; overflow: hidden; }
+.cmp-tabs { justify-content: center; border-bottom: 1px solid var(--line); margin-top: 8px; flex: none; }
+.cmp-tabs button { padding: 0 12px; } .cmp-tabs small { font: 600 11px var(--f-mono); letter-spacing: 0; margin-left: 6px; } .cmp-tabs small i { font-style: normal; }
+.cmp-pgs { flex: 1; min-height: 0; } .cmp-pg { height: 100%; overflow: auto; padding-top: 10px; } .cmp-pg:focus-visible { outline: none; }
+.cmp-cols { display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); gap: 0 24px; align-items: start; }
+.fly.sm { grid-template-columns: 26px 1fr 96px 1fr 26px; min-height: 20px; gap: 6px; } .fly.sm > span { font-size: 11.5px; } .fly.sm .ba, .fly.sm .bb { height: 6px; } 
+button.fly, button.tug { width: 100%; border-radius: 6px; text-align: inherit; } button.fly:hover, button.tug:hover { background: var(--hover); }
+.cp-pitch svg { width: 100%; max-height: min(440px, calc(100vh - 300px)); display: block; } .cp-slot { cursor: pointer; } .cp-slot:hover .cp-hit { fill: rgba(255,255,255,.06); }
+.cmp-posbar { flex-wrap: wrap; margin-bottom: 10px; } .cmp-posbar button { padding: 0 8px; }
+.rail { display: grid; grid-template-columns: 80px 1fr 150px; gap: 12px; align-items: center; min-height: 48px; font-size: 12.5px; } .rail > span { color: var(--muted); } .rail > b { font-size: 12px; line-height: 1.6; }
+.rail-tr { position: relative; height: 12px; margin: 5px 0; background: #151e27; border-radius: 6px; }
+.rail-tr .band { position: absolute; top: 0; bottom: 0; border-radius: 6px; opacity: .3; } .rail-tr.ka .band { background: var(--pa); } .rail-tr.kb .band { background: var(--pb); }
+.rail-tr .fair { position: absolute; top: -3px; bottom: -3px; border-left: 2px solid var(--text2); }
+.rail-tr .mk { position: absolute; top: 1px; width: 10px; height: 10px; margin-left: -5px; box-shadow: 0 0 0 2px var(--panel); }
+.rail-tr.ka .mk { border-radius: 50%; background: var(--pa); } .rail-tr.kb .mk { background: var(--pb); transform: rotate(45deg) scale(.85); }
+.rail-tr .bos { position: absolute; left: 0; top: 0; bottom: 0; background: repeating-linear-gradient(45deg, #2a3744 0 3px, transparent 3px 6px); border-radius: 6px 0 0 6px; }
+.cmp-edges { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; } .cmp-edge { font-size: 12px; padding: 3px 9px; border: 1px solid var(--line2); border-radius: var(--r-pill); color: var(--text2); } .cmp-edge i { font-style: normal; } .cmp-edge b { font-family: var(--f-mono); }
+.cmp-ratio { text-align: center; font-size: 13px; color: var(--text2); margin: 4px 0; }
+@media (max-width: 760px) { .cmp-cols { --n: 1 !important; } }  /* the two players: validated pair on --panel (dataviz validator, dark) */
 .ka { color: var(--pa); font-style: normal; } .kb { color: var(--pb); font-style: normal; }
 .cmp-g { padding-left: 0; text-align: center; margin: 14px 0 4px; }
 .cmp-top { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center; }
-.cmp-pl { display: grid; gap: 3px; font-size: 12.5px; color: var(--muted); } .cmp-pl b { font: 700 17px var(--f-body); color: var(--text); } .cmp-pl.ka { text-align: right; justify-items: end; }
-.cmp-pl.ka b::first-letter { color: var(--pa); } .cmp-pl.kb b::first-letter { color: var(--pb); }
+.cmp-pl { display: grid; gap: 3px; font-size: 12.5px; color: var(--muted); } .cmp-pl b { font: 700 15px var(--f-body); color: var(--text); } .cmp-pl b i { font-style: normal; } .cmp-pl.ka { text-align: right; justify-items: end; }
 .cmp-score { display: grid; grid-template-columns: auto auto auto; gap: 0 10px; align-items: baseline; justify-items: center; }
-.cmp-score > b { font: 700 40px/1 var(--f-mono); } .cmp-score > i { color: var(--faint); font-style: normal; font-size: 24px; }
+.cmp-score > b { font: 700 28px/1 var(--f-mono); } .cmp-score > i { color: var(--faint); font-style: normal; font-size: 24px; }
 .cmp-score small, .cmp-score .link { grid-column: 1 / -1; font-size: 11.5px; color: var(--muted); }
-.cmp-tugs { display: grid; gap: 6px; max-width: 520px; margin: 14px auto 0; }
-.tug { display: grid; grid-template-columns: 24px 1fr 24px 96px; gap: 8px; align-items: center; font-size: 12.5px; }
-.tug > b:first-child { text-align: right; } .tug > span { color: var(--muted); }
+.cmp-tugs { display: grid; gap: 4px; }
+.tug { display: grid; grid-template-columns: 24px 1fr 24px 110px; padding: 3px 4px; gap: 8px; align-items: center; font-size: 12.5px; }
+.tug > b:first-child { text-align: right; color: var(--pa); } .tug > b:nth-of-type(2) { color: var(--pb); } .tug > span { color: var(--muted); }
 .tug > i { position: relative; height: 10px; background: #151e27; border-radius: 5px; overflow: hidden; }
 .tug .ta, .tug .tb { position: absolute; top: 0; bottom: 0; } .tug .ta { left: 0; background: var(--pa); border-radius: 5px 0 0 5px; } .tug .tb { right: 0; background: var(--pb); border-radius: 0 5px 5px 0; }
 .fly { display: grid; grid-template-columns: 64px 1fr minmax(110px, 140px) 1fr 64px; align-items: center; gap: 8px; min-height: 24px; }
@@ -3411,7 +3432,7 @@ function renderAC() {
 // ---------- Compare ----------
 // Two players side by side: A from his profile, B picked from recently viewed, starred or a search. Green = the better of
 // the two on that line (lower for "lower is better" stats); what the mode hides stays hidden.
-let cmpA = null, cmpT, cmpSeq = 0;
+let cmpA = null, cmpB = null, cmpT, cmpSeq = 0, cmpTabId = 'ver';
 const cmpItem = (uid, name, sub) => `<button class="ac-item" data-cmp-pick="${uid}"><b>${esc(name)}</b><span class="muted">${esc(sub || 'Free agent')}</span></button>`;
 function openCompare(p) { if (!p) return; cmpA = p; cmpPick(); $('#cmp').showModal(); }
 function cmpPick() {
@@ -3438,56 +3459,140 @@ function cmpSearch() {
     $('#cmpHits').innerHTML = rows.map(x => cmpItem(x.uid, x.name, x.club_name)).join('') || '<p class="note">No player found.</p>';
   }, 200);
 }
+// Pages (lv 1 = not in Moneyball, lv 2 = Full only); the tab badges are each page's duel score. No page scrolls.
+const CMP_PAGES = [['ver', 'Verdict'], ['pos', 'Positions', 1], ['role', 'Roles', 1], ['attr', 'Attributes', 1], ['hid', 'Hidden', 2], ['sea', 'Season'], ['price', 'Price']];
+const cmpPages = () => CMP_PAGES.filter(([, , lv]) => !lv || (lv === 1 ? MODE !== 'moneyball' : MODE === 'full'));
+function cmpTab(t) {
+  cmpTabId = t;
+  $$('[data-cmptab]', $('#cmp')).forEach(b => { const on = b.dataset.cmptab === t; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
+  $$('[data-cmppg]', $('#cmp')).forEach(d => { d.hidden = d.dataset.cmppg !== t; });
+}
+// Paired bars (A grows left, B right, one shared scale). o: { ph: page to score it in, max, f, lower, cls, attrs (makes it a button) }.
+let cmpScore = {};
+function cmpFly(l, a, b, o = {}) {
+  const { ph, max = 20, f = v => v ?? '–', lower = false, cls = '', attrs } = o;
+  const d = a == null || b == null || a === b ? 0 : (a > b) !== lower ? 1 : -1;
+  if (ph) { const s = cmpScore[ph] ??= { a: 0, b: 0, t: 0 }; d > 0 ? s.a++ : d < 0 ? s.b++ : s.t++; }
+  const gap = (max === 20 || max === 100) && d ? `<em>+${Math.abs(a - b)}</em>` : '', tag = attrs ? 'button' : 'div', w = v => pctW(Math.max(v ?? 0, 0) / max);  // a negative (overpriced deal) has no bar
+  const txt = `${l}: ${cmpA.name} ${f(a)}, ${cmpB.name} ${f(b)}${d ? `, ${d > 0 ? cmpA.name : cmpB.name} better` : ''}`;
+  return `<${tag} class="fly ${cls} ${d > 0 ? 'wa' : d < 0 ? 'wb' : ''}" ${attrs ? `type="button" ${attrs} aria-label="${esc(txt)}"` : `role="img" aria-label="${esc(txt)}"`} title="${esc(txt)}">
+    <b aria-hidden="true">${d > 0 ? gap : ''}${f(a)}</b><i class="ba" aria-hidden="true"><i style="width:${w(a)}"></i></i><span aria-hidden="true">${l}</span>
+    <i class="bb" aria-hidden="true"><i style="width:${w(b)}"></i></i><b aria-hidden="true">${f(b)}${d < 0 ? gap : ''}</b></${tag}>`;
+}
+// Positions: one pitch, per slot ● A left and ◆ B right filled by FM's familiarity band; the leader's outline is thicker.
+function cmpPitch(A, B) {
+  const fill = v => famil(v)?.[2] || 'rgba(255,255,255,.06)';
+  return `<div class="cp-pitch"><svg viewBox="0 -3 68 97" aria-hidden="true"><g fill="none" stroke="rgba(255,255,255,.16)" stroke-width=".5"><rect x="2" y="2" width="64" height="88" rx="1"/><path d="M2 46h64"/><circle cx="34" cy="46" r="8"/><rect x="17" y="2" width="34" height="13"/><rect x="17" y="77" width="34" height="13"/></g>
+    ${POSITIONS.map(k => { const [x, y] = PITCH[k], cx = x * .68, cy = y * .92, a = A[posKey(k)] ?? 0, b = B[posKey(k)] ?? 0;
+      return `<g class="cp-slot" data-cmp-pos="${k}"><rect class="cp-hit" x="${cx - 9}" y="${cy - 8}" width="18" height="13" rx="4" fill="transparent"/>
+        <text x="${cx}" y="${cy - 4.6}" text-anchor="middle" font-size="2.8" font-weight="700" fill="rgba(255,255,255,.6)">${k}</text>
+        <circle cx="${cx - 3.6}" cy="${cy}" r="3" fill="${fill(a)}" stroke="var(--pa)" stroke-width="${a > b ? 1 : .4}"/>
+        <rect x="${cx + 1.5}" y="${cy - 2.2}" width="4.4" height="4.4" transform="rotate(45 ${cx + 3.7} ${cy})" fill="${fill(b)}" stroke="var(--pb)" stroke-width="${b > a ? 1 : .4}"/></g>`; }).join('')}
+  </svg><p class="note">Fill = familiarity: ${FAMIL.map(([, n, c]) => `<span style="color:${c}">${n}</span>`).join(' · ')}</p></div>`;
+}
+// Roles at one position, paired role scores 0-100, best first.
+function cmpRoles(A, B, pos) {
+  const rs = Object.keys(META.roles || {}).filter(r => rolePos(r).includes(pos)).map(r => [r, A['role_' + r], B['role_' + r]])
+    .filter(x => x[1] != null || x[2] != null).sort((x, y) => Math.max(y[1] ?? 0, y[2] ?? 0) - Math.max(x[1] ?? 0, x[2] ?? 0)).slice(0, 12);
+  return `<div class="seg cmp-posbar" role="group" aria-label="Position">${POSITIONS.map(k => `<button type="button" data-cmp-pos="${k}" aria-pressed="${k === pos}">${k}</button>`).join('')}</div>
+    ${rs.map(([r, a, b]) => cmpFly(label('role_' + r), a == null ? null : Math.round(a), b == null ? null : Math.round(b), { max: 100, cls: 'sm' })).join('') || '<p class="note">No role scores at this position.</p>'}
+    <p class="note">Familiarity at ${pos}: <i class="ka">●</i> ${A[posKey(pos)] ?? '–'} · <i class="kb">◆</i> ${B[posKey(pos)] ?? '–'}. A role score assumes he plays there.</p>`;
+}
+// Price rail: one money axis per measure; per player his asking mark, plus the fair band and tick when fair prices are on.
+function cmpRail(l, A, B, ask, fair, range, fmt) {
+  const pts = x => [ask(x), ...(FAIR ? [fair(x), ...(range(x) || [])] : [])].filter(n => n != null);
+  const max = Math.max(1, ...pts(A), ...pts(B)) * 1.1, at = n => (n / max * 100).toFixed(1) + '%';
+  const tr = (x, k) => { const a = ask(x), f = FAIR ? fair(x) : null, [lo, hi] = (FAIR && range(x)) || [];
+    return `<div class="rail-tr ${k}">${lo != null ? `<i class="band" style="left:${at(lo)};width:${at(hi - lo)}"></i>` : ''}${f != null ? `<i class="fair" style="left:${at(f)}"></i>` : ''}${a != null ? `<i class="mk" style="left:${at(a)}"></i>` : ''}</div>`; };
+  const t = x => `${ask(x) == null ? 'not for sale' : fmt(ask(x))}${FAIR && fair(x) != null ? ` (fair ${fmt(fair(x))})` : ''}`;
+  return `<div class="rail" role="img" aria-label="${esc(`${l}: ${A.name} ${t(A)}, ${B.name} ${t(B)}`)}" title="${esc(`${A.name} ${t(A)} · ${B.name} ${t(B)}`)}"><span aria-hidden="true">${l}</span><div aria-hidden="true">${tr(A, 'ka')}${tr(B, 'kb')}</div>
+    <b class="mono" aria-hidden="true"><i class="ka">●</i> ${ask(A) == null ? 'NFS' : fmt(ask(A))}<br><i class="kb">◆</i> ${ask(B) == null ? 'NFS' : fmt(ask(B))}</b></div>`;
+}
 async function cmpShow(uid) {
   const A = cmpA, seq = ++cmpSeq;
   $('#cmpBody').innerHTML = '<span class="sk" style="width:100%;height:240px"></span>';
   let B; try { const r = await api('/api/player/' + uid + mq()); if (!r.ok) throw r; B = await r.json(); }
   catch { $('#cmpBody').innerHTML = emptyState('Player not found', 'The server could not load him. Try another player.'); return; }
-  if (seq !== cmpSeq) return;
-  $('#cmpTitle').textContent = 'Compare';
-  const grp = groupOf(A), gk = grp === 'GK', att = a => 'attributes_' + a, sub = t => `<h3 class="pal-g cmp-g">${t}</h3>`;
-  // Each line is a duel (1 = A better, -1 = B, 0 = level or missing), tallied per phase for the verdict on top.
-  const score = {}, duel = (ph, a, b, lower) => { const s = score[ph] ??= { a: 0, b: 0, t: 0 }, d = a == null || b == null || a === b ? 0 : (a > b) !== lower ? 1 : -1;
-    d > 0 ? s.a++ : d < 0 ? s.b++ : s.t++; return d; };
-  // Butterfly row: A grows left, B right, on one shared scale; the winner's bar is solid and shows the gap.
-  const fly = (ph, l, a, b, max = 20, f = v => v ?? '–', lower = false) => {
-    const d = duel(ph, a, b, lower), gap = max === 20 && d ? `<em>+${Math.abs(a - b)}</em>` : '';
-    return `<div class="fly ${d > 0 ? 'wa' : d < 0 ? 'wb' : ''}" role="img" title="${esc(`${l}: ${A.name} ${f(a)}, ${B.name} ${f(b)}`)}" aria-label="${esc(`${l}: ${A.name} ${f(a)}, ${B.name} ${f(b)}${d ? `, ${d > 0 ? A.name : B.name} better` : ', level'}`)}">
-      <b aria-hidden="true">${d > 0 ? gap : ''}${f(a)}</b><i class="ba" aria-hidden="true"><i style="width:${pctW((a ?? 0) / max)}"></i></i><span aria-hidden="true">${l}</span>
-      <i class="bb" aria-hidden="true"><i style="width:${pctW((b ?? 0) / max)}"></i></i><b aria-hidden="true">${f(b)}${d < 0 ? gap : ''}</b></div>`;
-  };
-  // Dumbbell on the percentile axis (vs the same position group): circle = A, diamond = B, the bar takes the leader's colour.
-  const bell = (k, pa, pb) => {
-    const [l, fn, , , lower] = M[k], d = duel('Season', pa, pb, false), lo = Math.min(pa, pb), hi = Math.max(pa, pb);
-    return `<div class="db" role="img" title="${esc(`${A.name}: ${ordN(pa)} percentile · ${B.name}: ${ordN(pb)} percentile${lower ? ' · lower is better' : ''}`)}" aria-label="${esc(`${l}: ${A.name} ${fmtM(k, fn(A))} (${ordN(pa)} percentile), ${B.name} ${fmtM(k, fn(B))} (${ordN(pb)} percentile)${lower ? ', lower is better' : ''}`)}">
-      <span aria-hidden="true">${l}</span><div class="db-tr" aria-hidden="true"><i class="md"></i><i class="ln ${d > 0 ? 'wa' : d < 0 ? 'wb' : ''}" style="left:${lo}%;width:${hi - lo}%"></i>
-      <i class="pa" style="left:${pa}%"></i><i class="pb" style="left:${pb}%"></i></div><b class="mono" aria-hidden="true"><i class="ka">●</i> ${fmtM(k, fn(A))} · <i class="kb">◆</i> ${fmtM(k, fn(B))}</b></div>`;
-  };
-  const sec = (t, list) => { const l = list.filter(a => !hid(att(a)) && (A[att(a)] != null || B[att(a)] != null));
-    return l.length ? sub(t) + l.map(a => fly(t, label(att(a)), A[att(a)], B[att(a)])).join('') : ''; };
-  const abil = hid('ability_current') ? '' : [['Current ability', 'ability_current'], ['Potential ability', 'ability_potential']].map(([l, k]) => fly('Ability', l, A[k], B[k], 200)).join('');
-  const attrs = sec(gk ? 'Goalkeeping' : 'Technical', gk ? ATTR.goalkeeping : ATTR.technical) + sec('Mental', ATTR.mental) + sec('Physical', ATTR.physical);
+  const grp = groupOf(A), gk = grp === 'GK', att = a => 'attributes_' + a;
   const [ba, bb] = await Promise.all([ppBench(A, grp), ppBench(B, grp)]);
   if (seq !== cmpSeq) return;
-  const ks = (METRICS[grp] || METRICS.CM), both = ks.filter(k => ba.pcs[k] != null && bb.pcs[k] != null);
+  cmpB = B; cmpScore = {};
+  $('#cmpTitle').textContent = `Compare ${A.name} and ${B.name}`;
+  const pages = cmpPages().filter(([id]) => id !== 'hid' || ATTR.hidden.some(a => !hid(att(a)))), body = {}, cols = (n, ...c) => `<div class="cmp-cols" style="--n:${n}">${c.join('')}</div>`;
+  const h = t => `<h3 class="pal-g cmp-g">${t}</h3>`;
+  // Attributes: ability strip (Full), then one column per phase.
+  const phase = (t, list, ph = 'attr') => { const l = list.filter(a => !hid(att(a)) && (A[att(a)] != null || B[att(a)] != null));
+    return l.length ? `<div>${h(t)}${l.map(a => cmpFly(label(att(a)), A[att(a)], B[att(a)], { ph, cls: 'sm', lower: BAD.has(att(a)) })).join('')}</div>` : ''; };
+  const abil = hid('ability_current') ? '' : cmpFly('Current ability', A.ability_current, B.ability_current, { ph: 'attr', max: 200 }) + cmpFly('Potential ability', A.ability_potential, B.ability_potential, { ph: 'attr', max: 200 });
+  body.attr = abil + cols(3, phase(gk ? 'Goalkeeping' : 'Technical', gk ? ATTR.goalkeeping : ATTR.technical), phase('Mental', ATTR.mental), phase('Physical', ATTR.physical));
+  const pers = PERS.map(k => 'personality_' + k).filter(k => !hid(k) && (A[k] != null || B[k] != null));
+  body.hid = cols(2, phase('Hidden attributes', ATTR.hidden, 'hid'), pers.length ? `<div>${h('Personality')}${pers.map(k => cmpFly(label(k), A[k], B[k], { ph: 'hid', cls: 'sm', lower: BAD.has(k) })).join('')}</div>` : '');
+  // Season: dumbbells on the percentile axis (vs the same position group), raw paired bars under PERF_MIN.
+  const ks = METRICS[grp] || METRICS.CM, both = ks.filter(k => ba.pcs[k] != null && bb.pcs[k] != null);
+  const bell = k => { const [l, fn, , , lower] = M[k], pa = ba.pcs[k], pb = bb.pcs[k], s = cmpScore.sea ??= { a: 0, b: 0, t: 0 }, d = pa === pb ? 0 : pa > pb ? 1 : -1, lo = Math.min(pa, pb), hi = Math.max(pa, pb);
+    d > 0 ? s.a++ : d < 0 ? s.b++ : s.t++;
+    const txt = `${l}: ${A.name} ${fmtM(k, fn(A))} (${ordN(pa)} percentile), ${B.name} ${fmtM(k, fn(B))} (${ordN(pb)} percentile)${lower ? ', lower is better' : ''}`;
+    return `<div class="db" role="img" aria-label="${esc(txt)}" title="${esc(txt)}"><span aria-hidden="true">${l}</span><div class="db-tr" aria-hidden="true"><i class="md"></i><i class="ln ${d > 0 ? 'wa' : d < 0 ? 'wb' : ''}" style="left:${lo}%;width:${hi - lo}%"></i>
+      <i class="pa" style="left:${pa}%"></i><i class="pb" style="left:${pb}%"></i></div><b class="mono" aria-hidden="true"><i class="ka">●</i> ${fmtM(k, fn(A))} · <i class="kb">◆</i> ${fmtM(k, fn(B))}</b></div>`; };
   const short = [A, B].filter(x => (x.s_minutes || 0) < PERF_MIN).map(x => `${esc(x.name)} has ${(x.s_minutes || 0).toLocaleString()} min`);
-  const stats = both.length >= 3 ? both.map(k => bell(k, ba.pcs[k], bb.pcs[k])).join('') + `<p class="note">Axis = percentile among ${plural(grp)} with ${PERF_MIN}+ min, right is better (lower-is-better stats are turned around) · dashed = median.</p>`
-    : (short.length ? `<p class="note">Percentiles need ${PERF_MIN} league minutes: ${short.join(', ')}. Raw per-90 values instead.</p>` : '')
-      + ks.map(k => { const [l, fn, , , lower] = M[k], a = fn(A), b = fn(B), max = Math.max(a ?? 0, b ?? 0) || 1; return fly('Season', l, a, b, max, v => v == null ? '–' : fmtM(k, v), lower); }).join('');
+  const base = cmpFly('League minutes', A.s_minutes || 0, B.s_minutes || 0, { max: Math.max(A.s_minutes || 0, B.s_minutes || 0, 1), f: v => (v ?? 0).toLocaleString() })
+    + cmpFly('Appearances', A.s_apps ?? null, B.s_apps ?? null, { max: Math.max(A.s_apps || 0, B.s_apps || 0, 1) });
+  const rows = both.length >= 3 ? both.map(bell) : ks.map(k => { const [l, fn, , , lower] = M[k], a = fn(A), b = fn(B); return cmpFly(l, a, b, { ph: 'sea', max: Math.max(a ?? 0, b ?? 0) || 1, f: v => v == null ? '–' : fmtM(k, v), lower }); });
+  body.sea = base + h(`Per 90 · ${both.length >= 3 ? `percentile among ${plural(grp)} with ${PERF_MIN}+ min, right is better` : 'raw values'}`)
+    + (rows.length > 10 ? cols(2, rows.slice(0, Math.ceil(rows.length / 2)).join(''), rows.slice(Math.ceil(rows.length / 2)).join('')) : rows.join(''))
+    + (both.length >= 3 ? '<p class="note">Dashed = median · lower-is-better stats are turned around.</p>' : short.length ? `<p class="note">Percentiles need ${PERF_MIN} league minutes: ${short.join(', ')}.</p>` : '');
+  // Positions and roles.
+  const best = x => POSITIONS.reduce((m, k) => (x[posKey(k)] ?? 0) > (x[posKey(m)] ?? 0) ? k : m, POSITIONS[0]), pos = best(A);
+  const duelPos = POSITIONS.filter(k => Math.max(A[posKey(k)] ?? 0, B[posKey(k)] ?? 0) >= 9);
+  body.pos = cols(2, cmpPitch(A, B), `<div>${h('Position duel · click for roles')}${duelPos.map(k => cmpFly(k, A[posKey(k)] ?? null, B[posKey(k)] ?? null, { cls: 'sm', attrs: `data-cmp-pos="${k}"` })).join('')}</div>`);
+  body.role = cmpRoles(A, B, pos);
+  // Price and contract.
+  const lensRows = FAIR ? LENSES.filter(l => lensOk(l) && (A[l.deal] != null || B[l.deal] != null)).map(l => cmpFly(`Deal · ${l.label}`, A[l.deal] ?? null, B[l.deal] ?? null,
+    { max: Math.max(A[l.deal] ?? 0, B[l.deal] ?? 0, 1), f: v => v == null ? '–' : `${v > 0 ? '+' : ''}${Math.round(v)}%` })).join('') : '';
+  const mmax = Math.max(60, A.months_left ?? 0, B.months_left ?? 0), mat = n => (n / mmax * 100).toFixed(1) + '%';
+  const clock = `<div class="rail" role="img" aria-label="${esc(`Contract: ${A.name} ${A.months_left ?? '–'} months left, ${B.name} ${B.months_left ?? '–'}`)}"><span aria-hidden="true">Contract</span><div aria-hidden="true">${[[A, 'ka'], [B, 'kb']].map(([x, k]) =>
+    `<div class="rail-tr ${k}"><i class="bos" style="width:${mat(6)}"></i>${x.months_left != null ? `<i class="mk" style="left:${mat(x.months_left)}"></i>` : ''}</div>`).join('')}</div>
+    <b class="mono" aria-hidden="true"><i class="ka">●</i> ${A.months_left ?? '–'} mo<br><i class="kb">◆</i> ${B.months_left ?? '–'} mo</b></div><p class="note">${FAIR ? 'Mark = asking price · tick = fair value · shaded = fair range. ' : ''}Hatched = last 6 months: he can sign a pre-contract with a foreign club.</p>`;
+  body.price = cmpRail('Value', A, B, x => x.free_agent ? 0 : x.transfer_value, x => x.fair_fee, x => x.fair_fee_range, money)
+    + cmpRail('Wage', A, B, x => x.contract_wage, x => x.fair_wage, () => null, wage) + clock
+    + (lensRows ? h('Deal: % under fair value, per lens (no bar = overpriced)') + lensRows : `<p class="note">${FAIR ? '' : 'Turn on Fair prices to see fair value and deal % here.'}</p>`);
+  // Verdict: shape and body on the left; page duels, each player's edges and price on the right.
   const avg = (x, ks) => { const v = ks.map(k => x[att(k)]).filter(v => v != null); return v.length ? v.reduce((s, y) => s + y, 0) / v.length : 0; };
-  const axes = gk ? AXES_GK : AXES_OUT, shape = MODE === 'moneyball' ? '' : `${sub('Shape')}<div class="cmp-shape">${radar(axes.map(([n, ks]) => [n, avg(A, ks)]), 20, 15, axes.map(([, ks]) => avg(B, ks)))}</div>`;
-  const tug = (ph, s) => { const n = s.a + s.b + s.t || 1;
-    return `<div class="tug" role="img" title="${esc(`${A.name} ${s.a} · ${B.name} ${s.b} · level ${s.t}`)}" aria-label="${esc(`${ph}: ${A.name} better on ${s.a}, ${B.name} on ${s.b}, ${s.t} level`)}"><b class="mono ka" aria-hidden="true">${s.a}</b>
-      <i aria-hidden="true"><i class="ta" style="width:${pctW(s.a / n)}"></i><i class="tb" style="width:${pctW(s.b / n)}"></i></i><b class="mono kb" aria-hidden="true">${s.b}</b><span aria-hidden="true">${ph}</span></div>`; };
-  const tot = Object.values(score).reduce((t, s) => ({ a: t.a + s.a, b: t.b + s.b }), { a: 0, b: 0 });
-  const plate = (x, k) => `<div class="cmp-pl ${k}"><b>${k === 'ka' ? '●' : '◆'} ${flag(x.nationality_code)} ${esc(x.name)}</b><span>${esc(x.club_name || 'Free agent')} · ${x.age} yrs</span><span>${posChips(x.natural_positions)}</span></div>`;
+  const axes = gk ? AXES_GK : AXES_OUT, names = Object.fromEntries(CMP_PAGES);
+  const lines = [...ATTR.technical, ...ATTR.mental, ...ATTR.physical, ...ATTR.goalkeeping].filter(a => !hid(att(a)) && A[att(a)] != null && B[att(a)] != null).map(a => [label(att(a)), A[att(a)] - B[att(a)]]);
+  const edge = (sign, k) => lines.filter(([, d]) => d * sign > 0).sort((x, y) => (y[1] - x[1]) * sign).slice(0, 3).map(([l, d]) => `<span class="cmp-edge"><i class="${k}">${k === 'ka' ? '●' : '◆'}</i> ${l} <b>+${Math.abs(d)}</b></span>`).join('');
   const rt = A.transfer_value && B.transfer_value ? Math.max(A.transfer_value, B.transfer_value) / Math.min(A.transfer_value, B.transfer_value) : 0;
-  const ratio = rt && rt < 1.15 ? 'Similar price' : rt ? (B.transfer_value >= A.transfer_value ? `${esc(B.name)} costs ${(B.transfer_value / A.transfer_value).toFixed(1)}× ${esc(A.name)}` : `${esc(A.name)} costs ${(A.transfer_value / B.transfer_value).toFixed(1)}× ${esc(B.name)}`) : '';
-  $('#cmpBody').innerHTML = `<div class="cmp-top">${plate(A, 'ka')}<div class="cmp-score" role="img" aria-label="${esc(`${A.name} better on ${tot.a} lines, ${B.name} on ${tot.b}`)}"><b class="ka">${tot.a}</b><i>–</i><b class="kb">${tot.b}</b><small>lines won</small><button class="link" data-cmp-again>Change player</button></div>${plate(B, 'kb')}</div>
-    <div class="cmp-tugs">${Object.entries(score).map(([ph, s]) => tug(ph, s)).join('')}<p class="note">Counts lines, not how much each matters.</p></div>
-    ${sub('Price')}<div class="cmp-price"><div class="fly"><b>${feeHTML(A)}</b><i></i><span>Value</span><i></i><b>${feeHTML(B)}</b></div><div class="fly"><b>${wage(A.contract_wage)}</b><i></i><span>Wage</span><i></i><b>${wage(B.contract_wage)}</b></div>${ratio ? `<p class="note" style="text-align:center">${ratio}</p>` : ''}</div>
-    ${abil ? sub('Ability') + abil : ''}${shape}${attrs}${sub(`Season, per 90 · ${plural(grp)}`)}${stats}`;
+  const ratio = rt && rt < 1.15 ? 'Similar price' : rt ? (B.transfer_value > A.transfer_value ? `${esc(B.name)} costs ${rt.toFixed(1)}× ${esc(A.name)}` : `${esc(A.name)} costs ${rt.toFixed(1)}× ${esc(B.name)}`) : '';
+  const tug = (id, s) => { const n = s.a + s.b + s.t || 1;
+    return `<button type="button" class="tug" data-cmpgo="${id}" aria-label="${esc(`${names[id]}: ${A.name} better on ${s.a}, ${B.name} on ${s.b}, ${s.t} level. Open the page`)}"><b class="mono" aria-hidden="true">${s.a}</b>
+      <i aria-hidden="true"><i class="ta" style="width:${pctW(s.a / n)}"></i><i class="tb" style="width:${pctW(s.b / n)}"></i></i><b class="mono" aria-hidden="true">${s.b}</b><span aria-hidden="true">${names[id]} →</span></button>`; };
+  const bodyRows = cmpFly('Age', A.age, B.age, { max: 45, lower: true }).replace(/ w[ab]"/, '"') + (A.height_cm && B.height_cm ? cmpFly('Height', A.height_cm, B.height_cm, { max: 210, f: v => height(v) }) : '')
+    + (A.reputation_current != null ? cmpFly('Reputation', A.reputation_current, B.reputation_current, { max: Math.max(A.reputation_current, B.reputation_current, 1), f: v => v == null ? '–' : (v / 1000).toFixed(1) }) : '');
+  body.ver = cols(2, `<div>${MODE === 'moneyball' ? '' : `<div class="cmp-shape">${radar(axes.map(([n, ks]) => [n, avg(A, ks)]), 20, 15, axes.map(([, ks]) => avg(B, ks)))}</div>`}${bodyRows}</div>`,
+    `<div>${h('Who wins where')}<div class="cmp-tugs">${Object.entries(cmpScore).filter(([id]) => pages.some(x => x[0] === id)).map(([id, s]) => tug(id, s)).join('')}</div>
+      <p class="note">Counts lines, not how much each matters.</p>${lines.length ? `${h('Biggest edges')}<div class="cmp-edges">${edge(1, 'ka')}</div><div class="cmp-edges">${edge(-1, 'kb')}</div>` : ''}
+      ${ratio ? `${h('Price')}<p class="cmp-ratio">${ratio}</p>` : ''}</div>`);
+  const tot = Object.entries(cmpScore).filter(([id]) => pages.some(x => x[0] === id)).reduce((t, [, s]) => ({ a: t.a + s.a, b: t.b + s.b }), { a: 0, b: 0 });
+  const plate = (x, k) => `<div class="cmp-pl ${k}"><b><i class="${k}">${k === 'ka' ? '●' : '◆'}</i> ${flag(x.nationality_code)} ${esc(x.name)}</b><span>${esc(x.club_name || 'Free agent')} · ${x.age} yrs · ${posChips(x.natural_positions)}</span></div>`;
+  const cur = pages.some(x => x[0] === cmpTabId) ? cmpTabId : (cmpTabId = 'ver');
+  $('#cmpBody').innerHTML = `<div class="cmp-top">${plate(A, 'ka')}<div class="cmp-score" role="img" aria-label="${esc(`${A.name} better on ${tot.a} lines, ${B.name} on ${tot.b}`)}"><b class="ka">${tot.a}</b><i>–</i><b class="kb">${tot.b}</b><small>lines won · <button class="link" data-cmp-again>change player</button></small></div>${plate(B, 'kb')}</div>
+    <nav class="pp-tabs cmp-tabs" role="tablist" aria-label="Comparison pages">${pages.map(([id, l], i) => { const s = cmpScore[id];
+      return `<button role="tab" id="cmpt-${id}" data-cmptab="${id}" aria-controls="cmpg-${id}" aria-selected="${id === cur}" tabindex="${id === cur ? 0 : -1}" title="${i + 1}">${l}${s ? `<small aria-hidden="true"><i class="ka">${s.a}</i>·<i class="kb">${s.b}</i></small><span class="sr">, ${esc(A.name)} ${s.a}, ${esc(B.name)} ${s.b}</span>` : ''}</button>`; }).join('')}</nav>
+    <div class="cmp-pgs">${pages.map(([id]) => `<section class="cmp-pg cmp-${id}" role="tabpanel" id="cmpg-${id}" data-cmppg="${id}" aria-labelledby="cmpt-${id}" tabindex="0"${id === cur ? '' : ' hidden'}>${body[id]}</section>`).join('')}</div>`;
+  $(`[data-cmptab="${cur}"]`).focus();
 }
+$('#cmp').addEventListener('click', e => {
+  const t = e.target.closest('[data-cmptab],[data-cmpgo]'); if (t) return cmpTab(t.dataset.cmptab || t.dataset.cmpgo);
+  const p = e.target.closest('[data-cmp-pos]'); if (p && cmpB) { const k = p.dataset.cmpPos; $('#cmpg-role').innerHTML = cmpRoles(cmpA, cmpB, k); cmpTab('role'); $(`#cmpg-role [data-cmp-pos="${k}"]`)?.focus(); }
+});
+$('#cmp').addEventListener('keydown', e => {
+  const ids = $$('[data-cmptab]', $('#cmp')).map(b => b.dataset.cmptab);
+  if (!ids.length || e.target.matches('input')) return;
+  if (/^[1-7]$/.test(e.key) && ids[e.key - 1]) { cmpTab(ids[e.key - 1]); $(`[data-cmptab="${cmpTabId}"]`).focus(); return; }
+  if (!e.target.matches('[data-cmptab]')) return;
+  const at = ids.indexOf(e.target.dataset.cmptab), j = { ArrowRight: at + 1, ArrowLeft: at - 1 + ids.length, Home: 0, End: ids.length - 1 }[e.key]; if (j == null) return;
+  e.preventDefault(); cmpTab(ids[j % ids.length]); $(`[data-cmptab="${cmpTabId}"]`).focus();
+});
 
 // ---------- Mode & actions ----------
 function setMode(m, initial) {
