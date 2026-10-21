@@ -350,6 +350,21 @@ details[open] summary::before { content: "−"; }
 .pg-over.m-moneyball { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(300px, 360px); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "read read pizza" "role simmini pizza"; }
 .rd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 8px 28px; align-items: start; } @media (max-width: 900px) { .rd-grid { grid-template-columns: 1fr; } }
 .rd-id { margin: 0 0 8px; font-size: 15px; } .rd-pos, .rd-chips { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin: 0 0 8px; } .rd-pos small { color: var(--muted); }
+.pg-over.m-moneyball.g1, .pg-over.m-moneyball.g0 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 440px; grid-template-rows: 176px minmax(0, 1fr); gap: 12px; }
+.pg-over.g1 { grid-template-areas: "gread gread prev" "ssf ssf prev"; } .pg-over.m-moneyball.g0 { grid-template-rows: 132px minmax(0, 1fr); grid-template-areas: "gread gread val" "pos pos val"; }
+.pg-over.g1 > .pp-card, .pg-over.g0 > .pp-card { padding: 16px; min-height: 0; overflow: hidden; }
+.gate-m p { margin: 8px 0; font-size: 13px; } .gate-m p span { color: var(--muted); } .gate-bar { height: 14px; border-radius: 7px; background: #1a242d; overflow: hidden; } .gate-bar > i { display: block; height: 100%; background: var(--mode); border-radius: 7px; }
+.gate-chip { --c: var(--muted); } .gate-mini { padding: 10px 12px; border: 1px dashed var(--line2); border-radius: 8px; } .gate-mini .note { margin: 4px 0 8px; }
+.ssf2 { display: grid; grid-template-columns: 55fr 45fr; gap: 18px; flex: 1; min-height: 0; } .ssf-g { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 12px; }
+.ssf-t { display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; } .ssf-t span { color: var(--muted); font-size: 12px; } .ssf-t b { font: 600 28px var(--f-mono); } .ssf-t small { color: var(--muted); font-size: 11.5px; }
+.ssf-v, .gval { display: flex; flex-direction: column; justify-content: center; } .ssf-v .hist svg, .gval .hist svg { width: 100%; height: auto; }
+.ssf-f { margin: 10px 0 0; font-size: 12.5px; color: var(--muted); } .ssf-f b { color: var(--text); }
+.pv { display: grid; gap: 7px; flex: 1; min-height: 0; align-content: space-evenly; } .pv-r { display: grid; grid-template-columns: 120px minmax(0, 1fr) 44px; gap: 8px; align-items: center; font-size: 12.5px; } .pv-r > span { color: var(--text2); } .pv-r b { text-align: right; font-size: 12.5px; }
+.pv-t { position: relative; height: 14px; background: #1a242d; border-radius: 4px; } .pv-t > i { display: block; height: 100%; background: var(--mode); border-radius: 4px; opacity: .85; } .pv-t em { position: absolute; top: -3px; bottom: -3px; border-left: 1.5px dashed var(--text2); }
+.pv-sim { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); }
+.gval-t { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex: 1; min-height: 0; margin-top: 12px; } .gval-t.two { grid-template-columns: repeat(2, 1fr); } .gval-t .ssf-t b { font-size: 22px; }
+.gpos .pitch { width: auto; height: 300px; margin: 0 auto; } .gpos .legend { display: none; } .gpos-r { display: flex; flex-direction: column; gap: 14px; height: 100%; } .gpos-f { display: grid; gap: 10px; margin-top: auto; } .gpos-f .ssf-t b { font-size: 20px; } .gpos .tag { font-size: 15px; padding: 6px 10px; }
+.gpos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; flex: 1; min-height: 0; } .gpos-l { flex-direction: column; align-items: flex-start; }
 .rd-conf { margin: 6px 0 0; font-size: 12.5px; color: var(--muted); }
 .ovl { margin: 2px 0 8px; } .ovl p { margin: 0 0 5px; } .ovl .note { margin: 5px 0 0; }
 .ovl-tr { position: relative; height: 12px; border-radius: 6px; background: linear-gradient(90deg, #151e27 33%, #18222c 33% 66%, #1b2631 66%); }
@@ -2323,6 +2338,57 @@ function secUse() {
 // tick = the limit (ROLE_LIMIT_PCT, the 70th percentile). Under PERF_MIN there is no score: one line, the gate box sits in the pizza card.
 const fmtRS = (k, v) => { const u = META.role_stats?.[k]?.[1]; return v == null ? '–' : u === '%' ? `${v >= 99.95 ? 100 : v.toFixed(1)}%` : v.toFixed(Math.abs(v) >= 10 ? 1 : 2); };
 const ordN = n => n + (Math.floor(n / 10) % 10 === 1 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th'));
+// ---- Gated Moneyball Overview (under PERF_MIN): totals and previews, no percentile claims ----
+const nat1 = p => (p.natural_positions || '').split(';')[0].replace('STC', 'ST');
+function secGateRead() {
+  const p = ppx.p, mins = p.s_minutes || 0, left = PERF_MIN - mins, apps = p.s_apps ?? 0;
+  const verdict = mins ? `${p.age}, ${nat1(p)}, ${esc(p.club_name || 'free agent')}. ${mins.toLocaleString()} min ${p.s_starts ? `in ${p.s_starts} starts` : 'as a sub'}, ${apps} apps: ${p.s_goals ?? 0} G, ${p.s_assists ?? 0} A`
+    : `No minutes yet · ${p.age} yrs · ${esc(p.club_name || 'Free agent')}`;
+  const chips = ['Role fit', 'Percentile pizza', 'Similar players'].map(t => `<span class="pill gate-chip">${t}</span>`).join('');
+  return `${h3i('where', 'Profile read', 'small sample · no percentiles yet')}
+    <div class="rd-grid"><div><p class="rd-id"><b>${verdict}</b></p>
+      ${mins ? `<div class="rd-pos">${POSITIONS.map(k => [k, p[posKey(k)] ?? 0]).filter(x => x[1] >= 9).sort((x, y) => y[1] - x[1]).map(([k, v]) => `<span class="tag">${k} <small>${famTxt(v)}</small></span>`).join('')}</div>` : ''}
+      ${mins ? `<p class="rd-conf"><b style="color:${C.bad}">Low confidence</b> · ${p.s_starts ?? 0} starts · ${p.s_substitute_appearances ?? 0} sub</p>` : `<p class="rd-conf"><b>Debut watch:</b> his first ${PERF_MIN} league minutes unlock the read below.</p>`}</div>
+      <div class="gate-m"><div class="gate-bar" role="img" aria-label="${esc(`${mins} of ${PERF_MIN} league minutes`)}"><i style="width:${pctW(mins / PERF_MIN)}"></i></div>
+        <p><b class="mono">${mins.toLocaleString()} / ${PERF_MIN}</b> <span>· ${left.toLocaleString()} min to unlock</span></p><div class="rd-chips">${chips}</div></div></div>`;
+}
+function secSsf() {
+  const p = ppx.p, m = p.s_minutes || 0, p90 = k => m ? ((p[k] || 0) * 90 / m).toFixed(2) + ' / 90' : '';
+  const t = (l, v, sub) => `<div class="ssf-t"><span>${l}</span><b>${v}</b><small>${sub}</small></div>`;
+  const tiles = [t('Appearances', p.s_apps ?? 0, `${p.s_starts ?? 0} starts · ${p.s_substitute_appearances ?? 0} sub`), t('League minutes', m.toLocaleString(), `${m && p.s_apps ? Math.round(m / p.s_apps) : 0} per app`),
+    t('Goals', p.s_goals ?? 0, p90('s_goals')), t('Assists', p.s_assists ?? 0, p90('s_assists')), t('Shots', p.s_shots ?? 0, p90('s_shots')), t('Key passes', p.s_key_passes ?? 0, p90('s_key_passes'))].join('');
+  return `${h3i('level', 'Season so far', 'raw totals this season')}
+    <div class="ssf2"><div class="ssf-g">${tiles}</div><div class="ssf-v">${histChart('Value', [['value', 'Value']], money)}</div></div>
+    <p class="ssf-f">Avg rating <b>${p.s_avg_rating ? p.s_avg_rating.toFixed(2) : '–'}</b> · Player of the match <b>${p.s_player_of_the_match ?? 0}</b> · Cards <b>${p.s_yellow_cards ?? 0} Y · ${p.s_red_cards ?? 0} R</b></p>`;
+}
+const PREV = [['Goals', 's_goals'], ['xG', 's_expected_goals'], ['xA', 's_expected_assists'], ['Shots', 's_shots'], ['Key passes', 's_key_passes'], ['Dribbles', 's_dribbles'], ['Tackles won', 's_tackles_completed'], ['Passes completed', 's_passes_completed']];
+function secPrev() {
+  const { p, grp, bench, sim } = ppx, m = p.s_minutes || 0, pool = bench?.pool || [], v = (x, k) => x.s_minutes ? (x[k] || 0) * 90 / x.s_minutes : null;
+  // Bar scale: twice the median of his position with PERF_MIN+ min, so the dashed rule (the median) sits mid-bar. No percentile is claimed.
+  const bars = PREV.map(([l, k]) => { const me = v(p, k), md = median(pool.map(x => v(x, k))), max = Math.max(me ?? 0, 2 * (md || 0)) || 1;
+    return `<div class="pv-r" title="${esc(`${l}: ${me == null ? '–' : me.toFixed(2)} per 90${md != null ? ` · median ${plural(grp)} with ${PERF_MIN}+ min ${md.toFixed(2)}` : ''}`)}"><span>${l}</span><i class="pv-t"><i style="width:${pctW((me ?? 0) / max)}"></i>${md ? `<em style="left:${pctW(md / max)}"></em>` : ''}</i><b class="mono">${me == null ? '–' : me.toFixed(2)}</b></div>`; }).join('');
+  const rows = sim?.rows || [];
+  const simB = !sim ? '<span class="sk" style="height:90px;width:100%"></span>' : rows.length ? `<div class="sim-mini">${rows.slice(0, 3).map(r => simRow(r)).join('')}</div>`
+    : `<div class="gate-mini"><b>Comparable minutes</b><p class="note">Players this close get matched once he has ${PERF_MIN} min.</p><span class="pill gate-chip">Similar players</span></div>`;
+  return `${h3i('pizza', 'Provisional per-90', `raw · dashed = median ${plural(grp)} with ${PERF_MIN}+ min`)}<div class="pv">${bars}</div>
+    <p class="note">Percentiles at ${PERF_MIN} min: ${m.toLocaleString()} min is too small a sample to rank him.</p>
+    <div class="pv-sim">${h3i('similar', 'Similar players', '<span class="pill gate-chip">provisional</span>')}${simB}</div>`;
+}
+function secGatePos() {
+  const p = ppx.p, pos = POSITIONS.map(k => [k, p[posKey(k)] ?? 0]).filter(x => x[1] >= 9).sort((x, y) => y[1] - x[1]);
+  const sq = p.contract_squad_status ? p.contract_squad_status.replaceAll('_', ' ') : '';
+  const t = (l, v) => `<div class="ssf-t"><span>${l}</span><b>${v}</b></div>`;
+  return `${h3i('where', 'Where he plays', 'familiarity in words')}<div class="gpos"><div>${pitchMap(p)}</div>
+    <div class="gpos-r"><div class="rd-pos gpos-l">${pos.map(([k, v]) => `<span class="tag">${k} <small>${famTxt(v)}</small></span>`).join('') || '<span class="note">No position rated.</span>'}</div>
+      <div class="gpos-f">${t('Age', p.age)}${p.months_left != null ? t('Contract', `${(p.months_left / 12).toFixed(1)} yrs`) : ''}${sq ? t('Squad role', esc(sq)) : ''}</div></div></div>`;
+}
+function secGateVal() {
+  const p = ppx.p, h = (p.history || []).filter(r => r.value != null), mx = h.length ? h.reduce((a, b) => b.value > a.value ? b : a) : null;
+  const t = (l, v, sub) => `<div class="ssf-t"><span>${l}</span><b>${v}</b><small>${sub}</small></div>`;
+  const vt = h.length >= 2 ? `<div class="gval-t">${t('First', money(h[0].value), dDate(h[0].date))}${t('Peak', money(mx.value), dDate(mx.date))}${t('Now', money(h.at(-1).value), dDate(h.at(-1).date))}</div>` : '';
+  const wt = `<div class="gval-t two">${t('Wage', wage(p.contract_wage), 'contract wage')}${t('Contract', p.months_left != null ? `${p.months_left} mo` : '–', p.contract_end ? `until ${dDate(p.contract_end)}` : 'left')}</div>`;
+  return `${h3i('dev', 'Value so far', 'one snapshot per save load')}<div class="gval">${histChart('Value', [['value', 'Value']], money)}</div>${vt}${wt}`;
+}
 function secRoleMB() {
   const { p, grp } = ppx, fit = p.stat_roles || {}, lim = META.role_limit_pct || 70, mins = p.s_minutes || 0;
   const roles = Object.keys(fit).map(r => [r, p['srole_' + r]]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
@@ -2383,7 +2449,7 @@ function secKpis(x = ppx) {
   out.push(k('Performance', perf ?? '–', perf != null ? pctColor(perf) : C.muted, perf != null ? 'index, his league' : `under ${PERF_MIN} min`));
   out.push(k('Avg rating', p.s_avg_rating ? p.s_avg_rating.toFixed(2) : '–', p.s_avg_rating ? ratingColor(p.s_avg_rating) : C.muted, `${p.s_apps ?? 0} apps · ${mins.toLocaleString()} min`));
   const ask = p.free_agent ? 'Free' : p.transfer_value == null ? 'Not for sale' : money(p.transfer_value);
-  out.push(k('Value', ask, null, FAIR && p.deal_score != null ? `${Math.abs(Math.round(p.deal_score))}% ${p.deal_score >= 0 ? 'under' : 'over'} fair value` : FAIR && mb && mins < FAIR_MIN ? `No fair value under ${FAIR_MIN} min` : 'transfer value'));
+  out.push(k('Value', ask, null, FAIR && p.deal_score != null ? `${Math.abs(Math.round(p.deal_score))}% ${p.deal_score >= 0 ? 'under' : 'over'} fair value` : FAIR && mb && mins < FAIR_MIN ? `Fair value at ${FAIR_MIN}+ min` : 'transfer value'));
   out.push(k('Wage', wage(p.contract_wage), null, p.free_agent ? 'asking, free agent' : p.contract_end ? `until ${esc(p.contract_end)}` : 'no contract'));  // a free agent's stored end date is stale
   return [...out.slice(-2), ...out.slice(0, -2)].join('');  // value and wage lead
 }
@@ -2693,7 +2759,10 @@ const PP_PAGES = {
   fair: [['over', 'Overview', ['role', 'simmini', 'attr', 'canvas', 'sg', 'radar']], ['stats', 'Statistics', ['swarm', 'pizza', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
   moneyball: [['over', 'Overview', ['read', 'role', 'pizza', 'simmini']], ['stats', 'Statistics', ['swarm', 'stats']], ['similar', 'Similar players', ['similar']], ['price', 'Price', ['pverdict', 'plens', 'pmarket', 'phist']], ['contract', 'Contract', ['contract', 'clauses', 'club', 'traits']]],
 };
-const ppPages = () => PP_PAGES[MODE] || PP_PAGES.full;
+// Moneyball under PERF_MIN: the Overview swaps to a gated grid (ui-ux-designer, owner-approved), g1 = some minutes, g0 = none.
+const ppGate = () => MODE !== 'moneyball' || !ppPlayer || (ppPlayer.s_minutes || 0) >= PERF_MIN ? '' : ppPlayer.s_minutes ? 'g1' : 'g0';
+const ppPages = () => { const pp = PP_PAGES[MODE] || PP_PAGES.full, g = ppGate();
+  return g ? pp.map(x => x[0] === 'over' ? ['over', x[1], g === 'g1' ? ['gread', 'ssf', 'prev'] : ['gread', 'pos', 'val']] : x) : pp; };
 const ppCards = () => ppPages().flatMap(x => x[2]);
 // This season at a glance, on the tab row of every page and mode (stats are visible in all three): the numbers people look for first.
 function seasonStrip(p, gk) {
@@ -2713,7 +2782,7 @@ function simMini(n, more = true) {
   const s = ppx.sim; if (!s) return '<span class="sk" style="height:120px;width:100%"></span>';
   return s.rows.length ? `<div class="sim-mini">${s.rows.slice(0, n).map(r => simRow(r)).join('')}</div>${more ? '<button class="link" data-ppgo="similar">All similar players →</button>' : ''}` : '<p class="note">No close match found.</p>';
 }
-const PP_FN = { kpis: secKpis, hero: secHero, deal: secDeal, sg: secSG, dev: secDev, attr: secAttr, role: secRole, canvas: secCanvas, read: secRead, swarm: secSwarm, pizza: secPizza,
+const PP_FN = { kpis: secKpis, hero: secHero, deal: secDeal, sg: secSG, dev: secDev, attr: secAttr, role: secRole, canvas: secCanvas, read: secRead, gread: secGateRead, ssf: secSsf, prev: secPrev, pos: secGatePos, val: secGateVal, swarm: secSwarm, pizza: secPizza,
   radar: () => profileInner(ppx.p), rarch: secArch, rvs: secVs, rfit: secFit, rmind: secMind, rrisk: secRisk, ruse: secUse, simmini: () => h3i('similar', 'Similar players', '<button class="link" data-ppgo="similar">See all →</button>') + simMini(MODE === 'moneyball' ? 7 : 3, false) };
 // Development over the snapshots ScoutSheet keeps each time this career's save is loaded (server: snapshot()).
 // series: [key, label, dashed]; one small line chart, one shared scale (CA and PA, or one measure alone).
@@ -2792,14 +2861,14 @@ function openProfile(uid) {
 async function renderProfile() {
   const box = $('#player'), uid = st.pp, seq = ++ppSeq, alive = () => seq === ppSeq && st.page === 'player';
   ppPlayer = null; ppx = null;
-  const pages = ppPages(), area = (id, ks, k) => id === 'over' || id === 'price' || ks.includes('swarm') ? ` style="grid-area:${k}"` : '';
+  let pages = ppPages(); const area = (id, ks, k) => id === 'over' || id === 'price' || ks.includes('swarm') ? ` style="grid-area:${k}"` : '';
   box.innerHTML = `<div class="pp-in"><div class="pp-head"><div class="pp-id"><span class="sk" style="height:30px;width:40%"></span><span class="sk" style="margin-top:10px;width:30%"></span></div></div>
     <div class="pp-body pg-over m-${MODE}">${pages[0][2].map(k => `<section class="pp-card"${area('over', [], k)}><span class="sk" style="width:40%"></span><span class="sk" style="margin-top:12px;height:120px;width:100%"></span></section>`).join('')}</div></div>`;
   let p;
   try { const r = await api('/api/player/' + uid + mq()); if (!r.ok) throw r.status; p = await r.json(); }
   catch { if (alive()) box.innerHTML = emptyState('Player not found', 'The server could not load this player: it may be restarting, or this save does not have him. Go back or try again in a moment.'); return; }
   if (!alive()) return;
-  ppPlayer = p; ppRole = null; ppTab = 'over';
+  ppPlayer = p; ppRole = null; ppTab = 'over'; pages = ppPages();
   lsSet('fm26_recent', [{ uid: p.uid, name: p.name, club: p.club_name }, ...ls('fm26_recent', []).filter(x => x.uid !== p.uid)].slice(0, 10));  // Compare's picker
   const grp = groupOf(p), mb = MODE === 'moneyball';
   const x = ppx = { p, grp, alive, bench: null, sim: null, abil: null, all: null };
@@ -2817,7 +2886,7 @@ async function renderProfile() {
       </div>
     </header>
     <div class="pp-tabrow"><nav class="pp-tabs" role="tablist" aria-label="Profile pages">${pages.map(([id, l], i) => `<button role="tab" id="ppt-${id}" data-pptab="${id}" aria-selected="${!i}" tabindex="${i ? -1 : 0}" aria-controls="ppg-${id}">${l}</button>`).join('')}</nav>${seasonStrip(p, grp === 'GK')}</div>
-    ${pages.map(([id, , ks], i) => `<div class="pp-body pg-${id} m-${MODE}" id="ppg-${id}" data-page="${id}" role="tabpanel" aria-labelledby="ppt-${id}"${i ? ' hidden' : ''}>${ks.map(k => `<section class="pp-card" data-pp="${k}"${area(id, ks, k)}></section>`).join('')}</div>`).join('')}</article>`;
+    ${pages.map(([id, , ks], i) => `<div class="pp-body pg-${id} m-${MODE}${id === 'over' && ppGate() ? ' ' + ppGate() : ''}" id="ppg-${id}" data-page="${id}" role="tabpanel" aria-labelledby="ppt-${id}"${i ? ' hidden' : ''}>${ks.map(k => `<section class="pp-card" data-pp="${k}"${area(id, ks, k)}></section>`).join('')}</div>`).join('')}</article>`;
   ppPaint();
   $('#ppName', box).focus({ preventScroll: true });
   const again = () => { if (alive()) ppPaint(['kpis', ...ppCards()]); };
