@@ -938,6 +938,12 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .ac-list { position: absolute; left: 0; right: 0; top: calc(100% + 4px); background: var(--raise); border: 1px solid var(--line2); border-radius: var(--r); box-shadow: var(--shadow); z-index: 10; padding: 4px; }
 .ac-list:empty { display: none; }
 /* Sized by its content, like dialog.pal: a top margin and an auto bottom one (WebKit collapses fit-content here). */
+dialog.es.set.cmp { width: min(820px, calc(100vw - 32px)); } dialog.es.set.cmp[open] { display: block; }
+.cmp-r { display: grid; grid-template-columns: 1fr minmax(120px, 1.2fr) 1fr; align-items: center; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.cmp-r > :first-child { text-align: right; } .cmp-r > span { text-align: center; color: var(--muted); font-size: 12.5px; }
+.cmp-r b { font: 600 13px var(--f-mono); color: var(--text2); } .cmp-r b.win { color: var(--good); }
+.cmp-h { border-bottom: 0; padding-bottom: 8px; } .cmp-h div { font-size: 12.5px; color: var(--muted); } .cmp-h div b { display: block; font: 700 17px var(--f-body); color: var(--text); }
+.cmp-pz { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 dialog.es.set { width: min(660px, calc(100vw - 32px)); height: auto; max-height: calc(100vh - 80px); margin: 8vh auto auto; bottom: auto; overflow-y: auto; }
 .set .es-in { display: block; height: auto; }
 .set .es-body { overflow: visible; }
@@ -1146,6 +1152,12 @@ dialog.es.set { width: min(660px, calc(100vw - 32px)); height: auto; max-height:
     </div>
     <footer class="es-foot set-foot"><button class="btn" value="off">No thanks</button><button class="btn" value="on">Share usage stats</button></footer>
   </form>
+</dialog>
+<dialog id="cmp" class="es set cmp" aria-labelledby="cmpTitle">
+  <div class="es-in">
+    <header class="es-head"><h2 id="cmpTitle">Compare</h2><button type="button" class="icon-btn" data-cmp-close aria-label="Close">×</button></header>
+    <div id="cmpBody" class="es-body"></div>
+  </div>
 </dialog>
 <dialog id="load" class="pal" aria-labelledby="loadTitle">
   <header class="es-head"><h2 id="loadTitle">Load a save</h2><button type="button" class="icon-btn" data-load-close aria-label="Close">×</button></header>
@@ -2622,6 +2634,7 @@ async function renderProfile() {
   catch { if (alive()) box.innerHTML = emptyState('Player not found', 'The server could not load this player: it may be restarting, or this save does not have him. Go back or try again in a moment.'); return; }
   if (!alive()) return;
   ppPlayer = p; ppRole = null; ppTab = 'over';
+  lsSet('fm26_recent', [{ uid: p.uid, name: p.name, club: p.club_name }, ...ls('fm26_recent', []).filter(x => x.uid !== p.uid)].slice(0, 10));  // Compare's picker
   const grp = groupOf(p), mb = MODE === 'moneyball';
   const x = ppx = { p, grp, alive, bench: null, sim: null, abil: null, all: null };
   box.innerHTML = `<article class="pp-in" aria-labelledby="ppName">
@@ -2633,6 +2646,7 @@ async function renderProfile() {
       <div class="pp-act">
         <button class="icon-btn star star-btn" data-star="${p.uid}" data-name="${esc(p.name)}" data-club="${p.club_uid ?? ''}" aria-pressed="${shortlist.has(p.uid)}" aria-label="Shortlist ${esc(p.name)}" title="Shortlist (s)">★</button>
         <button class="btn primary" data-similar="${p.uid}">Find similar players</button>
+        <button class="btn" data-compare="${p.uid}">Compare</button>
         <button class="btn" data-offer="${p.uid}">Make an offer →</button>
       </div>
     </header>
@@ -3355,6 +3369,66 @@ function renderAC() {
   $('#ofSearch').setAttribute('aria-expanded', 'true');
 }
 
+// ---------- Compare ----------
+// Two players side by side: A from his profile, B picked from recently viewed, starred or a search. Green = the better of
+// the two on that line (lower for "lower is better" stats); what the mode hides stays hidden.
+let cmpA = null, cmpT, cmpSeq = 0;
+const cmpItem = (uid, name, sub) => `<button class="ac-item" data-cmp-pick="${uid}"><b>${esc(name)}</b><span class="muted">${esc(sub || 'Free agent')}</span></button>`;
+function openCompare(p) { if (!p) return; cmpA = p; cmpPick(); $('#cmp').showModal(); }
+function cmpPick() {
+  const recent = ls('fm26_recent', []).filter(x => x.uid !== cmpA.uid).slice(0, 6);
+  $('#cmpTitle').textContent = `Compare ${cmpA.name} with…`;
+  $('#cmpBody').innerHTML = `<input id="cmpQ" class="in" style="width:100%" placeholder="Find a player…" aria-label="Find a player to compare" autocomplete="off">
+    <div id="cmpHits" class="load-saves" style="margin-top:6px"></div>
+    ${recent.length ? `<div class="pal-g" style="padding-left:0">Recently viewed</div><div class="load-saves">${recent.map(x => cmpItem(x.uid, x.name, x.club)).join('')}</div>` : ''}
+    <div class="pal-g" style="padding-left:0">Starred</div><div id="cmpStars" class="load-saves"><span class="sk" style="width:100%;height:36px"></span></div>`;
+  $('#cmpQ').focus();
+  const ids = [...shortlist].filter(u => u !== cmpA.uid);
+  if (!ids.length) { $('#cmpStars').innerHTML = '<p class="note">No starred players yet: ★ a player to find him here.</p>'; return; }
+  api('/api/players', { shortlist: ids, start: 0, end: 30, mode: MODE }).then(r => r.ok ? r.json() : null).catch(() => null)
+    .then(d => { if ($('#cmpStars')) $('#cmpStars').innerHTML = (d?.rows || []).map(x => cmpItem(x.uid, x.name, x.club_name)).join('') || '<p class="note">Could not load your starred players.</p>'; });
+}
+function cmpSearch() {
+  clearTimeout(cmpT);
+  const q = $('#cmpQ').value.trim();
+  if (q.length < 2) { $('#cmpHits').innerHTML = ''; return; }
+  cmpT = setTimeout(async () => {
+    const seq = ++cmpSeq, r = await api('/api/players', { search: q, start: 0, end: 8, mode: MODE }).catch(() => null);
+    if (seq !== cmpSeq || !r || !r.ok || !$('#cmpHits')) return;
+    const rows = (await r.json()).rows.filter(x => x.uid !== cmpA.uid);
+    $('#cmpHits').innerHTML = rows.map(x => cmpItem(x.uid, x.name, x.club_name)).join('') || '<p class="note">No player found.</p>';
+  }, 200);
+}
+async function cmpShow(uid) {
+  const A = cmpA, seq = ++cmpSeq;
+  $('#cmpBody').innerHTML = '<span class="sk" style="width:100%;height:240px"></span>';
+  let B; try { const r = await api('/api/player/' + uid + mq()); if (!r.ok) throw r; B = await r.json(); }
+  catch { $('#cmpBody').innerHTML = emptyState('Player not found', 'The server could not load him. Try another player.'); return; }
+  if (seq !== cmpSeq) return;
+  $('#cmpTitle').textContent = 'Compare';
+  const row = (l, a, b, f = v => v ?? '–', lower = false, plain = false) => {
+    const w = a == null || b == null || a === b || plain ? '' : (a > b) !== lower ? 'a' : 'b';
+    return `<div class="cmp-r"><b class="${w === 'a' ? 'win' : ''}">${f(a)}</b><span>${l}</span><b class="${w === 'b' ? 'win' : ''}">${f(b)}</b></div>`;
+  };
+  const sub = t => `<div class="pal-g" style="padding-left:0;text-align:center">${t}</div>`, grp = groupOf(A);
+  const head = x => `<div><b>${flag(x.nationality_code)} ${esc(x.name)}</b>${esc(x.club_name || 'Free agent')} · ${x.age} yrs<br>${posChips(x.natural_positions)}</div>`;
+  const att = a => 'attributes_' + a, sec = (t, list) => { const l = list.filter(a => !hid(att(a)) && (A[att(a)] != null || B[att(a)] != null));
+    return l.length ? sub(t) + l.map(a => row(label(att(a)), A[att(a)], B[att(a)])).join('') : ''; };
+  const stats = (METRICS[grp] || METRICS.CM).map(k => { const [l, fn, , , lower] = M[k]; return row(l, fn(A), fn(B), v => v == null ? '–' : fmtM(k, v), lower); }).join('');
+  $('#cmpBody').innerHTML = `<div class="cmp-r cmp-h">${head(A)}<span><button class="link" data-cmp-again>Change player</button></span>${head(B)}</div>
+    <div class="cmp-r"><b>${feeHTML(A)}</b><span>Value</span><b>${feeHTML(B)}</b></div>
+    ${row('Wage', A.contract_wage, B.contract_wage, wage, false, true)}
+    ${hid('ability_current') ? '' : row('Current ability', A.ability_current, B.ability_current) + row('Potential ability', A.ability_potential, B.ability_potential)}
+    ${sec(grp === 'GK' ? 'Goalkeeping' : 'Technical', grp === 'GK' ? ATTR.goalkeeping : ATTR.technical)}${sec('Mental', ATTR.mental)}${sec('Physical', ATTR.physical)}
+    ${sub(`Season, per 90 · ${plural(grp)} metrics`)}${row('League minutes', A.s_minutes || 0, B.s_minutes || 0, v => v.toLocaleString(), false, true)}${stats}
+    ${sub('Season percentiles')}<div class="cmp-pz" id="cmpPz"></div>
+    <p class="note" style="text-align:center">Green = the better of the two on that line.</p>`;
+  const [ba, bb] = await Promise.all([ppBench(A, grp), ppBench(B, grp)]);
+  if (seq !== cmpSeq || !$('#cmpPz')) return;
+  const pz = (x, b) => Object.keys(b.pcs).length >= 3 ? pizza(grp, b.pcs) : `<p class="note">Percentiles need ${PERF_MIN} league minutes (${esc(x.name)}: ${(x.s_minutes || 0).toLocaleString()}).</p>`;
+  $('#cmpPz').innerHTML = pz(A, ba) + pz(B, bb);
+}
+
 // ---------- Mode & actions ----------
 function setMode(m, initial) {
   const was = MODE;
@@ -3688,6 +3762,10 @@ document.addEventListener('click', e => {
     toggleStar(+d.star, p ? p.name : d.name, p ? p.club_uid : (d.club === '' ? null : +d.club)); }
   else if (d.offer) { const p = shown(+d.offer); closeDrawer(); setPage('offers'); pickOfferPlayer(p); }
   else if (d.similar) { const p = shown(+d.similar); if (p) findSimilar(p); }
+  else if (d.compare) openCompare(shown(+d.compare));
+  else if (d.cmpPick) cmpShow(+d.cmpPick);
+  else if (d.cmpAgain != null) cmpPick();
+  else if (d.cmpClose != null) $('#cmp').close();
   else if (d.profile) openProfile(+d.profile);
   else if (d.ofi != null) pickOfferPlayer(of.list[+d.ofi]);
   else if (d.offee) { $('#ofFee').value = bare(money(+d.offee)); evalOffer(); }
@@ -3734,6 +3812,7 @@ document.addEventListener('input', e => {
     capSet(k, i >= st.length ? { m: 'none' } : { m: 'custom', v: st[i] }); }
   if (e.target.id === 'clubSearch') { clearTimeout(clubT); clubT = setTimeout(clubSearch, 250); }
   if (e.target.id === 'ofSearch') offerSearch();
+  if (e.target.id === 'cmpQ') cmpSearch();
   if (e.target.id === 'ofFee' || e.target.id === 'ofWage') evalOffer();
 });
 $('#offers').addEventListener('keydown', e => {
