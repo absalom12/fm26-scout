@@ -2863,9 +2863,10 @@ PP_FN.pverdict = () => {
       <div class="kpi"><span>Walk away above</span><b>${money(hi)}</b><small>top of the fair range</small></div></div>` : ''}${facts}`;
 };
 PP_FN.plens = () => { const { p } = ppx, ask = p.free_agent ? 0 : p.transfer_value, ls = LENSES.filter(l => l.id !== 'blend' && lensOk(l) && p[l.ffee] > 0);
+  const off = p.fair_fee > 0 && ls.some(l => Math.abs(p[l.ffee] / p.fair_fee - 1) > .02) ? `<p class="note">His fair value, <b>${money(p.fair_fee)}</b>, is this mode's own model; each dot is one lens on its own, so they can differ.</p>` : '';  // Kepa: one £6.0M dot vs a £5.8M fair value read as a bug
   const up = ls.filter(l => ask > 0 && p[l.ffee] >= ask).map(l => l.label), dn = ls.filter(l => ask > 0 && p[l.ffee] < ask).map(l => l.label);
   return secDeal().replace(h3i('cost', 'The deal equation', 'where each model prices him · line = asking · band = fair range'), h3i('vs', 'How sure is the model?', 'dot = one lens\'s fair fee · line = asking · band = fair range'))
-    + (up.length && dn.length ? `<p class="note">${up.join(', ')} price him above the asking; ${dn.join(', ')} below${dn.some(l => /Form|Performance/.test(l)) && up.some(l => /Ability|Attributes/.test(l)) ? ': you pay for the player, not this season' : ''}.</p>` : ''); };
+    + off + (up.length && dn.length ? `<p class="note">${up.join(', ')} price him above the asking; ${dn.join(', ')} below${dn.some(l => /Form|Performance/.test(l)) && up.some(l => /Ability|Attributes/.test(l)) ? ': you pay for the player, not this season' : ''}.</p>` : ''); };
 PP_FN.pmarket = () => { const { p, grp, bench } = ppx, pool = bench?.pool || [];
   return h3i('level', 'Against the market', `vs ${plural(grp)}`) + (bench ? strip('Asking value', pool.map(r => r.transfer_value), p.free_agent ? 0 : p.transfer_value, money, grp) + strip('Wage', pool.map(r => r.contract_wage), p.contract_wage, wage, grp) : '<span class="sk" style="height:120px;width:100%"></span>'); };
 PP_FN.phist = () => h3i('dev', 'How his price moved', 'one snapshot per save load') + `<div class="hist-sm">${histChart('Value', [['value', 'Value']], money)}${MODE === 'full' ? histChart('Ability', [['ca', 'CA'], ['pa', 'PA', true]])
@@ -3733,7 +3734,7 @@ function cmpSearch(now = false) {
   $('#cmpLists').hidden = q.length >= 2; hits.hidden = q.length < 2;
   if (q.length < 2) { hits.innerHTML = ''; return; }
   const run = async () => {
-    const seq = ++cmpSeq, r = await api('/api/players', { search: q, start: 0, end: 40, mode: MODE }).catch(() => null);  // more than fits: the list scrolls (owner)
+    const seq = ++cmpSeq, r = await api('/api/players', { search: q, start: 0, end: 40, mode: MODE, gender: cmpA.gender || undefined })  // same gender as A.catch(() => null);  // more than fits: the list scrolls (owner)
     if (seq !== cmpSeq || !r || !r.ok || !$('#cmpHits')) return;
     const rows = (await r.json()).rows.filter(x => x.uid !== cmpA.uid);
     hits.innerHTML = rows.map(cmpItem).join('') || '<p class="note">No player found.</p>';
