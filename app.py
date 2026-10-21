@@ -268,9 +268,10 @@ def extract(save_path, out_dir, players=True):
         # groups of one league, one-club tables...), so a league is the table itself, keyed by its position.
         nation = {c.uid: c.nation_id for c in s.clubs()}
         # a domestic league has clubs from one nation; continental tournaments that promote/relegate (women's
-        # champions league) span several
+        # champions league) span several. Many top flights (Portugal, Saudi Arabia, Mexico, Argentina) have no rules
+        # entry in the save at all: no rules = keep, only rules without promotion or relegation (cups) drop a table.
         leagues = club_leagues((i, t.club_count, [r.club_uid for r in t.rows]) for i, t in enumerate(tables)
-                               if (r := rules.get(t.competition_id)) and (r.promotion_places or r.relegation_places)
+                               if ((r := rules.get(t.competition_id)) is None or r.promotion_places or r.relegation_places)
                                and len({nation.get(r.club_uid) for r in t.rows} - {None}) <= 1)
         groups = [[r.team_id for r in t.rows] for t in tables]
         groups += [[f.home_team_id, f.away_team_id] for f in s.fixtures()]
@@ -833,6 +834,7 @@ class Query(BaseModel):
     gender: str | None = None    # "Men" | "Women" | "Unknown"
     wage_max: int | None = None  # weekly
     nations: list[str] = []      # country names; matches first or second nationality
+    home_grown: str | None = None  # "club" | "nation": home-grown at the managed club / in its nation
     mode: str = "full"           # "full" | "fair" (no CA/PA/hidden) | "moneyball" (stats only)
     fair_play: bool = False      # legacy alias for mode="fair"
     similar_to: int | None = None  # uid: with no explicit sort, closest players to him first
@@ -892,6 +894,11 @@ def build(q: Query):
     if q.nations:
         where.append("(list_contains(?, nationality) OR list_has_any(?, string_split(coalesce(second_nationalities, ''), ', ')))")
         args += [q.nations, q.nations]
+    if q.home_grown in ("club", "nation") and CLUB:  # exact id match: a substring search on "620" also hits 1620, 6201...
+        col, val = ("home_grown_club_uids", "?") if q.home_grown == "club" else \
+            ("home_grown_nation_ids", "(SELECT any_value(club_nation_id) FROM players WHERE club_uid = ?)")
+        where.append(f"list_contains(string_split(coalesce({col}, ''), ';'), CAST({val} AS VARCHAR))")
+        args.append(CLUB["club_uid"])
     if q.gender in ("Men", "Women"):
         where.append("gender = ?"); args.append(q.gender)
     elif q.gender == "Unknown":

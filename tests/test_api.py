@@ -358,3 +358,15 @@ def test_fm26_roles_use_known_attributes_positions_and_stats(scout):
     assert set(scout.STAT_ROLES) == set(scout.ROLES)
     assert all(set(d) <= set(scout.ROLE_STATS) for d in scout.STAT_ROLES.values())
     assert scout.ROLE_GROUP["advanced_playmaker"] == "AM" and scout.ROLE_GROUP["wide_midfielder"] == "W"
+
+
+def test_home_grown_filter_matches_exact_ids(squad, client):
+    con = squad.con()
+    con.execute("ALTER TABLE players ADD COLUMN home_grown_club_uids VARCHAR; ALTER TABLE players ADD COLUMN home_grown_nation_ids VARCHAR")
+    con.execute("ALTER TABLE players ADD COLUMN club_nation_id INT; UPDATE players SET club_nation_id = 139 WHERE club_uid = 1")
+    con.execute("UPDATE players SET home_grown_club_uids = '1;7' WHERE uid = 100")
+    con.execute("UPDATE players SET home_grown_club_uids = '11', home_grown_nation_ids = '139' WHERE uid = 101")  # 11 is not club 1
+    uids = lambda hg: sorted(r["uid"] for r in client.post("/api/players", json={"home_grown": hg, "end": 50}).json()["rows"])
+    assert uids("club") == [100]
+    assert uids("nation") == [101]
+    assert len(uids(None)) == 15

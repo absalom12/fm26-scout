@@ -1417,8 +1417,9 @@ try { shortlist = new Set(JSON.parse(localStorage.getItem('fm26_shortlist') || '
 const saveSL = () => { try { localStorage.setItem('fm26_shortlist', JSON.stringify([...shortlist])); } catch {} renderLists(); };
 // All search criteria live in F; the quick bar and the Edit search dialog both edit it.
 const F0 = () => ({ positions: [], age_min: null, age_max: null, value_max: null, wage_max: null, ca_min: null, pa_min: null, risks: false,
-  nations: [], months_max: null, squad: '', club_country: '', free_agent: false, on_loan: false, similar: null, min: {}, max: {} });
+  nations: [], months_max: null, squad: '', club_country: '', home_grown: '', free_agent: false, on_loan: false, similar: null, min: {}, max: {} });
 let F = F0();
+const HG = { club: 'Home-grown at my club', nation: 'Home-grown in my nation' };  // FM's two rules, server: Query.home_grown
 let saved = []; try { saved = JSON.parse(localStorage.getItem('fm26_searches') || '[]'); } catch {}
 const saveSearches = () => { try { localStorage.setItem('fm26_searches', JSON.stringify(saved)); } catch {} };
 
@@ -1509,7 +1510,7 @@ function query(extra = {}, f = F) {
     shortlist: !deals && st.preset === '__shortlist' ? [...shortlist] : null,
     positions: f.positions, age: [f.age_min, f.age_max], value_max: f.value_max, wage_max: f.wage_max,
     ca_min: hid('ability_current') ? null : f.ca_min, pa_min: hid('ability_potential') ? null : f.pa_min,
-    hide_hidden_risks: MODE === 'full' && f.risks, gender: gender(), nations: f.nations, mode: MODE, similar_to: f.similar?.uid ?? null,
+    hide_hidden_risks: MODE === 'full' && f.risks, gender: gender(), nations: f.nations, home_grown: f.home_grown || null, mode: MODE, similar_to: f.similar?.uid ?? null,
     ...extra, filters: { ...filters, ...(extra.filters || {}) } };
 }
 const refresh = () => grid && grid.purgeInfiniteCache();
@@ -1523,11 +1524,22 @@ function currentCols() {
 // only touches what changed (a column's width survives) and the order on screen is the order of the definitions.
 let ALL_COLS = new Set();
 const DEFS = new Map(), defOf = (c, hide) => { const d = DEFS.get(c) || DEFS.set(c, colDef(c)).get(c); return d.hide === hide ? d : DEFS.set(c, { ...d, hide }).get(c); };
+// The order the user dragged columns into (one list for every view and mode): columns in it take its order among
+// the slots they hold, the others keep their place, so a hidden column (CA/PA in Fair play) comes back where it was.
+const userOrder = order => {
+  const rank = new Map(ls('fm26_col_order', []).map((c, i) => [c, i])), mine = order.filter(c => rank.has(c)).sort((a, b) => rank.get(a) - rank.get(b));
+  return order.map(c => rank.has(c) ? mine.shift() : c);
+};
+function saveColOrder(e) {
+  if (!e.finished || !String(e.source).startsWith('ui')) return;  // a drag, not applyColumns
+  const shown = grid.getColumnState().filter(c => !c.hide).map(c => c.colId);
+  lsSet('fm26_col_order', [...shown, ...ls('fm26_col_order', []).filter(c => !shown.includes(c))]);
+}
 function gridColDefs() {
   const fixed = st.page === 'deals' && st.lens === 'attributes' ? FIXED.filter(c => !c.startsWith('ability_')) : FIXED;  // judged on attributes, not CA/PA
   const order = [...new Set([...fixed, ...currentCols()])].filter(c => ALL_COLS.has(c) && !hid(c)), show = new Set(order);
   const keep = grid ? [...Object.keys(grid.getFilterModel()), ...grid.getColumnState().filter(c => c.sort).map(c => c.colId)] : [];
-  return [...order.map(c => defOf(c, false)), ...[...new Set(keep)].filter(c => !show.has(c) && ALL_COLS.has(c)).map(c => defOf(c, true))];
+  return [...userOrder(order).map(c => defOf(c, false)), ...[...new Set(keep)].filter(c => !show.has(c) && ALL_COLS.has(c)).map(c => defOf(c, true))];
 }
 function applyColumns() {
   grid.setGridOption('columnDefs', gridColDefs());
@@ -1675,6 +1687,7 @@ function critList(f = F, cash = false) {
   if (f.months_max != null) L.push([`≤ ${f.months_max} months left`, () => f.months_max = null]);
   if (f.squad) L.push([esc(label(f.squad)), () => f.squad = '']);
   if (f.club_country) L.push([`Plays in ${esc(f.club_country)}`, () => f.club_country = '']);
+  if (f.home_grown) L.push([HG[f.home_grown], () => f.home_grown = '']);
   if (f.similar) L.push([`Most similar to ${esc(f.similar.name)}`, () => f.similar = null]);
   if (f.free_agent) L.push(['Free agents', () => f.free_agent = false]);
   if (f.on_loan) L.push(['On loan', () => f.on_loan = false]);
@@ -2807,7 +2820,7 @@ const esSecs = () => ES_SECS.filter(([k]) => MODE === 'moneyball' ? !['attr', 'r
 function esCounts() {
   const m = D.min, x = D.max, has = (o, k) => o[k] != null && !hid(k), nn = (...v) => v.filter(z => z != null).length, keys = o => Object.keys(o).filter(k => !hid(k));
   return { gen: (D.age_min != null || D.age_max != null) + D.positions.length + has(m, 'height_cm') + has(x, 'height_cm') + (D.value_max != null || has(m, 'transfer_value')) + (D.wage_max != null || has(m, 'contract_wage')), nat: D.nations.length,
-    money: nn(D.months_max) + ['months_left', 'deal_score'].filter(k => has(m, k)).length + !!D.squad + !!D.club_country + !!D.free_agent + !!D.on_loan,
+    money: nn(D.months_max) + ['months_left', 'deal_score'].filter(k => has(m, k)).length + !!D.squad + !!D.club_country + !!D.home_grown + !!D.free_agent + !!D.on_loan,
     attr: keys(m).filter(k => k.startsWith('attributes_') && !HID_A.includes(k)).length, stats: STATS_F.filter(([c]) => has(m, c)).length,
     roles: keys(m).filter(k => k.startsWith('role_')).length,
     hidden: nn(D.ca_min, D.pa_min) + !!D.risks + [...keys(m), ...keys(x)].filter(k => HID_A.includes(k) || k.startsWith('personality_')).length };
@@ -2848,6 +2861,7 @@ function renderES() {
         ${FAIR ? `<label class="fld">Deal ≥ <span class="muted">% under fair price</span><input class="in" data-esmin="deal_score" type="number" step="1" value="${D.min.deal_score ?? ''}" placeholder="any"></label>` : ''}
         <label class="fld">Squad status <select class="in" data-esf="squad"><option value="">Any</option>${SQUAD.map(s => `<option value="${s}" ${D.squad === s ? 'selected' : ''}>${label(s)}</option>`).join('')}</select></label>
         <label class="fld">Club country <select class="in" data-esf="club_country"><option value="">Any</option>${(META.nations || []).map(x => x.name).sort().map(x => `<option ${D.club_country === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></label>
+        <label class="fld">Home-grown <select class="in" data-esf="home_grown">${Object.entries({ '': 'Any', club: 'At my club', nation: 'In my nation' }).map(([v, l]) => `<option value="${v}" ${(D.home_grown || '') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       </div>
       <div class="es-row"><label class="check"><input type="checkbox" data-esb="free_agent" ${D.free_agent ? 'checked' : ''}> Free agents only</label>
         <label class="check"><input type="checkbox" data-esb="on_loan" ${D.on_loan ? 'checked' : ''}> On loan only</label></div>`),
@@ -3133,6 +3147,7 @@ function renderClub() {
             <button data-reco="needs" aria-pressed="${recoTab === 'needs'}">Fix weak spots</button>
             <button data-reco="tactic" aria-pressed="${recoTab === 'tactic'}">Fit the tactic</button></div>
           <span id="recoScope"></span>
+          ${basis() !== 'performance' ? '<span class="es-legend note reco-legend" style="margin:0 0 0 auto">Attribute colour: <span class="a1">1–6</span><span>7–14</span><span class="a4">15–20</span></span>' : ''}
         </div>
         <div id="recos"></div>
       </section>
@@ -3190,7 +3205,8 @@ function recoKeys(p) {
   const g = SLOT_GRP[p.target_pos] || groupOf(p), chip = (l, v, cls = '', t = l) => `<span class="ac" title="${esc(t)}">${l}<b class="${cls}">${v}</b></span>`;
   if (basis() === 'performance') return [...(KEY_STATS[g] || []).map(k => p[k] != null ? chip(STAT_ABBR[k], Number.isInteger(p[k]) ? p[k] : p[k].toFixed(k === 'stat_score' ? 0 : 2), '', label(k)) : '')].join('');
   return [MODE === 'full' && p.ability_current != null ? chip('CA', p.ability_current, '', 'Current ability') + chip('PA', p.ability_potential ?? '–', '', 'Potential ability') : '',
-    ...KEY_ATTRS[g].map(a => p['attributes_' + a] != null ? chip(ABBR[a] || a.slice(0, 3), p['attributes_' + a], tier(p['attributes_' + a]), label('attributes_' + a)) : '')].join('');
+    ...KEY_ATTRS[g].map(a => { const v = p['attributes_' + a];  // 3 colours here (weak / normal / strong), see .reco-legend
+      return v != null ? chip(ABBR[a] || a.slice(0, 3), v, v <= 6 ? 'a1' : v >= 15 ? 'a4' : '', `${label('attributes_' + a)} ${v}/20`) : ''; })].join('');
 }
 function loadRecos() {
   clearTimeout(recoT);
@@ -3591,6 +3607,7 @@ async function init() {
     onCellClicked: p => p.colDef.colId !== 'star' && p.data && !p.event?.target?.closest?.('.pname') && (p.event?.shiftKey ? openProfile(p.data.uid) : openPlayer(p.data.uid)),
     onCellKeyDown: p => p.event.key === 'Enter' && p.data && (p.colDef.colId === 'star' ? toggleStar(p.data.uid, p.data.name, p.data.club_uid) : p.event.shiftKey ? openProfile(p.data.uid) : openPlayer(p.data.uid)),
     onFilterChanged: renderSummary,
+    onColumnMoved: saveColOrder,
     datasource: { getRows: async p => {
       const q = query({ start: p.startRow, end: p.endRow, sort: p.sortModel, filters: p.filterModel }), key = JSON.stringify(q);
       const pending = prefetch?.key === key ? prefetch.r : null; prefetch = null;
@@ -3762,7 +3779,7 @@ $('#es').addEventListener('input', e => {
   const t = e.target, d = t.dataset;
   if (!D || t.id === 'esName' || d.cap) return;  // cap tiles go through capSet (document listener): a repaint here first would reset the thumb
   if (t.id === 'esNatQ') { const pos = t.selectionStart; renderES(); const q = $('#esNatQ'); q.focus(); q.setSelectionRange(pos, pos); return; }
-  if (d.esf) D[d.esf] = d.esf === 'squad' || d.esf === 'club_country' ? t.value : esNum(t.value);
+  if (d.esf) D[d.esf] = d.esf === 'squad' || d.esf === 'club_country' || d.esf === 'home_grown' ? t.value : esNum(t.value);
   else if (d.esminm) { const v = esNum(t.value); if (v == null) delete D.min[d.esminm]; else D.min[d.esminm] = v; }
   else if (d.esb) D[d.esb] = t.checked;
   else if (d.esab) {  // CA / PA gauge: 0 = any
