@@ -861,6 +861,7 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .es-lg { display: grid; gap: 6px; margin-top: 4px; grid-column: 1 / -1; } .es-lg .ac-wrap input { height: 36px; font-size: 14px; }
 .qf.bad { border-color: var(--bad); color: var(--bad); }
 .slot.oop .disc { outline: 2px dashed var(--fam); outline-offset: 2px; }
+.es-pctsw { margin: 2px 0 6px; }
 .nat-wrap { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 18px; align-items: start; }
 .nat-list { max-height: 230px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-sm); display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 .nat-list label { display: flex; align-items: center; gap: 8px; padding: 4px 10px; font-size: 13px; cursor: pointer; min-height: 36px; }
@@ -1768,7 +1769,7 @@ function critList(f = F, cash = false) {
   if (f.similar) L.push([`Most similar to ${esc(f.similar.name)}`, () => f.similar = null]);
   if (f.free_agent) L.push(['Free agents', () => f.free_agent = false]);
   if (f.on_loan) L.push(['On loan', () => f.on_loan = false]);
-  Object.entries(f.min).forEach(([c, v]) => !hid(c) && c !== 'transfer_value' && c !== 'contract_wage' && L.push([`${esc(short(c))} ≥ ${v}`, () => delete f.min[c]]));
+  Object.entries(f.min).forEach(([c, v]) => !hid(c) && c !== 'transfer_value' && c !== 'contract_wage' && L.push([c.startsWith('pct_') ? `${esc(short(c.slice(4)))} · top ${100 - v}%` : `${esc(short(c))} ≥ ${v}`, () => delete f.min[c]]));
   Object.entries(f.max).forEach(([c, v]) => !hid(c) && L.push([`${esc(short(c))} ≤ ${v}`, () => delete f.max[c]]));
   return L;
 }
@@ -2908,7 +2909,7 @@ function esCounts() {
   const m = D.min, x = D.max, has = (o, k) => o[k] != null && !hid(k), nn = (...v) => v.filter(z => z != null).length, keys = o => Object.keys(o).filter(k => !hid(k));
   return { gen: (D.age_min != null || D.age_max != null) + D.positions.length + has(m, 'height_cm') + has(x, 'height_cm') + (D.value_max != null || has(m, 'transfer_value')) + (D.wage_max != null || has(m, 'contract_wage')) + (D.leagues || []).filter(lgKnown).length + !!D.home_grown + !!D.free_agent, nat: D.nations.length,
     money: nn(D.months_max) + ['months_left', 'deal_score'].filter(k => has(m, k)).length + !!D.squad + !!D.on_loan,
-    attr: keys(m).filter(k => k.startsWith('attributes_') && !HID_A.includes(k)).length, stats: STATS_F.filter(([c]) => has(m, c)).length,
+    attr: keys(m).filter(k => k.startsWith('attributes_') && !HID_A.includes(k)).length, stats: STATS_F.filter(([c]) => has(m, c) || has(m, 'pct_' + c)).length,
     roles: keys(m).filter(k => k.startsWith('role_')).length,
     hidden: nn(D.ca_min, D.pa_min) + !!D.risks + [...keys(m), ...keys(x)].filter(k => HID_A.includes(k) || k.startsWith('personality_')).length };
 }
@@ -2923,6 +2924,8 @@ function renderES() {
   const pair = (name, lo, hi) => `<div class="fld"><span>${name}</span><div class="es-pair">${lo}<span>to</span>${hi}</div></div>`;
   const vis = c => cols.has(c) && !hid(c);
   const statIn = ([c, n]) => `<label class="fld">${n} <input class="in" data-esmin="${c}" type="number" step="any" min="0" value="${D.min[c] ?? ''}" placeholder="any"></label>`;
+  // Percentile mode: "top X%" of his position group (pct_<stat> >= 100 - X); per-90 minimums typed before stay active.
+  const pctIn = ([c, n]) => `<label class="fld">${n} <span class="muted">top %</span><input class="in" data-espct="${c}" type="number" step="1" min="1" max="99" value="${D.min['pct_' + c] != null ? 100 - D.min['pct_' + c] : ''}" placeholder="any"></label>`;
   const stats = STATS_F.filter(([c]) => vis(c)), sgrp = [['Volume & form', stats.filter(([c]) => !/_p90|_pct/.test(c))], ['Per 90 minutes', stats.filter(([c]) => c.includes('_p90'))], ['Success rates', stats.filter(([c]) => c.includes('_pct'))]];
   const roles = Object.entries(META.roles).filter(([r]) => cols.has('role_' + r)), rgrp = [...new Set(roles.map(([, gp]) => gp))];
   const esPos = Object.keys(PZ), unknownPos = D.positions.filter(p => !PZ[p]);  // FB / W picked in the toolbar: removable chips
@@ -2962,7 +2965,9 @@ function renderES() {
        <span role="group" aria-label="Shift every set attribute minimum" style="display:inline-flex;gap:6px">
         <button type="button" class="btn" data-esshift="-1" title="Lower every attribute minimum you set by 1">−1</button>
         <button type="button" class="btn" data-esshift="1" title="Raise every attribute minimum you set by 1">+1</button></span>`),
-    sec('stats', n.stats, 'Statistics', 'this season, minimums', sgrp.filter(([, l]) => l.length).map(([t, l]) => `<div class="es-sub">${t}</div><div class="es-fields">${l.map(statIn).join('')}</div>`).join('')),
+    sec('stats', n.stats, 'Statistics', 'this season, minimums', `<div class="seg es-pctsw" role="group" aria-label="Statistics as"><button type="button" data-espctmode="0" aria-pressed="${!esPct}">Per 90</button><button type="button" data-espctmode="1" aria-pressed="${esPct}">Percentile</button></div>
+      ${esPct ? `<p class="es-note">Top X% of his position (same gender), whole save, players with ${PERF_MIN}+ min. Players under ${PERF_MIN} min are left out.</p>` : ''}`
+      + sgrp.filter(([, l]) => l.length).map(([t, l], i) => `<div class="es-sub">${t}</div><div class="es-fields">${l.map(esPct && i ? pctIn : statIn).join('')}</div>`).join('')),
     noAttr ? '' : sec('roles', n.roles, 'Roles', 'minimum role score 0–100, grouped by position', `<div class="es-roles">${rgrp.map(gp => `<div><div class="es-sub">${gp} <small>${PZN[gp] || ''}</small></div><div class="es-tiles">${roles.filter(([, x]) => x === gp).map(([r]) => rangeRow('role_' + r, label('role_' + r), 100)).join('')}</div></div>`).join('')}</div>`),
     full ? sec('hidden', n.hidden, 'Hidden &amp; ability', 'Full mode only · hatched zone = players left out', `<div class="hd-top">
         ${abil('ca_min', 'Current ability')}${abil('pa_min', 'Potential ability')}
@@ -3043,8 +3048,9 @@ function lgSuggest() {
   $('#esLgQ').setAttribute('aria-expanded', 'true');
 }
 function lgPick(k) { if (!D.leagues.includes(k)) D.leagues = [...D.leagues, k]; renderES(); const q = $('#esLgQ'); q.value = ''; q.focus(); }
+let esPct = false;  // Statistics shows percentile boxes (reopens that way when one is set)
 function openES(target = 'grid') {
-  esFor = target; D = migF(clone(target === 'club' ? CF : F)); D.leagues ??= []; esCrit = [];
+  esFor = target; D = migF(clone(target === 'club' ? CF : F)); D.leagues ??= []; esCrit = []; esPct = Object.keys(D.min).some(k => k.startsWith('pct_'));
   $('#esName').value = ''; $('#esNatQ') && ($('#esNatQ').value = '');
   if (target === 'club') esCap0 = CLUB_CAPS.map(([k, f]) => D[f] = capVal(k));  // the header tiles ARE these filters while the dialog is open
   if (target === 'grid' && st.page !== 'scout' && st.page !== 'deals') { st.page = '-'; setPage('scout'); }
@@ -4053,6 +4059,7 @@ $('#es').addEventListener('click', e => {
   else if (d.esrm != null) { const i = +d.esrm, top = $('#esBody').scrollTop; esCrit[i]?.[1](); renderES(); $('#esBody').scrollTop = top;
     ($(`#esStrip [data-esrm="${Math.min(i, esCrit.length - 1)}"]`) || $('#esRail button'))?.focus(); }
   else if (d.esg != null) { D.gender = d.esg; $$('[data-esg]').forEach(b => b.setAttribute('aria-pressed', b === t)); esLive(); }
+  else if (d.espctmode != null) { esPct = d.espctmode === '1'; renderES(); }
   else if (d.eslg) lgPick(d.eslg);
   else if (d.eslgRm) { D.leagues = D.leagues.filter(x => x !== d.eslgRm); renderES(); }
   else if (d.esnatRm) { D.nations = D.nations.filter(x => x !== d.esnatRm); renderES(); }
@@ -4085,6 +4092,7 @@ $('#es').addEventListener('input', e => {
   }
   else if (d.esnat) { D.nations = t.checked ? [...D.nations, d.esnat] : D.nations.filter(x => x !== d.esnat); }
   else if (d.esmin) { if (t.value === '') delete D.min[d.esmin]; else D.min[d.esmin] = Number(t.value); }
+  else if (d.espct) { const n = Math.round(Number(t.value)); if (t.value === '') delete D.min['pct_' + d.espct]; else if (n >= 1 && n <= 99) D.min['pct_' + d.espct] = 100 - n; }
   else if (d.esmax) { if (t.value === '') delete D.max[d.esmax]; else D.max[d.esmax] = Number(t.value); }
   else if (d.rmin || d.rmax) {
     const isMax = d.rmax != null, col = d.rmin || d.rmax, v = Number(t.value), off = isMax ? v >= Number(t.max) : v <= 0;

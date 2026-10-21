@@ -423,6 +423,16 @@ def add_stat_score():
         FROM p LEFT JOIN r USING (uid)""")
 
 
+def add_stat_pcts():
+    # pct_<stat>: percentile of each per-90 / success-rate stat in his position group and gender, whole save, PERF_MIN+
+    # minutes (others NULL). Edit search's "top X%" filters on pct_<stat> >= 100 - X.
+    cols = [c for (c,) in con().execute("SELECT column_name FROM (DESCRIBE players)").fetchall()
+            if c.startswith("s_") and c.endswith(("_p90", "_pct"))]
+    ranks = ", ".join(f"round(100 * percent_rank() OVER (PARTITION BY gender, stat_group ORDER BY {c}), 1) AS pct_{c}" for c in cols)
+    con().execute(f"""CREATE OR REPLACE TABLE players AS SELECT p.*, {', '.join(f'CASE WHEN p.{c} IS NOT NULL THEN e.pct_{c} END AS pct_{c}' for c in cols)}
+        FROM players p LEFT JOIN (SELECT uid, {ranks} FROM players WHERE s_minutes >= {PERF_MIN} AND stat_group IS NOT NULL) e USING (uid)""")
+
+
 # Moneyball role fit: the season-stats twin of ROLES. Stat -> (label, unit, SQL value, lower is better).
 ROLE_STATS = {
     "save_pct": ("Save %", "%", "100.0 * (coalesce(s_saves_held, 0) + coalesce(s_saves_parried, 0) + coalesce(s_saves_tipped, 0)) / nullif(s_shots_on_target_faced, 0)", False),
@@ -745,6 +755,7 @@ def load(d=None):
     _step(.5, 1, "Scoring players")
     if has_s:
         add_stat_score()
+        add_stat_pcts()
         add_stat_roles()
     add_deals()
     global COLS, CLUB, MODE_HIDDEN, VISIBLE

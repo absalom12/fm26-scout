@@ -403,3 +403,15 @@ def test_club_fills_every_slot(squad, client):
     assert all(s["starter"] for s in d["slots"])
     assert d["slots"][5]["starter"]["out_of_position"] and d["slots"][8]["starter"]["out_of_position"]
     assert len({s["starter"]["uid"] for s in d["slots"]}) == 11
+
+
+def test_stat_percentiles_rank_inside_position_and_minutes(scout):
+    con = scout.con()
+    con.execute("""CREATE OR REPLACE TABLE players AS SELECT * FROM (VALUES
+        (1, 'Men', 'ST', 900, 0.1), (2, 'Men', 'ST', 900, 0.5), (3, 'Men', 'ST', 900, 0.9),
+        (4, 'Men', 'ST', 100, 2.0),    -- under the minutes gate: no percentile, and not a peer
+        (5, 'Men', 'CB', 900, 0.2)     -- another group: ranks alone
+        ) t(uid, gender, stat_group, s_minutes, s_goals_p90)""")
+    scout.add_stat_pcts()
+    pct = dict(con.execute("SELECT uid, pct_s_goals_p90 FROM players").fetchall())
+    assert pct == {1: 0.0, 2: 50.0, 3: 100.0, 4: None, 5: 0.0}
