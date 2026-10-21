@@ -1043,6 +1043,7 @@ dialog.es.set { width: min(660px, calc(100vw - 32px)); height: auto; max-height:
 .cmp .vf { align-self: center; }
 .pkg { margin-top: 10px; font-size: 13px; color: var(--text2); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .update { position: fixed; left: 16px; bottom: 16px; z-index: 50; padding: 10px 14px; border-radius: var(--r); background: var(--accent); color: #07090c; font-weight: 600; font-size: 13px; text-decoration: none; box-shadow: 0 6px 24px rgba(0,0,0,.4); }
+.save-strip { display: flex; gap: 10px; align-items: center; padding: 8px 16px; background: var(--accent-soft); color: var(--text2); font-size: 13px; border-bottom: 1px solid var(--line); } .save-strip > span { margin-right: auto; } .save-strip[hidden] { display: none; }
 .nfs-banner { display: flex; gap: 10px; align-items: center; padding: 10px 12px; margin-bottom: 14px; border-radius: var(--r); background: var(--bad-soft); color: var(--text2); font-size: 13px; }
 .lens-mini span { font: 600 11px var(--f-mono); margin-left: 6px; }
 .legend-row { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 6px; font-size: 12px; color: var(--muted); }
@@ -1141,6 +1142,7 @@ dialog.es.set { width: min(660px, calc(100vw - 32px)); height: auto; max-height:
   <input id="file" type="file" accept=".fm" hidden>
   <div id="progress" class="progress" aria-hidden="true"></div>
 </header>
+<div id="saveStrip" class="save-strip" role="status" hidden></div>
 
 <!-- Quick filters (Scout + Deal Finder): essentials only, the rest lives in Edit search -->
 <div class="bar only-grid" role="toolbar" aria-label="Quick filters">
@@ -4179,6 +4181,25 @@ const fitZoom = () => { const f = Math.min(innerWidth / 1512, innerHeight / 827)
   for (const w of [1720, 1560, 1400]) r.classList.toggle('lw-' + w, innerWidth / app <= w);
   r.classList.toggle('pp-short', h < 800); r.classList.toggle('pp-vshort', h < 720); };
 addEventListener('resize', fitZoom); fitZoom();
+// The save loaded from FM's folder is tracked: when FM writes it again (or a newer save of the same club), offer a
+// reload. Never automatic. "Later" hides it until a different change (kept for this session only).
+let watchLater = '';
+async function saveWatch() {
+  const r = await fetch('/api/save-watch').then(x => x.ok ? x.json() : {}).catch(() => ({})), el = $('#saveStrip');
+  const key = r.changed ? 'c:' + r.changed : r.newer ? 'n:' + r.newer : '';
+  if (!key || key === watchLater || uploading) { if (!key) el.hidden = true; return; }
+  el.innerHTML = r.changed
+    ? `<span>Your save changed in FM. Reload now? <span class="muted">(about 1 minute)</span></span><button class="btn primary" data-watch-go="${esc(r.changed)}">Reload</button>`
+    : `<span>A newer save of your ${esc(r.club || '')} career: <b>${esc(r.newer)}</b> · ${esc(dDate(r.game_date))}. Switch to it?</span><button class="btn primary" data-watch-go="${esc(r.newer)}">Switch</button>`;
+  el.insertAdjacentHTML('beforeend', `<button class="btn" data-watch-later="${esc(key)}">Later</button>`);
+  el.hidden = false;
+}
+$('#saveStrip').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  $('#saveStrip').hidden = true;
+  if (t.dataset.watchGo) loadNamed(t.dataset.watchGo); else watchLater = t.dataset.watchLater;
+});
+saveWatch(); setInterval(saveWatch, 30000);
 ping(); setInterval(ping, 30000);  // the server quits after 10 min without a ping (or 15 s after the tab closes)
 setFair(FAIR);
 addEventListener('pagehide', () => navigator.sendBeacon('/api/bye'));
