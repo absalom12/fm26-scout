@@ -63,7 +63,11 @@ async def local_only(request: Request, call_next):
         return JSONResponse({"detail": "forbidden"}, status_code=403)
     if int(request.headers.get("content-length") or 0) > MAX_UPLOAD:
         return JSONResponse({"detail": "too large"}, status_code=413)
-    return await call_next(request)
+    t0 = time.monotonic()
+    r = await call_next(request)
+    if (dt := time.monotonic() - t0) > 3:  # diagnostic: requests stalled ~30 s on 2026-10-21, cause not found yet
+        print(f"SLOW {dt:.1f}s {request.method} {request.url.path} threads={threading.active_count()}", file=sys.stderr, flush=True)
+    return r
 
 
 @app.exception_handler(Exception)
