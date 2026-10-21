@@ -689,7 +689,10 @@ dialog::backdrop { background: rgba(3,6,9,.6); backdrop-filter: blur(2px); }
 .cap output { font: 700 15px/1 var(--f-mono); color: var(--faint); padding-right: 22px; }
 .cap.on output { color: var(--text); } .cap.custom.on output { color: var(--mode); }
 .cap output.tick { animation: esTick .4s var(--ease); }
-.cap input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; } .cap input:active { cursor: grabbing; }
+/* the range only covers the ruler at the bottom: a click on the number types it (the editor's own input stays visible) */
+.cap { cursor: text; } .cap output { text-decoration: underline dotted var(--line2); text-underline-offset: 3px; }
+.cap input[type=range] { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 14px; margin: 0; opacity: 0; cursor: ew-resize; } .cap input[type=range]:active { cursor: grabbing; }
+.cap.line input[type=range] { height: 10px; }
 .cap-x { position: absolute; z-index: 1; right: 5px; bottom: 5px; height: 20px; min-width: 20px; padding: 0 6px; border: 1px solid var(--line2); border-radius: 10px; background: var(--bg2); color: var(--text2); font: 600 11px/18px var(--f-display); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
 .cap-x:hover { color: var(--text); border-color: var(--mode); } .cap-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .cap-x.x { padding: 0; font: 400 15px/18px var(--f-body); }
@@ -1581,7 +1584,7 @@ function query(extra = {}, f = F) {
   return { search: $('#search').value.trim(),
     preset: deals ? lens().preset : st.preset && st.preset !== '__shortlist' ? st.preset : null,
     shortlist: !deals && st.preset === '__shortlist' ? [...shortlist] : null,
-    positions: f.positions, age: f.age_min != null && f.age_max != null && f.age_min > f.age_max ? [f.age_max, f.age_min] : [f.age_min, f.age_max],  // 25-18 means 18-25 value_max: f.value_max, wage_max: f.wage_max,
+    positions: f.positions, age: f.age_min != null && f.age_max != null && f.age_min > f.age_max ? [f.age_max, f.age_min] : [f.age_min, f.age_max],  /* 25-18 = 18-25 */ value_max: f.value_max, wage_max: f.wage_max,
     ca_min: hid('ability_current') ? null : f.ca_min, pa_min: hid('ability_potential') ? null : f.pa_min,
     hide_hidden_risks: MODE === 'full' && f.risks, gender: gender(), nations: f.nations, home_grown: f.home_grown || null, leagues: (f.leagues || []).filter(lgKnown), mode: MODE, similar_to: f.similar?.uid ?? null,
     ...extra, filters: { ...filters, ...(extra.filters || {}) } };
@@ -3079,7 +3082,11 @@ function swapSlots(a, b) {
   if (B) p[a] = B.uid; if (A) p[b] = A.uid;
   setPins(p);
 }
-const parseMoney = s => { const m = String(s).trim().replace(/[£€$,\s]/g, '').match(/^(\d+(?:\.\d+)?)([kKmM]?)$/); if (!m) return String(s).trim() === '' ? null : NaN; return Math.round(+m[1] * ({ k: 1e3, m: 1e6 }[m[2].toLowerCase()] || 1)); };
+// "5M", "500k", "£2.5m", "1,500,000" (thousands) or "2,5m" (decimal comma), "≤ 20k/w" -> number; "" -> null; junk -> NaN.
+const parseMoney = s => { let t = String(s).trim().replace(/^≤|[£€$\s]|\/?p?\/?w$/gi, '');
+  t = /,\d{3}(\D|$)/.test(t) ? t.replace(/,/g, '') : t.replace(',', '.');
+  const m = t.match(/^(\d+(?:\.\d+)?)([km]?)$/i); if (!m) return t === '' ? null : NaN;
+  return Math.round(+m[1] * ({ k: 1e3, m: 1e6 }[m[2].toLowerCase()] || 1)); };
 // Cap tiles (My Club header, Scout toolbar). m: 'none' (no limit: money's default), 'auto' (money: follows the selected slot's
 // starter, opt-in with Match; age: 31, its default), 'custom' (dragged or typed by the user, sticky across slots).
 // Budget and the Scout "Value" are the same filter (transfer value) seen from two sides: the money you have / what he is worth.
@@ -3116,7 +3123,7 @@ function capPaint(el) {  // state -> tile, in place (a re-render would drop the 
   const rf = el.querySelector('.cap-ref'); rf.hidden = ref == null || c.m === 'auto'; if (ref != null) rf.style.left = `calc(${stopAt(stops, ref) / n} * (100% - 2px))`;
   el.title = (c.m === 'custom' ? `Your ${name.toLowerCase()}${CAP[k][4] ? '' : ': kept when you switch slots'}. Drag to the far right for no limit`
     : c.m === 'auto' ? (age ? 'Default: veterans would otherwise top every list' : st ? `Follows ${st.name}, the ${formation[slotSel]} starter (${fmt(ref)}), slot after slot` : 'Follows the starter of the slot you pick: no limit until then')
-    : `No ${name.toLowerCase()} limit${ref != null ? `. ${st.name} (${formation[slotSel]}) is on ${fmt(ref)}: Match caps it there` : ''}. Drag to set one`) + '. Double-click to type it';
+    : `No ${name.toLowerCase()} limit${ref != null ? `. ${st.name} (${formation[slotSel]}) is on ${fmt(ref)}: Match caps it there` : ''}. Drag to set one`) + '. Click the number to type it, drag the ruler to slide';
   if (o.textContent !== txt) { if (o.textContent) { o.classList.remove('tick'); void o.offsetWidth; o.classList.add('tick'); } o.textContent = txt; }
   if (document.activeElement !== r || r.dataset.n !== String(n)) { r.max = n; r.dataset.n = n; } r.value = i;
   r.setAttribute('aria-valuetext', v != null ? `${txt} (${el.querySelector('i').textContent})` : 'no limit');
@@ -3136,10 +3143,11 @@ function capSet(k, c) {
 }
 const capX = k => capSet(k, capVal(k) != null || capState(k).m === 'auto' && k !== 'age_max' ? { m: 'none' } : { m: 'auto' });
 // Typed entry (double-click or Enter): "2.5M", "400k" in the shown currency / wage period; age a whole number 15-45. Empty = no limit.
-function capEdit(el) {
+function capEdit(el, seed) {
   const k = el.dataset.capk, v = capVal(k), o = el.querySelector('output'), age = CAP[k][3] === 'age'; if (el.querySelector('.cap-in')) return;
-  const inp = Object.assign(document.createElement('input'), { className: 'cap-in', value: v == null ? '' : age ? v : bare(CAP[k][2](v)), placeholder: age ? '15–45, empty = any' : 'e.g. 2.5M, empty = any' });
-  inp.setAttribute('aria-label', CAP[k][0] + ', type a value'); o.after(inp); inp.select(); inp.focus();
+  const inp = Object.assign(document.createElement('input'), { className: 'cap-in', value: v == null ? '' : age ? v : bare(CAP[k][2](v)), placeholder: age ? '15–45, empty = any' : 'e.g. 5M, 500k, 2.5m' });
+  inp.setAttribute('aria-label', `${CAP[k][0]} cap: type ${age ? 'an age' : 'an amount like 5M'}, Enter to apply, Escape to cancel`); o.after(inp);
+  if (seed != null) { inp.value = seed; inp.focus(); inp.setSelectionRange(seed.length, seed.length); } else { inp.select(); inp.focus(); }
   let fin = false;  // Enter, then the blur that removing the field causes: commit once
   const done = ok => { if (fin) return; fin = true; if (ok) { const s = inp.value.trim(), t = age ? (s === '' ? null : /^\d+$/.test(s) && +s >= 15 && +s <= 45 ? +s : NaN) : parseMoney(s);
       if (Number.isNaN(t)) { fin = false; inp.setAttribute('aria-invalid', 'true'); inp.focus(); return; }
@@ -4001,8 +4009,9 @@ document.addEventListener('auxclick', e => {
   const uid = +(t.dataset.player || t.dataset.profile || t.getAttribute('row-id'));
   if (uid) { e.preventDefault(); openProfile(uid); }
 });
-document.addEventListener('dblclick', e => { const c = e.target.closest('.cap[data-capk]'); if (c && !e.target.closest('.cap-x')) capEdit(c); });
-document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset?.cap) { e.preventDefault(); capEdit(e.target.closest('.cap')); } });
+document.addEventListener('click', e => { const c = e.target.closest('.cap[data-capk]'); if (c && !e.target.closest('.cap-x, input')) capEdit(c); });
+document.addEventListener('keydown', e => { if (!e.target.dataset?.cap) return;  // on the tile: Enter or a digit / currency sign starts typing
+  if (e.key === 'Enter') { e.preventDefault(); capEdit(e.target.closest('.cap')); } else if (/^[\d£€$]$/.test(e.key)) { e.preventDefault(); capEdit(e.target.closest('.cap'), e.key); } });
 document.addEventListener('change', e => {
   if (e.target.id === 'cShape') { formation = [...shapes()[e.target.value]]; slotSel = null; PINS = {}; renderClub(); refetchClub(); }
 });
