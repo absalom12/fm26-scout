@@ -1516,7 +1516,7 @@ const refresh = () => grid && grid.purgeInfiniteCache();
 function currentCols() {
   if (st.page !== 'deals') return st.view === 'overview' ? OVERVIEW[MODE] : VIEWS[st.view];
   const L = lens(), others = LENSES.filter(x => x !== L).map(x => x.deal);
-  return ['club_name', 'transfer_value', L.ffee, 'contract_wage', L.fwage, L.deal, ...L.ctx, ...others];
+  return ['club_name', 'transfer_value', L.ffee, L.deal, 'contract_wage', L.fwage, ...L.ctx, ...others];  // Deal compares the value pair
 }
 // The grid only holds the columns on screen (plus hidden ones carrying a filter or a sort, so they keep applying):
 // building all ~150 columns with their header filters cost seconds at startup. Definitions are cached, so a view switch
@@ -3359,9 +3359,10 @@ function setMode(m, initial) {
     grid.applyColumnState({ state: grid.getColumnState().filter(c => hid(c.colId) && c.sort).map(c => ({ colId: c.colId, sort: null })) });
     peerCache.clear();
     renderLists(); renderViews(); renderLenses(); renderSummary();
+  } finally {  // the page on screen follows MODE even if the list work above throws (else the profile kept the old mode's view,
+    // and the grid kept the old mode's columns: CA/PA stayed in Fair play, empty since the server no longer sends them)
     if (st.page === 'scout' || st.page === 'deals') applyColumns();
     refresh();
-  } finally {  // the page on screen follows MODE even if the list work above throws (else the profile kept the old mode's view)
     CLUB = null; if (st.page === 'club') loadClub();
     if (st.page === 'offers') renderOffers();
     if (st.page === 'player') renderProfile();
