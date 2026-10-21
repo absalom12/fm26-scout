@@ -856,6 +856,7 @@ dialog.es[open] { animation: palIn var(--t) var(--ease); }
 .es-row { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; margin-top: 14px; }
 .es-row .check { min-height: 32px; }
 .es-lg { display: grid; gap: 6px; margin-top: 4px; grid-column: 1 / -1; } .es-lg .ac-wrap input { height: 36px; font-size: 14px; }
+.qf.bad { border-color: var(--bad); color: var(--bad); }
 .nat-wrap { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 18px; align-items: start; }
 .nat-list { max-height: 230px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-sm); display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 .nat-list label { display: flex; align-items: center; gap: 8px; padding: 4px 10px; font-size: 13px; cursor: pointer; min-height: 36px; }
@@ -1139,7 +1140,7 @@ dialog.es.set { width: min(660px, calc(100vw - 32px)); height: auto; max-height:
 <!-- Quick filters (Scout + Deal Finder): essentials only, the rest lives in Edit search -->
 <div class="bar only-grid" role="toolbar" aria-label="Quick filters">
   <div id="positions" class="chips" role="group" aria-label="Positions"></div>
-  <span class="fld">Age <input data-q="age_min" class="qf" type="number" min="14" max="45" placeholder="min" aria-label="Age min"> – <input data-q="age_max" class="qf" type="number" min="14" max="45" placeholder="max" aria-label="Age max"></span>
+  <span class="fld">Age <input data-q="age_min" class="qf" type="text" inputmode="numeric" maxlength="2" placeholder="min" aria-label="Age min, 14 to 45"> – <input data-q="age_max" class="qf" type="text" inputmode="numeric" maxlength="2" placeholder="max" aria-label="Age max, 14 to 45"></span>
   <span id="valCap"></span>
   <button id="esBtn" class="btn es-btn" aria-haspopup="dialog" title="All search criteria (e)">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Edit search <span id="esCount" class="count"></span></button>
@@ -1580,7 +1581,7 @@ function query(extra = {}, f = F) {
   return { search: $('#search').value.trim(),
     preset: deals ? lens().preset : st.preset && st.preset !== '__shortlist' ? st.preset : null,
     shortlist: !deals && st.preset === '__shortlist' ? [...shortlist] : null,
-    positions: f.positions, age: [f.age_min, f.age_max], value_max: f.value_max, wage_max: f.wage_max,
+    positions: f.positions, age: f.age_min != null && f.age_max != null && f.age_min > f.age_max ? [f.age_max, f.age_min] : [f.age_min, f.age_max],  // 25-18 means 18-25 value_max: f.value_max, wage_max: f.wage_max,
     ca_min: hid('ability_current') ? null : f.ca_min, pa_min: hid('ability_potential') ? null : f.pa_min,
     hide_hidden_risks: MODE === 'full' && f.risks, gender: gender(), nations: f.nations, home_grown: f.home_grown || null, leagues: (f.leagues || []).filter(lgKnown), mode: MODE, similar_to: f.similar?.uid ?? null,
     ...extra, filters: { ...filters, ...(extra.filters || {}) } };
@@ -3901,7 +3902,16 @@ async function init() {
 let qt;
 const debounced = (fn, ms = 300) => { clearTimeout(qt); qt = setTimeout(fn, ms); };
 $('#search').addEventListener('input', () => { if (st.page === 'club' || st.page === 'offers' || st.page === 'player') setPage('scout'); debounced(() => { refresh(); renderSummary(); }, 250); });
-$$('.qf').forEach(el => el.addEventListener('input', () => { F[el.dataset.q] = el.value === '' ? null : Number(el.value); debounced(() => { renderSummary(); refresh(); }); }));
+// Age boxes: only a whole age in 14-45 applies (a half-typed "1" or a stray "1418" used to empty the list); the box
+// shows red until then and goes back to the applied age on blur.
+$$('.qf').forEach(el => {
+  el.addEventListener('input', () => {
+    const v = el.value.trim(), n = Number(v), ok = v === '' || (Number.isInteger(n) && n >= 14 && n <= 45);
+    el.classList.toggle('bad', !ok); if (!ok) return;
+    F[el.dataset.q] = v === '' ? null : n; debounced(() => { renderSummary(); refresh(); });
+  });
+  el.addEventListener('blur', () => { el.classList.remove('bad'); el.value = F[el.dataset.q] ?? ''; });
+});
 $('#reset').onclick = resetAll;
 $('#exportBtn').onclick = exportCSV;
 async function openLoad() {
