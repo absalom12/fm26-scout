@@ -2322,10 +2322,10 @@ function secRole() {
     <div class="fbs">${vals.map(([k, x]) => fbar(label(k), x, x / 20, x >= 15 ? C.good : x >= 12 ? C.ok : C.warn, '', .75)).join('')}</div>
 `;
 }
-function secPizza(x = ppx) {
+function secPizza(x = ppx, compact = false) {  // compact: the quick view's own card (Full, Fair play), one line under PERF_MIN
   const { p, grp, bench } = x, mins = p.s_minutes || 0;
   const body = !mins ? '<p class="note">No league minutes this season, so there is nothing to benchmark yet.</p>'
-    : mins < PERF_MIN ? (x === ppx && ppTab === 'stats' ? minsNote(mins) : minsGate(mins, PERF_MIN))  // Statistics: the box sits in All stats
+    : mins < PERF_MIN ? (compact || (x === ppx && ppTab === 'stats') ? minsNote(mins) : minsGate(mins, PERF_MIN))  // Statistics: the box sits in All stats
     : !bench ? '<span class="sk" style="height:220px;width:100%"></span>'
     : Object.keys(bench.pcs).length >= 3 ? `${pizza(grp, bench.pcs)}<p class="note">Wedge = percentile per 90 against ${bench.pool.length} ${plural(grp)} with ${PERF_MIN}+ min; 85 = better than 85% of them. Dashed ring = median peer.</p>`
     : '<p class="note">Not enough peer data.</p>';
@@ -2807,10 +2807,11 @@ async function openPlayer(uid) {
         <button class="btn primary" data-offer="${p.uid}">Make an offer →</button>
       </div>
       <section class="sec" data-dr="main">${mb ? secPizza(x) : `${h3i('attr', 'Attributes', MODE === 'full' ? 'hidden under physical · hover a cell' : 'scale 20 · hover a cell for its name')}${heatMap(p, false, true)}`}</section>
+      ${mb ? '' : `<section class="sec" data-dr="pizza">${secPizza(x, true)}</section>`}
       <section class="sec" data-dr="sim">${h3i('similar', 'Similar players')}<span class="sk" style="height:120px;width:100%"></span></section>
     </div>`;
   $('[data-close]', dr).focus({ preventScroll: true });
-  if (mb && mins >= PERF_MIN) ppBench(p, grp).then(b => { if (!alive()) return; x.bench = b; $('[data-dr="main"]', dr).innerHTML = secPizza(x); });
+  if (mins >= PERF_MIN) ppBench(p, grp).then(b => { if (!alive()) return; x.bench = b; $(`[data-dr="${mb ? 'main' : 'pizza'}"]`, dr).innerHTML = secPizza(x, !mb); });
   api('/api/players', { start: 0, end: 6, positions: [grp], gender: p.gender || null, mode: MODE, similar_to: p.uid, filters: mb ? { s_minutes: num('greaterThanOrEqual', PERF_MIN) } : {} })
     .then(r => r.ok ? r.json() : null).catch(() => null).then(res => {
       if (!alive()) return;
