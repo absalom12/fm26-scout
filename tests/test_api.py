@@ -218,6 +218,7 @@ def squad(scout, monkeypatch):
     """A tiny world: our club (uid 1) with one player per 4-2-3-1 slot plus a second striker, and outside players."""
     pos_cols = ["gk", "dc", "dl", "dr", "dm", "mc", "amc", "aml", "amr", "stc", "wbl", "wbr", "ml", "mr", "sw"]
     xi = ["gk", "dr", "dc", "dc", "dl", "dm", "dm", "amr", "amc", "aml", "stc"]
+    scout.STAT_Q.clear()  # no season stats in this world (a load clears it too)
     rows = [(i + 1, 1, p, 60, 50) for i, p in enumerate(xi)] + [(12, 1, "stc", 55, 90)]  # 12: weaker striker, top performer
     rows += [(100 + i, 2, "stc", 70 + i, 40 + 10 * i) for i in range(3)]  # outside strikers: role score 70-72, performance 40-60
     con = scout.con()
@@ -341,13 +342,16 @@ def test_moneyball_player_has_stat_role_fit_and_no_attributes(stat_world, client
     d = client.get("/api/player/5?mode=moneyball").json()
     assert not [k for k in d if k.startswith(("attributes_", "role_"))]
     fit = d["stat_roles"]
-    assert set(fit) == {r for r, g in stat_world.ROLE_GROUP.items() if g == "ST"}
-    for r, xs in fit.items():  # the bars add up to the score
+    st = {r for r, g in stat_world.ROLE_GROUP.items() if g == "ST"}
+    groups = {g for (_, g, _) in stat_world.STAT_Q}  # every role of a group with peers, so Compare can line him up anywhere
+    assert set(fit) == {r for r, g in stat_world.ROLE_GROUP.items() if g in groups} > st
+    assert all(d[f"srole_{r}"] is None for r in set(fit) - st)  # but a score only where he plays
+    for r, xs in ((r, fit[r]) for r in st):  # the bars add up to the score
         assert [x["stat"] for x in xs] == list(stat_world.STAT_ROLES[r])
         assert round(sum(x["weight"] * x["pct"] for x in xs) / sum(x["weight"] for x in xs), 1) == d[f"srole_{r}"]
         assert all(x["limit"] is not None and 0 <= x["pct"] <= 100 for x in xs)
     assert client.get("/api/player/1?mode=moneyball").json()["stat_roles"] == {}
-    assert "stat_roles" not in client.get("/api/player/5?mode=full").json()
+    assert client.get("/api/player/5?mode=full").json()["stat_roles"].keys() == fit.keys()  # Compare's Season page, every mode
 
 
 def test_fm26_roles_use_known_attributes_positions_and_stats(scout):

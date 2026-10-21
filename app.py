@@ -594,8 +594,11 @@ def add_stat_roles():
 
 
 def stat_roles(p):
-    """Per-stat detail behind each srole_ score of a player: {role: [{stat, value, pct, limit, weight}]}."""
-    roles = [r for r in STAT_ROLES if p.get(f"srole_{r}") is not None]
+    """Per-stat detail for every stats role of a player with PERF_MIN+ min: {role: [{stat, value, pct, limit, weight}]}.
+    Also for roles he has no srole_ score at (under 15 familiarity), so Compare can line him up against anyone."""
+    if (p.get("s_minutes") or 0) < PERF_MIN:
+        return {}
+    roles = [r for r in STAT_ROLES if any((p.get("gender"), ROLE_GROUP[r], k) in STAT_Q for k in STAT_ROLES[r])]  # groups with peers
     if not roles:
         return {}
     ks = sorted({k for r in roles for k in STAT_ROLES[r]})
@@ -799,6 +802,7 @@ def load(d=None):
              LEFT JOIN nat n1 ON n1.id = b.nation_id LEFT JOIN nat n3 ON n3.id = b.club_nation_id""")
     con().execute("DROP TABLE raw; DROP TABLE cg; DROP TABLE st; DROP TABLE nat; DROP TABLE cl; DROP TABLE lk")
     _step(.5, 1, "Scoring players")
+    STAT_Q.clear()  # a save without season stats must not keep the previous save's percentiles
     if has_s:
         add_stat_score()
         add_stat_pcts()
@@ -1135,8 +1139,7 @@ def player(uid: int, mode: str = "full", fair_play: bool = False):
     mode = _mode(mode, fair_play)
     p = _player(uid, mode)
     telemetry.record("profile", mode)
-    extra = {"stat_roles": stat_roles(p)} if mode == "moneyball" else {}
-    extra["history"] = history(uid, mode)
+    extra = {"stat_roles": stat_roles(p), "history": history(uid, mode)}
     return {**p, "fair_fee_range": fair_range(p.get("fair_fee"), p.get("gender"), mode), **extra}
 
 
